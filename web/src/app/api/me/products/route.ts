@@ -66,8 +66,14 @@ export async function PUT(req: NextRequest) {
     if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const { appointmentId, productId, quantity } = await req.json();
+
+    const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { shopId: true } });
+    if (!appointment || appointment.shopId !== payload.shopId) {
+      return NextResponse.json({ error: "Agendamento não encontrado" }, { status: 404 });
+    }
+
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+    if (!product || product.shopId !== payload.shopId) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
 
     const existing = await prisma.comandaItem.findFirst({ where: { appointmentId, productId } });
     if (existing) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { verifyToken } from "@/app/lib/auth";
 import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -7,7 +8,12 @@ import { ptBR } from "date-fns/locale";
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     let cancelledBy = "client";
-    try { const body = await req.json(); if (body?.cancelledBy) cancelledBy = body.cancelledBy; } catch { /* sem body */ }
+    let clientPhone: string | null = null;
+    try {
+      const body = await req.json();
+      if (body?.cancelledBy) cancelledBy = body.cancelledBy;
+      if (body?.phone) clientPhone = body.phone.replace(/\D/g, "");
+    } catch { /* sem body */ }
 
     const appointment = await prisma.appointment.findUnique({
       where: { id: params.id },
@@ -21,6 +27,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     if (!appointment) return NextResponse.json({ error: "Agendamento não encontrado" }, { status: 404 });
     if (appointment.status === "cancelled") return NextResponse.json({ error: "Já cancelado" }, { status: 400 });
+
+    // Verificação de ownership: barbeiro da loja OU cliente dono do agendamento
+    const token = req.headers.get("authorization")?.slice(7);
+    const payload = token ? verifyToken(token) : null;
+    const isShopMember = payload && payload.shopId === appointment.shopId;
+    const isClient = clientPhone && appointment.client.phone === clientPhone;
+
+    if (!isShopMember && !isClient) {
+      return NextResponse.json({ error: "Sem permissão para cancelar" }, { status: 403 });
+    }
 
     await prisma.appointment.update({
       where: { id: params.id },

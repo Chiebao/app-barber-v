@@ -16,6 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
 
     if (!appointment) return NextResponse.json({ error: "Agendamento não encontrado" }, { status: 404 });
+    if (appointment.shopId !== payload.shopId) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     if (appointment.status !== "confirmed") {
       return NextResponse.json({ error: "Agendamento não está confirmado" }, { status: 400 });
     }
