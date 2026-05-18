@@ -312,4 +312,11 @@ export const api = {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  deleteAccount: (token: string, password: string) =>
+    request("/api/me/account", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ password }),
+    }),
 };

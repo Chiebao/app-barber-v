@@ -308,6 +308,11 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
 
   const bookingLink = `${API_BASE}/${barber.slug}`;
   const [appAlert, setAppAlert] = useState<{ title: string; message?: string; buttons?: AlertButton[] } | null>(null);
+
+  // Excluir conta
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const showAlert = (title: string, message?: string, buttons?: AlertButton[]) => setAppAlert({ title, message, buttons });
 
   const fetchShop = useCallback(async () => {
@@ -409,6 +414,27 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
       { text: "Cancelar", style: "cancel" },
       { text: "Sair", style: "destructive", onPress: onLogout },
     ]);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      showAlert("Atenção", "Digite sua senha para confirmar a exclusão.");
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      await api.deleteAccount(token, deletePassword.trim());
+      setShowDeleteConfirm(false);
+      setDeletePassword("");
+      showAlert("Conta excluída", "Sua conta e dados foram removidos permanentemente.", [
+        { text: "OK", onPress: onLogout },
+      ]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir conta";
+      showAlert("Erro", msg);
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   return (
@@ -638,6 +664,51 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
             variant="destructive"
             onPress={handleLogout}
           />
+
+          {/* Excluir conta */}
+          {!showDeleteConfirm ? (
+            <TouchableOpacity
+              onPress={() => setShowDeleteConfirm(true)}
+              style={{ alignSelf: "center", paddingVertical: spacing.md }}
+            >
+              <Text style={{ color: colors.error, fontSize: fontSize.bodySmall, textDecorationLine: "underline" }}>
+                Excluir minha conta
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <AppCard style={{ gap: spacing.md, borderColor: colors.error + "40", borderWidth: 1 }}>
+              <Text style={[styles.cardTitle, { color: colors.error }]}>Excluir conta permanentemente</Text>
+              <Text style={styles.cardSubtitle}>
+                {barber.role === "owner"
+                  ? "Isso excluirá sua barbearia, barbeiros, serviços e todos os agendamentos. Essa ação não pode ser desfeita."
+                  : "Seus dados pessoais serão removidos e sua conta desativada. Essa ação não pode ser desfeita."}
+              </Text>
+              <AppInput
+                label="Confirme sua senha"
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry
+                placeholder="Digite sua senha"
+              />
+              <View style={{ flexDirection: "row", gap: spacing.md }}>
+                <View style={{ flex: 1 }}>
+                  <AppButton
+                    title="Cancelar"
+                    variant="secondary"
+                    onPress={() => { setShowDeleteConfirm(false); setDeletePassword(""); }}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AppButton
+                    title={deletingAccount ? "Excluindo..." : "Excluir"}
+                    variant="destructive"
+                    onPress={handleDeleteAccount}
+                    disabled={deletingAccount}
+                  />
+                </View>
+              </View>
+            </AppCard>
+          )}
 
           {/* Versão */}
           <Text style={styles.version}>BarberPro v{APP_VERSION}</Text>
