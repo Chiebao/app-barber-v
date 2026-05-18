@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "production"
+    },
+    "production": {
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-services.json",
+        "track": "production"
+      },
+      "ios": {
+        "appleId": "seu-apple-id@email.com",
+        "ascAppId": "seu-app-store-connect-id"
+      }
+    }
+  }
+}

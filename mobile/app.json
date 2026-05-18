@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "BarberPro",
+    "slug": "barberpro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#0f0f1a",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.barberpro.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Tire fotos dos seus produtos",
+        "NSPhotoLibraryUsageDescription": "Escolha fotos dos seus produtos da galeria"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0f1a"
+      },
+      "package": "com.barberpro.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8b25b181-1331-4bda-921f-86b268e19647",
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Escolha fotos dos seus produtos da galeria",
+          "cameraPermission": "Tire fotos dos seus produtos"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8b25b181-1331-4bda-921f-86b268e19647"
+      }
+    },
+    "owner": "eliashenr"
+  }
+}

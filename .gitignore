@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Expo
+.expo/
+dist/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Vercel
+.vercel/
+
+# Build
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Mobile signing
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+google-services.json
+
+# Lock files (keep package-lock)
+yarn.lock

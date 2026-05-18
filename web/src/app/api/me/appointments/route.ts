@@ -1,0 +1,59 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/prisma";
+import { verifyToken } from "@/app/lib/auth";
+
+export async function GET(req: NextRequest) {
+  try {
+    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
+    if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get("date");
+
+    const where: Record<string, unknown> = {
+      shopId: payload.shopId,
+      status: { not: "cancelled" },
+    };
+
+    // Barbeiro ve apenas os seus; dono ve todos
+    if (payload.role === "barber") where.barberId = payload.userId;
+
+    if (date) {
+      where.date = { gte: new Date(date + "T00:00:00"), lte: new Date(date + "T23:59:59") };
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where,
+      include: {
+        client: { select: { id: true, name: true, phone: true, noShowCount: true, notes: true } },
+        barber: { select: { name: true } },
+        services: { include: { service: true } },
+        rating: { select: { score: true } },
+        comandaItems: { include: { product: true } },
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+
+    return NextResponse.json({
+      appointments: appointments.map(a => ({
+        id: a.id,
+        date: a.date.toISOString().split("T")[0],
+        startTime: a.startTime,
+        endTime: a.endTime,
+        totalPrice: a.totalPrice,
+        status: a.status,
+        paymentMethod: a.paymentMethod,
+        paidAt: a.paidAt,
+        barberName: a.barber.name,
+        client: a.client,
+        services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: as.service.price })),
+        rating: a.rating?.score || null,
+        comanda: a.comandaItems.map(ci => ({ name: ci.product.name, quantity: ci.quantity, price: ci.price })),
+        comandaTotal: a.comandaItems.reduce((s, ci) => s + ci.price * ci.quantity, 0),
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}

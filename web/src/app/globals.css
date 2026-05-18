@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Tokens (CSS Variables) ──────────────────────────────────────── */
+:root {
+  --brand-500: #c9a96e;
+  --dark-900: #0B0B14;
+  --dark-800: #161625;
+  --dark-700: #1D1D32;
+  --text-primary: #F5F5F7;
+  --text-secondary: #8B8FA3;
+  --text-muted: #555870;
+  --border-color: #2A2D42;
+  --border-subtle: #1E2035;
+  --overlay-start: rgba(8, 6, 16, 0.40);
+  --overlay-end: rgba(8, 6, 16, 0.82);
+  --glow-color: rgba(201, 169, 110, 0.10);
+}
+
+/* ── Body Background ────────────────────────────────────────────────────── */
+body {
+  background-color: var(--dark-900);
+  background-image: url('/bg-barber.jpg');
+  background-size: cover;
+  background-position: top center;
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+h1, h2 {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+/* Camada 1: escurecimento gradiente */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      var(--overlay-start) 0%,
+      rgba(8, 6, 16, 0.62) 45%,
+      var(--overlay-end) 100%
+    );
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Camada 2: brilho da cor de marca no topo */
+body::after {
+  content: '';
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70vw;
+  height: 400px;
+  background: radial-gradient(ellipse at center, var(--glow-color) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Glass Effect ───────────────────────────────────────────────────────── */
+.bg-dark-800 {
+  background-color: rgba(18, 16, 32, 0.74) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.bg-dark-900 {
+  background-color: rgba(8, 6, 18, 0.82) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark-900); }
+::-webkit-scrollbar-thumb { background: var(--brand-500); border-radius: 3px; }
+
+/* ── Skeleton Loading ───────────────────────────────────────────────────── */
+@layer utilities {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--dark-800) 25%,
+      var(--dark-700) 50%,
+      var(--dark-800) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* ── Focus Ring Utility ─────────────────────────────────────────────────── */
+@layer utilities {
+  .focus-brand {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
+    border-color: var(--brand-500);
+  }
+}
+
+/* ── Button Press Effect ────────────────────────────────────────────────── */
+@layer utilities {
+  .press-scale {
+    transition: transform 0.1s ease;
+  }
+  .press-scale:active {
+    transform: scale(0.97);
+  }
+}
