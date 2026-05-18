@@ -1,5 +1,11 @@
 export const API_BASE = "https://barberpro-black.vercel.app";
 
+let _onUnauthorized: (() => void) | null = null;
+
+export function setOnUnauthorized(cb: () => void) {
+  _onUnauthorized = cb;
+}
+
 interface RegisterData {
   ownerName: string;
   shopName: string;
@@ -44,7 +50,10 @@ async function request(path: string, options?: RequestInit) {
   }
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro na requisição");
+  if (!res.ok) {
+    if (res.status === 401 && _onUnauthorized) _onUnauthorized();
+    throw new Error(data.error || "Erro na requisição");
+  }
   return data;
 }
 

@@ -7,7 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   ownerName: z.string().min(2),
   shopName: z.string().min(2),
-  phone: z.string().min(10),
+  phone: z.string().regex(/^\d{10,11}$/, "Telefone deve ter 10 ou 11 digitos"),
   password: z.string().min(6),
   openTime: z.string().regex(/^\d{2}:\d{2}$/),
   closeTime: z.string().regex(/^\d{2}:\d{2}$/),

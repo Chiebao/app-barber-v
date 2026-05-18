@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "expo-secure-store";
+import * as SplashScreen from "expo-splash-screen";
 import { useFonts, PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold } from "@expo-google-fonts/playfair-display";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import * as Notifications from "expo-notifications";
-import { api } from "./src/services/api";
+import { api, setOnUnauthorized } from "./src/services/api";
+
+SplashScreen.preventAutoHideAsync();
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -88,9 +92,20 @@ export default function App() {
     await SecureStore.deleteItemAsync("barber");
   };
 
+  useEffect(() => {
+    setOnUnauthorized(handleLogout);
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (!loading && fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [loading, fontsLoaded]);
+
   if (loading || !fontsLoaded) return null;
 
   return (
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
     <ThemeProvider>
       <StatusBar style="light" />
       {screen === "login" && (
@@ -179,5 +194,6 @@ export default function App() {
         />
       )}
     </ThemeProvider>
+    </View>
   );
 }
