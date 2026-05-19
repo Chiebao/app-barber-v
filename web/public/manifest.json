@@ -1,21 +1,39 @@
 {
-  "name": "BarberPro",
+  "name": "BarberPro - Agendamento Online",
   "short_name": "BarberPro",
-  "description": "Agende seu corte online",
+  "description": "Agende seu corte de cabelo online. Sistema completo para barbearias.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",
+  "categories": ["business", "lifestyle"],
+  "lang": "pt-BR",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
