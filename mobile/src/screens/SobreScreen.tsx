@@ -713,10 +713,10 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
 
           {/* Links legais */}
           <View style={{ flexDirection: "row", justifyContent: "center", gap: spacing.lg }}>
-            <TouchableOpacity onPress={() => Linking.openURL("https://barberpro-black.vercel.app/privacidade")}>
+            <TouchableOpacity onPress={() => Linking.openURL("https://barberpro-mauve.vercel.app/privacidade")}>
               <Text style={{ color: colors.gray[400], fontSize: fontSize.caption, textDecorationLine: "underline" }}>Privacidade</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => Linking.openURL("https://barberpro-black.vercel.app/termos")}>
+            <TouchableOpacity onPress={() => Linking.openURL("https://barberpro-mauve.vercel.app/termos")}>
               <Text style={{ color: colors.gray[400], fontSize: fontSize.caption, textDecorationLine: "underline" }}>Termos de Uso</Text>
             </TouchableOpacity>
           </View>

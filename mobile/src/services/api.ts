@@ -1,4 +1,4 @@
-export const API_BASE = "https://barberpro-black.vercel.app";
+export const API_BASE = "https://barberpro-mauve.vercel.app";
 
 let _onUnauthorized: (() => void) | null = null;
 
