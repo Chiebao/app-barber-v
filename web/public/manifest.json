@@ -2,7 +2,7 @@
   "name": "BarberPro - Agendamento Online",
   "short_name": "BarberPro",
   "description": "Agende seu corte de cabelo online. Sistema completo para barbearias.",
-  "start_url": "/",
+  "start_url": "/admin",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
