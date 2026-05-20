@@ -87,7 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
     }
 
-    // Notifica lista de espera para a data cancelada
+    // Conta lista de espera para a data cancelada
     const cancelledDate = appointment.date.toISOString().split("T")[0];
     const waitlistEntries = await prisma.waitlist.findMany({
       where: {
@@ -97,17 +97,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           { preferredDate: null },
         ],
       },
-      take: 3, // limita para não spam
+      take: 3,
     });
 
-    if (waitlistEntries.length > 0) {
+    // Notifica via WhatsApp API se disponível e se cancelamento foi pelo cliente
+    if (waitlistEntries.length > 0 && (cancelledBy === "client" || !cancelledBy)) {
       const formattedDate = format(appointment.date, "dd 'de' MMMM", { locale: ptBR });
-      for (const entry of waitlistEntries) {
-        const phone = entry.clientPhone.replace(/\D/g, "");
-        const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
-        const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
-        const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-        if (WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID) {
+      const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+      const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
+      if (WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID) {
+        for (const entry of waitlistEntries) {
+          const phone = entry.clientPhone.replace(/\D/g, "");
+          const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
           fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
             method: "POST",
             headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}`, "Content-Type": "application/json" },
@@ -126,7 +127,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
     }
 
-    return NextResponse.json({ ok: true });
+    // Notifica o owner via push se um cliente cancelou e tem gente na lista de espera
+    if ((cancelledBy === "client" || !cancelledBy) && waitlistEntries.length > 0) {
+      const ownerBarber = await prisma.barber.findFirst({
+        where: { shopId: appointment.shopId, isOwnerProfile: true },
+        select: { pushToken: true },
+      });
+      if (ownerBarber?.pushToken?.startsWith("ExponentPushToken")) {
+        fetch("https://exp.host/--/api/v2/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([{
+            to: ownerBarber.pushToken,
+            title: "Vaga aberta + lista de espera 📋",
+            body: `${appointment.client.name} cancelou às ${appointment.startTime}. ${waitlistEntries.length} cliente(s) na lista de espera!`,
+            sound: "default",
+          }]),
+        }).catch(console.error);
+      }
+    }
+
+    return NextResponse.json({ ok: true, waitlistCount: waitlistEntries.length });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

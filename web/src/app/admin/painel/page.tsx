@@ -240,13 +240,61 @@ export default function PainelPage() {
     if (subView === "clientes") fetchClients();
   }, [token, subView]);
 
+  // ── Cancel state ──
+  const [cancelModalId, setCancelModalId] = useState<string | null>(null);
+  const [cancelNotifyWaitlist, setCancelNotifyWaitlist] = useState(false);
+  const [waitlistCountForDate, setWaitlistCountForDate] = useState(0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
   // ── Actions ──
-  const cancelAppointment = async (id: string) => {
-    if (!confirm("Cancelar este agendamento?")) return;
+  const openCancelModal = async (id: string) => {
+    setCancelModalId(id);
+    setCancelNotifyWaitlist(true);
+    // Check waitlist count for this appointment's date
     try {
-      await fetch(`/api/appointments/${id}/cancel`, { method: "PATCH", headers: authHeaders() });
+      const res = await fetch("/api/me/waitlist", { headers: authHeaders() });
+      const data = await res.json();
+      const appt = appointments.find(a => a.id === id);
+      const entries = (data.waitlist || []).filter((w: { preferredDate: string | null }) =>
+        !w.preferredDate || w.preferredDate === appt?.date
+      );
+      setWaitlistCountForDate(entries.length);
+    } catch { setWaitlistCountForDate(0); }
+  };
+
+  const cancelAppointment = async () => {
+    if (!cancelModalId) return;
+    setCancellingId(cancelModalId);
+    try {
+      await fetch(`/api/appointments/${cancelModalId}/cancel`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ cancelledBy: "shop", notifyWaitlist: cancelNotifyWaitlist }),
+      });
+      const appt = appointments.find(a => a.id === cancelModalId);
+      // Open wa.me links for waitlist clients if toggle is on
+      if (cancelNotifyWaitlist && waitlistCountForDate > 0 && appt) {
+        try {
+          const res = await fetch("/api/me/waitlist", { headers: authHeaders() });
+          const data = await res.json();
+          const entries = (data.waitlist || []).filter((w: { preferredDate: string | null }) =>
+            !w.preferredDate || w.preferredDate === appt.date
+          );
+          const dateFormatted = new Date(appt.date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+          for (const entry of entries.slice(0, 3)) {
+            const phone = entry.clientPhone.replace(/\D/g, "");
+            const phoneWA = phone.startsWith("55") ? phone : `55${phone}`;
+            const msg = encodeURIComponent(
+              `Oi ${entry.clientName}! 🎉\nAbriu uma vaga no dia ${dateFormatted} às ${appt.startTime}.\nAgende agora: ${bookingLink}`
+            );
+            window.open(`https://wa.me/${phoneWA}?text=${msg}`, "_blank");
+          }
+        } catch { /* ignore */ }
+      }
+      setCancelModalId(null);
       fetchAppointments();
     } catch { alert("Erro ao cancelar"); }
+    finally { setCancellingId(null); }
   };
 
   const markNoShow = async (id: string, clientName: string) => {
@@ -646,7 +694,7 @@ export default function PainelPage() {
                           {/* Action buttons: Cancel + No Show */}
                           {appt.status === "confirmed" && !isPayingThis && (
                             <div className="flex gap-2">
-                              <button onClick={() => cancelAppointment(appt.id)} className="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-400 font-medium hover:bg-red-500/20 transition">Cancelar</button>
+                              <button onClick={() => openCancelModal(appt.id)} className="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-400 font-medium hover:bg-red-500/20 transition">Cancelar</button>
                               {isAppointmentPast(appt.date, appt.startTime) && (
                                 <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-sm text-yellow-400 font-medium hover:bg-yellow-500/20 transition">Nao veio</button>
                               )}
@@ -791,18 +839,30 @@ export default function PainelPage() {
             {/* ═══════ CONFIG TAB ═══════ */}
             {activeTab === "config" && (
               <div className="space-y-6">
-                <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setActiveTab("home")} className="flex items-center gap-1 text-brand-400 text-sm hover:text-brand-300 shrink-0">
+                    <span className="text-lg">←</span> Voltar
+                  </button>
+                  <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
+                </div>
 
                 {/* Shop settings */}
                 {shopSettings && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
-                    <h3 className="font-semibold text-white">Horario de Funcionamento</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><p className="text-xs text-gray-400 mb-1">Abertura</p><input type="time" value={shopSettings.openTime} onChange={e => setShopSettings(p => p ? {...p, openTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" /></div>
-                      <div><p className="text-xs text-gray-400 mb-1">Fechamento</p><input type="time" value={shopSettings.closeTime} onChange={e => setShopSettings(p => p ? {...p, closeTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" /></div>
+                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-5">
+                    <h3 className="font-semibold text-white">🕐 Horario de Funcionamento</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">Abertura</p>
+                        <input type="time" value={shopSettings.openTime} onChange={e => setShopSettings(p => p ? {...p, openTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white text-center text-lg font-semibold focus:border-brand-400 focus:outline-none" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">Fechamento</p>
+                        <input type="time" value={shopSettings.closeTime} onChange={e => setShopSettings(p => p ? {...p, closeTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white text-center text-lg font-semibold focus:border-brand-400 focus:outline-none" />
+                      </div>
                     </div>
-                    <div><p className="text-xs text-gray-400 mb-2">Dias de trabalho</p>
-                      <div className="flex gap-2">{WEEKDAYS.map((d, i) => (<button key={i} onClick={() => setShopSettings(p => p ? {...p, workDays: p.workDays.includes(i) ? p.workDays.filter(x => x !== i) : [...p.workDays, i].sort()} : p)} className={`flex-1 py-2 rounded-lg border text-sm font-medium transition ${shopSettings.workDays.includes(i) ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>{d}</button>))}</div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-2">Dias de trabalho</p>
+                      <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map((d, i) => (<button key={i} onClick={() => setShopSettings(p => p ? {...p, workDays: p.workDays.includes(i) ? p.workDays.filter(x => x !== i) : [...p.workDays, i].sort()} : p)} className={`py-2.5 rounded-lg border text-sm font-medium transition ${shopSettings.workDays.includes(i) ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-500"}`}>{d}</button>))}</div>
                     </div>
                     <div><p className="text-xs text-gray-400 mb-1">Chave Pix</p><input type="text" placeholder="Sua chave pix" value={shopSettings.pixKey} onChange={e => setShopSettings(p => p ? {...p, pixKey: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" /></div>
 
@@ -836,6 +896,50 @@ export default function PainelPage() {
           </>
         )}
       </div>
+
+      {/* ── Cancel Confirmation Modal ── */}
+      {cancelModalId && (() => {
+        const appt = appointments.find(a => a.id === cancelModalId);
+        return (
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setCancelModalId(null)}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">Cancelar agendamento?</h3>
+              {appt && (
+                <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">
+                  <p className="font-medium text-white">{appt.client?.name}</p>
+                  <p className="text-sm text-gray-400">{appt.startTime} - {appt.endTime} · {appt.services.map(s => s.name).join(", ")}</p>
+                </div>
+              )}
+
+              {/* Waitlist toggle */}
+              {waitlistCountForDate > 0 && (
+                <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-400">📋 Lista de espera</p>
+                      <p className="text-xs text-gray-400">{waitlistCountForDate} cliente{waitlistCountForDate > 1 ? "s" : ""} aguardando vaga</p>
+                    </div>
+                    <button
+                      onClick={() => setCancelNotifyWaitlist(v => !v)}
+                      className={`w-12 h-6 rounded-full transition-colors shrink-0 ${cancelNotifyWaitlist ? "bg-blue-500" : "bg-gray-700"}`}
+                    >
+                      <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${cancelNotifyWaitlist ? "translate-x-6" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                  {cancelNotifyWaitlist && (
+                    <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para voce avisar os clientes da lista de espera.</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button onClick={() => setCancelModalId(null)} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
+                <button onClick={cancelAppointment} disabled={cancellingId === cancelModalId} className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-all">{cancellingId === cancelModalId ? "Cancelando..." : "Confirmar Cancelamento"}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Bottom Navigation (mobile-like) ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-dark-800 border-t border-gray-700 flex z-30 safe-bottom">

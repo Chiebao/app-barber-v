@@ -104,11 +104,17 @@ export default function MeusAgendamentos() {
     if (!confirm("Deseja cancelar este agendamento?")) return;
     setCancelling(id);
     try {
-      const res = await fetch(`/api/appointments/${id}/cancel`, { method: "PATCH" });
+      const cleanPhone = phone.replace(/\D/g, "");
+      const res = await fetch(`/api/appointments/${id}/cancel`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cancelledBy: "client", phone: cleanPhone }),
+      });
       if (res.ok) {
         setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a)));
       } else {
-        alert("Erro ao cancelar. Tente novamente.");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Erro ao cancelar. Tente novamente.");
       }
     } finally {
       setCancelling(null);
