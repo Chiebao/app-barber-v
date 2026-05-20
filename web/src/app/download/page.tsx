@@ -11,9 +11,7 @@ export default function DownloadPage() {
       <div className="max-w-md w-full space-y-8 animate-fade-in">
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="mx-auto w-20 h-20 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center shadow-lg">
-            <span className="text-4xl">✂️</span>
-          </div>
+          <img src="/logo.png" alt="BarberPro" className="mx-auto w-20 h-20 rounded-2xl shadow-lg" />
           <h1 className="text-3xl font-bold text-white">BarberPro</h1>
           <p className="text-gray-400">
             Instale o app no seu celular em segundos

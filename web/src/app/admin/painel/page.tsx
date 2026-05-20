@@ -374,9 +374,12 @@ export default function PainelPage() {
     <main className="min-h-screen bg-dark-900 pb-10">
       {/* Header */}
       <header className="bg-dark-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-brand-400">{user?.shopName || "Painel"}</h1>
-          <p className="text-xs text-gray-400">Ola, {user?.name || "proprietario"}</p>
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="BarberPro" className="w-10 h-10 rounded-lg" />
+          <div>
+            <h1 className="text-xl font-bold text-brand-400">{user?.shopName || "Painel"}</h1>
+            <p className="text-xs text-gray-400">Ola, {user?.name || "proprietario"}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {user?.shopSlug && (
