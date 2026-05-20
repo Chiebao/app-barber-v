@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados invalidos", details: error.errors }, { status: 400 });
     console.error("Register error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: "Erro interno", debug: msg }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
