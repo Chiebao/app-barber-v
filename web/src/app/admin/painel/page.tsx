@@ -903,7 +903,7 @@ export default function PainelPage() {
         (() => {
           const appt = appointments.find(a => a.id === cancelModalId);
           return (
-            <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setCancelModalId(null)}>
+            <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)" }} onClick={() => setCancelModalId(null)}>
               <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
                 <h3 className="text-lg font-bold text-white">Cancelar agendamento?</h3>
                 {appt && (
