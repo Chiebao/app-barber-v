@@ -150,8 +150,8 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-dark-900 pb-12">
-      <header className="bg-dark-800 border-b border-gray-700">
-        <img src="/banner.png" alt="BarberPro" className="w-full max-h-28 object-cover object-center" />
+      <header className="bg-dark-800 border-b border-gray-700 py-4 px-6 flex items-center justify-center">
+        <img src="/banner.png" alt="BarberPro" className="h-14 w-auto object-contain" />
       </header>
 
       {/* Tabs */}
