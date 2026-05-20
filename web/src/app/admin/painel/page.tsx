@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
@@ -897,49 +898,52 @@ export default function PainelPage() {
         )}
       </div>
 
-      {/* ── Cancel Confirmation Modal ── */}
-      {cancelModalId && (() => {
-        const appt = appointments.find(a => a.id === cancelModalId);
-        return (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setCancelModalId(null)}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">Cancelar agendamento?</h3>
-              {appt && (
-                <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">
-                  <p className="font-medium text-white">{appt.client?.name}</p>
-                  <p className="text-sm text-gray-400">{appt.startTime} - {appt.endTime} · {appt.services.map(s => s.name).join(", ")}</p>
-                </div>
-              )}
-
-              {/* Waitlist toggle */}
-              {waitlistCountForDate > 0 && (
-                <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-blue-400">📋 Lista de espera</p>
-                      <p className="text-xs text-gray-400">{waitlistCountForDate} cliente{waitlistCountForDate > 1 ? "s" : ""} aguardando vaga</p>
-                    </div>
-                    <button
-                      onClick={() => setCancelNotifyWaitlist(v => !v)}
-                      className={`w-12 h-6 rounded-full transition-colors shrink-0 ${cancelNotifyWaitlist ? "bg-blue-500" : "bg-gray-700"}`}
-                    >
-                      <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${cancelNotifyWaitlist ? "translate-x-6" : "translate-x-0.5"}`} />
-                    </button>
+      {/* ── Cancel Confirmation Modal (via portal to escape CSS containing blocks) ── */}
+      {cancelModalId && typeof document !== "undefined" && createPortal(
+        (() => {
+          const appt = appointments.find(a => a.id === cancelModalId);
+          return (
+            <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setCancelModalId(null)}>
+              <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-bold text-white">Cancelar agendamento?</h3>
+                {appt && (
+                  <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">
+                    <p className="font-medium text-white">{appt.client?.name}</p>
+                    <p className="text-sm text-gray-400">{appt.startTime} - {appt.endTime} · {appt.services.map(s => s.name).join(", ")}</p>
                   </div>
-                  {cancelNotifyWaitlist && (
-                    <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para voce avisar os clientes da lista de espera.</p>
-                  )}
-                </div>
-              )}
+                )}
 
-              <div className="flex gap-3">
-                <button onClick={() => setCancelModalId(null)} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
-                <button onClick={cancelAppointment} disabled={cancellingId === cancelModalId} className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-all">{cancellingId === cancelModalId ? "Cancelando..." : "Confirmar Cancelamento"}</button>
+                {/* Waitlist toggle */}
+                {waitlistCountForDate > 0 && (
+                  <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-blue-400">📋 Lista de espera</p>
+                        <p className="text-xs text-gray-400">{waitlistCountForDate} cliente{waitlistCountForDate > 1 ? "s" : ""} aguardando vaga</p>
+                      </div>
+                      <button
+                        onClick={() => setCancelNotifyWaitlist(v => !v)}
+                        className={`w-12 h-6 rounded-full transition-colors shrink-0 ${cancelNotifyWaitlist ? "bg-blue-500" : "bg-gray-700"}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${cancelNotifyWaitlist ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    {cancelNotifyWaitlist && (
+                      <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para voce avisar os clientes da lista de espera.</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button onClick={() => setCancelModalId(null)} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
+                  <button onClick={cancelAppointment} disabled={cancellingId === cancelModalId} className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-all">{cancellingId === cancelModalId ? "Cancelando..." : "Confirmar Cancelamento"}</button>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })(),
+        document.body
+      )}
 
       {/* ── Bottom Navigation (mobile-like) ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-dark-800 border-t border-gray-700 flex z-30 safe-bottom">
