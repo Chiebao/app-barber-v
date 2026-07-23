@@ -99,6 +99,9 @@ export default function PainelPage() {
   const [newBarberPassword, setNewBarberPassword] = useState("");
   const [newBarberCommission, setNewBarberCommission] = useState("");
   const [addingBarber, setAddingBarber] = useState(false);
+  const [resetBarberId, setResetBarberId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resettingBarber, setResettingBarber] = useState(false);
 
   // ── Financeiro state ──
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -353,6 +356,17 @@ export default function PainelPage() {
     catch { toast.error("Erro ao atualizar barbeiro"); }
   };
 
+  const handleResetBarberPassword = async (barberId: string) => {
+    if (resetPassword.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return; }
+    setResettingBarber(true);
+    try {
+      const res = await fetch("/api/auth/add-barber", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ barberId, newPassword: resetPassword }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Senha do barbeiro redefinida"); setResetBarberId(null); setResetPassword(""); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao redefinir"); }
+    } catch { toast.error("Erro ao redefinir"); } finally { setResettingBarber(false); }
+  };
+
   const handleAddBarber = async () => {
     if (!newBarberName.trim() || !newBarberPhone.trim() || newBarberPassword.length < 6) { toast.error("Preencha todos os campos (senha min 6)"); return; }
     setAddingBarber(true);
@@ -500,10 +514,23 @@ export default function PainelPage() {
         {barbersLoading ? <Spinner /> : barbers.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum barbeiro cadastrado</p> : (
           <div className="space-y-3">
             {barbers.map(b => (
-              <div key={b.id} className={`flex items-center gap-4 rounded-xl border bg-dark-800 p-4 ${b.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
-                <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>
-                <div className="flex-1 min-w-0"><p className="font-medium text-white">{b.name}</p><p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p></div>
-                <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+              <div key={b.id} className={`rounded-xl border bg-dark-800 p-4 ${b.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>
+                  <div className="flex-1 min-w-0"><p className="font-medium text-white">{b.name}</p><p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p></div>
+                  <button onClick={() => { setResetBarberId(resetBarberId === b.id ? null : b.id); setResetPassword(""); }} title="Redefinir senha" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">🔑</button>
+                  <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                </div>
+                {resetBarberId === b.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-700 space-y-2">
+                    <p className="text-xs text-gray-400">Nova senha para <span className="text-white font-medium">{b.name}</span></p>
+                    <div className="flex gap-2">
+                      <input type="text" value={resetPassword} onChange={e => setResetPassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="flex-1 rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      <button onClick={() => handleResetBarberPassword(b.id)} disabled={resettingBarber} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition">{resettingBarber ? "..." : "Salvar"}</button>
+                    </div>
+                    <p className="text-xs text-gray-500">Anote e envie a nova senha para o barbeiro por WhatsApp.</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

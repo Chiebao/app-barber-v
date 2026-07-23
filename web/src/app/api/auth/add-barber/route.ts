@@ -65,11 +65,24 @@ export async function PATCH(req: NextRequest) {
     const payload = auth ? verifyToken(auth.slice(7)) : null;
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { barberId, active, role, commission } = await req.json();
+    const { barberId, active, role, commission, newPassword } = await req.json();
+
+    // Multi-tenant: garante que o barbeiro pertence à barbearia do dono
+    const target = await prisma.barber.findUnique({ where: { id: barberId }, select: { shopId: true, isOwnerProfile: true } });
+    if (!target || target.shopId !== payload.shopId) {
+      return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 404 });
+    }
+
     const updateData: Record<string, unknown> = {};
     if (active !== undefined) updateData.active = active;
     if (role !== undefined) updateData.role = role;
     if (commission !== undefined) updateData.commission = Math.min(100, Math.max(0, Number(commission)));
+    if (newPassword !== undefined) {
+      if (typeof newPassword !== "string" || newPassword.length < 6) {
+        return NextResponse.json({ error: "Senha deve ter no mínimo 6 caracteres" }, { status: 400 });
+      }
+      updateData.passwordHash = await hashPassword(newPassword);
+    }
     await prisma.barber.update({ where: { id: barberId }, data: updateData });
     return NextResponse.json({ ok: true });
   } catch (error) {

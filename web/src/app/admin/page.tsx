@@ -52,6 +52,23 @@ export default function AdminPage() {
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  // Esqueci senha (fluxo manual via WhatsApp de suporte)
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState("");
+  const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "";
+
+  const handleForgotPassword = () => {
+    const cleanPhone = forgotPhone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) { toast.error("Informe seu telefone de cadastro"); return; }
+    if (!SUPPORT_WHATSAPP) { toast.error("Suporte indisponível no momento. Contate a barbearia."); return; }
+    const msg = encodeURIComponent(
+      `Olá! Esqueci minha senha do BarberPro. Meu telefone de cadastro é ${cleanPhone}. Podem me ajudar a redefinir?`
+    );
+    window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${msg}`, "_blank");
+    setForgotOpen(false);
+    setForgotPhone("");
+  };
+
   const toggleDay = (d: number) =>
     setWorkDays((p) => (p.includes(d) ? p.filter((x) => x !== d) : [...p, d].sort()));
 
@@ -183,6 +200,26 @@ export default function AdminPage() {
               className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
               {loading ? "Entrando..." : "Entrar"}
             </button>
+            <button onClick={() => { setForgotOpen(true); setForgotPhone(loginPhone); }}
+              className="w-full text-center text-sm text-gray-400 hover:text-brand-400 transition py-1">
+              Esqueci minha senha
+            </button>
+          </div>
+        )}
+
+        {/* Modal: Esqueci senha */}
+        {forgotOpen && (
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)" }} onClick={() => setForgotOpen(false)}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">Recuperar senha</h3>
+              <p className="text-sm text-gray-400">Informe seu telefone de cadastro. Vamos abrir o WhatsApp do suporte para redefinir sua senha com segurança.</p>
+              <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)} placeholder="Telefone com DDD"
+                className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+              <div className="flex gap-3">
+                <button onClick={() => setForgotOpen(false)} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
+                <button onClick={handleForgotPassword} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-semibold text-white hover:bg-green-600 transition">Abrir WhatsApp</button>
+              </div>
+            </div>
           </div>
         )}
 
