@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
+import { toast } from "@/app/lib/toast";
 
 function applyWebTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -112,9 +113,10 @@ export default function MeusAgendamentos() {
       });
       if (res.ok) {
         setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a)));
+        toast.success("Agendamento cancelado");
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || "Erro ao cancelar. Tente novamente.");
+        toast.error(data.error || "Erro ao cancelar. Tente novamente.");
       }
     } finally {
       setCancelling(null);
@@ -156,9 +158,10 @@ export default function MeusAgendamentos() {
           )
         );
         setEditingId(null);
+        toast.success("Serviços atualizados");
       } else {
         const d = await res.json();
-        alert(d.error || "Erro ao salvar alterações");
+        toast.error(d.error || "Erro ao salvar alterações");
       }
     } finally {
       setSaving(false);
@@ -621,7 +624,7 @@ export default function MeusAgendamentos() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("PDF error:", error);
-      alert("Erro ao gerar PDF. Tente novamente.");
+      toast.error("Erro ao gerar PDF. Tente novamente.");
     } finally {
       setGeneratingPdf(false);
     }

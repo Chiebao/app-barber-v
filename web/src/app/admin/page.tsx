@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/app/lib/toast";
 
 const CORTES = [
   { name: "Degrade", category: "corte", duration: 30, price: 35 },
@@ -66,8 +67,8 @@ export default function AdminPage() {
       ...(fazLuzes ? [{ name: tipoLuzes || "Luzes", category: "luzes", duration: 60, price: parseFloat(precoLuzes) }] : []),
     ];
 
-    if (services.length === 0) { alert("Selecione pelo menos um servico!"); return; }
-    if (!name || !shopName || !phone || password.length < 6) { alert("Preencha todos os campos!"); return; }
+    if (services.length === 0) { toast.error("Selecione pelo menos um serviço!"); return; }
+    if (!name || !shopName || !phone || password.length < 6) { toast.error("Preencha todos os campos!"); return; }
 
     setLoading(true);
     try {
@@ -86,7 +87,7 @@ export default function AdminPage() {
       localStorage.setItem("admin_user", JSON.stringify({ ...data.user, shopName: data.shop.name, shopSlug: data.shop.slug, role: data.role }));
       router.push("/admin/painel");
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erro ao cadastrar");
+      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar");
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,7 @@ export default function AdminPage() {
       localStorage.setItem("admin_user", JSON.stringify({ ...data.user, shopName: data.shop.name, shopSlug: data.shop.slug, role: data.role }));
       router.push("/admin/painel");
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erro ao entrar");
+      toast.error(e instanceof Error ? e.message : "Erro ao entrar");
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ export default function AdminPage() {
             <p className="text-brand-400 font-mono text-sm break-all">{result.link}</p>
             <div className="flex gap-3">
               <button
-                onClick={() => navigator.clipboard.writeText(result.link).then(() => alert("Link copiado!"))}
+                onClick={() => navigator.clipboard.writeText(result.link).then(() => toast.success("Link copiado!"))}
                 className="flex-1 rounded-lg border border-gray-700 py-2 text-sm text-gray-300 hover:text-white transition-colors"
               >
                 Copiar Link

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
+import { toast } from "@/app/lib/toast";
 import BarberPageChat from "./_chat-page";
 
 function applyWebTheme(themeId: string) {
@@ -297,7 +298,12 @@ export default function BarberPage() {
     setStep("confirm");
   };
 
+  const bookingLock = useRef(false);
+
   const handleBook = async () => {
+    // Trava contra duplo-clique / duplo-submit
+    if (bookingLock.current) return;
+    bookingLock.current = true;
     setBookError("");
     setStep("booking");
     try {
@@ -324,8 +330,13 @@ export default function BarberPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        setBookError(err.error || "Erro ao agendar. Tente novamente.");
-        setStep("confirm");
+        const msg = res.status === 409
+          ? "Ops! Esse horário acabou de ser ocupado. Escolha outro."
+          : (err.error || "Erro ao agendar. Tente novamente.");
+        setBookError(msg);
+        toast.error(msg);
+        setStep(res.status === 409 ? "time" : "confirm");
+        if (res.status === 409 && selectedDate) handleSelectDate(selectedDate);
         return;
       }
 
@@ -335,6 +346,8 @@ export default function BarberPage() {
     } catch {
       setBookError("Erro ao agendar. Tente novamente.");
       setStep("confirm");
+    } finally {
+      bookingLock.current = false;
     }
   };
 

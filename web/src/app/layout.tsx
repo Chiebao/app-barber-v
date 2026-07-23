@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "./lib/toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,6 +60,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-dark-900 text-white antialiased">
         {children}
+        <Toaster />
       </body>
     </html>
   );

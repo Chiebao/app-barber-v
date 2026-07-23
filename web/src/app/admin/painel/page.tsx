@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
+import { toast } from "@/app/lib/toast";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -162,17 +163,26 @@ export default function PainelPage() {
     [token]
   );
 
+  // Sessão expirada (401): limpa token, avisa e volta ao login
+  const handleUnauthorized = useCallback(() => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
+    toast.info("Sua sessão expirou. Faça login novamente.");
+    router.replace("/admin");
+  }, [router]);
+
   // ── Fetchers ──
   const fetchAppointments = useCallback(async () => {
     if (!token) return;
     setAgendaLoading(true);
     try {
       const res = await fetch(`/api/me/appointments?date=${selectedDate}`, { headers: authHeaders() });
+      if (res.status === 401) { handleUnauthorized(); return; }
       const data = await res.json();
       setAppointments(data.appointments || []);
     } catch { setAppointments([]); }
     finally { setAgendaLoading(false); }
-  }, [token, selectedDate, authHeaders]);
+  }, [token, selectedDate, authHeaders, handleUnauthorized]);
 
   const fetchSlots = useCallback(async () => {
     if (!token) return;
@@ -293,8 +303,9 @@ export default function PainelPage() {
         } catch { /* ignore */ }
       }
       setCancelModalId(null);
+      toast.success("Agendamento cancelado");
       fetchAppointments();
-    } catch { alert("Erro ao cancelar"); }
+    } catch { toast.error("Erro ao cancelar"); }
     finally { setCancellingId(null); }
   };
 
@@ -302,16 +313,18 @@ export default function PainelPage() {
     if (!confirm(`${clientName} nao compareceu? Isso sera registrado.`)) return;
     try {
       await fetch(`/api/appointments/${id}/no-show`, { method: "PATCH", headers: authHeaders() });
+      toast.success("Falta registrada");
       fetchAppointments();
-    } catch { alert("Erro ao registrar"); }
+    } catch { toast.error("Erro ao registrar"); }
   };
 
   const confirmPixPayment = async (id: string) => {
     if (!confirm("Confirmar pagamento via Pix?")) return;
     try {
       await fetch(`/api/appointments/${id}/confirm-payment`, { method: "PATCH", headers: authHeaders() });
+      toast.success("Pagamento confirmado");
       fetchAppointments();
-    } catch { alert("Erro ao confirmar"); }
+    } catch { toast.error("Erro ao confirmar"); }
   };
 
   const handleConfirmPayment = async (appointmentId: string) => {
@@ -322,9 +335,10 @@ export default function PainelPage() {
       if (removedServiceIds.length > 0) body.removedServiceIds = removedServiceIds;
       if (customPrice !== "") body.customPrice = parseFloat(customPrice);
       const res = await fetch("/api/me/finance", { method: "PATCH", headers: authHeaders(), body: JSON.stringify(body) });
-      if (res.ok) { setPayingId(null); setRemovedServiceIds([]); setCustomPrice(""); fetchAppointments(); }
-      else alert("Erro ao confirmar pagamento");
-    } catch { alert("Erro ao confirmar pagamento"); }
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setPayingId(null); setRemovedServiceIds([]); setCustomPrice(""); toast.success("Pagamento confirmado"); fetchAppointments(); }
+      else toast.error("Erro ao confirmar pagamento");
+    } catch { toast.error("Erro ao confirmar pagamento"); }
     finally { setConfirmingPayId(null); }
   };
 
@@ -336,17 +350,18 @@ export default function PainelPage() {
 
   const handleToggleBarber = async (barberId: string, active: boolean) => {
     try { await fetch("/api/auth/add-barber", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ barberId, active }) }); fetchBarbers(); }
-    catch { alert("Erro"); }
+    catch { toast.error("Erro ao atualizar barbeiro"); }
   };
 
   const handleAddBarber = async () => {
-    if (!newBarberName.trim() || !newBarberPhone.trim() || newBarberPassword.length < 6) { alert("Preencha todos os campos (senha min 6)"); return; }
+    if (!newBarberName.trim() || !newBarberPhone.trim() || newBarberPassword.length < 6) { toast.error("Preencha todos os campos (senha min 6)"); return; }
     setAddingBarber(true);
     try {
       const res = await fetch("/api/auth/add-barber", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newBarberName, phone: newBarberPhone.replace(/\D/g, ""), password: newBarberPassword, commission: newBarberCommission ? parseFloat(newBarberCommission) : 0 }) });
-      if (res.ok) { setNewBarberName(""); setNewBarberPhone(""); setNewBarberPassword(""); setNewBarberCommission(""); fetchBarbers(); }
-      else { const d = await res.json(); alert(d.error || "Erro"); }
-    } catch { alert("Erro"); } finally { setAddingBarber(false); }
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setNewBarberName(""); setNewBarberPhone(""); setNewBarberPassword(""); setNewBarberCommission(""); toast.success("Barbeiro adicionado"); fetchBarbers(); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao adicionar"); }
+    } catch { toast.error("Erro ao adicionar"); } finally { setAddingBarber(false); }
   };
 
   const toggleSlot = async (time: string) => {
@@ -365,7 +380,7 @@ export default function PainelPage() {
         blocked: isBlocked ? prev.blocked.filter(t => t !== time) : [...prev.blocked, time],
         allDay: false,
       } : prev);
-    } catch { alert("Erro"); }
+    } catch { toast.error("Erro ao atualizar horário"); }
     finally { setSlotsSaving(false); }
   };
 
@@ -376,7 +391,8 @@ export default function PainelPage() {
     try {
       await fetch("/api/me/blocked-slots", { method: "POST", headers: authHeaders(), body: JSON.stringify({ date: availDate, allDay: true, ...(bid ? { barberId: bid } : {}) }) });
       setSlotData(prev => prev ? { ...prev, allDay: true, blocked: [...prev.allSlots] } : prev);
-    } catch { alert("Erro"); } finally { setSlotsSaving(false); }
+      toast.success("Dia bloqueado");
+    } catch { toast.error("Erro ao bloquear"); } finally { setSlotsSaving(false); }
   };
 
   const unblockAllDay = async () => {
@@ -385,48 +401,52 @@ export default function PainelPage() {
     try {
       await fetch("/api/me/blocked-slots", { method: "DELETE", headers: authHeaders(), body: JSON.stringify({ date: availDate, allDay: true, ...(bid ? { barberId: bid } : {}) }) });
       setSlotData(prev => prev ? { ...prev, allDay: false, blocked: [] } : prev);
-    } catch { alert("Erro"); } finally { setSlotsSaving(false); }
+      toast.success("Dia liberado");
+    } catch { toast.error("Erro ao liberar"); } finally { setSlotsSaving(false); }
   };
 
   const removeFromWaitlist = async (id: string) => {
     setRemovingWaitId(id);
     try { await fetch(`/api/me/waitlist/${id}`, { method: "DELETE", headers: authHeaders() }); setWaitlist(prev => prev.filter(e => e.id !== id)); }
-    catch {} setRemovingWaitId(null);
+    catch { toast.error("Erro ao remover da lista"); } setRemovingWaitId(null);
   };
 
   const handleAddService = async () => {
-    if (!newService.name.trim() || !newService.price) { alert("Preencha nome e preco"); return; }
+    if (!newService.name.trim() || !newService.price) { toast.error("Preencha nome e preço"); return; }
     setAddingService(true);
     try {
       const res = await fetch("/api/me/services", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newService.name, duration: parseInt(newService.duration), price: parseFloat(newService.price), category: newService.category }) });
-      if (res.ok) { setNewService({ name: "", duration: "30", price: "", category: "corte" }); fetchServices(); }
-      else { const d = await res.json(); alert(d.error || "Erro"); }
-    } catch { alert("Erro"); } finally { setAddingService(false); }
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setNewService({ name: "", duration: "30", price: "", category: "corte" }); toast.success("Serviço adicionado"); fetchServices(); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao adicionar"); }
+    } catch { toast.error("Erro ao adicionar"); } finally { setAddingService(false); }
   };
 
   const toggleService = async (id: string, active: boolean) => {
     try { await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id, active }) }); fetchServices(); }
-    catch { alert("Erro"); }
+    catch { toast.error("Erro ao atualizar serviço"); }
   };
 
   const saveShopSettings = async () => {
     if (!shopSettings) return;
     setSavingSettings(true);
     try {
-      await fetch("/api/me/shop", { method: "PATCH", headers: authHeaders(), body: JSON.stringify(shopSettings) });
-      alert("Configuracoes salvas!");
-    } catch { alert("Erro ao salvar"); }
+      const res = await fetch("/api/me/shop", { method: "PATCH", headers: authHeaders(), body: JSON.stringify(shopSettings) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      toast.success("Configurações salvas!");
+    } catch { toast.error("Erro ao salvar"); }
     finally { setSavingSettings(false); }
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) { alert("Senha deve ter min 6 caracteres"); return; }
+    if (newPassword.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return; }
     setChangingPassword(true);
     try {
       const res = await fetch("/api/me/password", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ currentPassword, newPassword }) });
-      if (res.ok) { alert("Senha alterada com sucesso!"); setCurrentPassword(""); setNewPassword(""); }
-      else { const d = await res.json(); alert(d.error || "Erro"); }
-    } catch { alert("Erro"); } finally { setChangingPassword(false); }
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Senha alterada com sucesso!"); setCurrentPassword(""); setNewPassword(""); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao alterar senha"); }
+    } catch { toast.error("Erro ao alterar senha"); } finally { setChangingPassword(false); }
   };
 
   const handleLogout = () => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); router.push("/admin"); };
