@@ -1,6 +1,5 @@
-const CACHE_NAME = "barberpro-v1";
+const CACHE_NAME = "barberpro-v2";
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
@@ -27,12 +26,18 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Não cachear chamadas de API
+  // Nunca cachear/interceptar chamadas de API
   if (url.pathname.startsWith("/api/")) return;
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetched = fetch(request)
+  // Só GET pode ser cacheado
+  if (request.method !== "GET") return;
+
+  // HTML/navegação → NETWORK-FIRST: sempre busca a versão mais nova,
+  // só usa cache se estiver offline. Elimina o problema de "versão velha
+  // depois de um deploy".
+  if (request.mode === "navigate" || request.destination === "document") {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
           if (response && response.status === 200 && response.type === "basic") {
             const clone = response.clone();
@@ -40,9 +45,22 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-      return cached || fetched;
+  // Assets estáticos (JS/CSS/imagens do Next, com hash no nome) → CACHE-FIRST
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        if (response && response.status === 200 && response.type === "basic") {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      });
     })
   );
 });

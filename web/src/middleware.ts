@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_ORIGINS = [
-  "https://barberpro-black.vercel.app",
+  "https://barberpro-mauve.vercel.app",
   "https://barberpro.com.br",
+  ...(process.env.NEXT_PUBLIC_BASE_URL ? [process.env.NEXT_PUBLIC_BASE_URL] : []),
   "http://localhost:3000",
 ];
 

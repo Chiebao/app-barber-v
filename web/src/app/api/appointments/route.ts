@@ -41,18 +41,6 @@ export async function POST(req: NextRequest) {
 
     const dateObj = new Date(data.date + "T00:00:00");
 
-    // Verifica conflito de horario para o barbeiro
-    const conflicts = await prisma.appointment.findMany({
-      where: {
-        barberId: data.barberId,
-        date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
-        status: { notIn: ["cancelled", "no_show"] },
-      },
-    });
-
-    const hasConflict = conflicts.some((apt) => data.startTime < apt.endTime && endTime > apt.startTime);
-    if (hasConflict) return NextResponse.json({ error: "Horario ja ocupado" }, { status: 409 });
-
     // Cria ou encontra cliente
     let client = await prisma.client.findUnique({ where: { phone: cleanPhone } });
     if (!client) {
@@ -65,21 +53,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Pre-pagamento necessario", pixKey: shop.pixKey }, { status: 402 });
     }
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        shopId: data.shopId,
-        barberId: data.barberId,
-        clientId: client.id,
-        date: dateObj,
-        startTime: data.startTime,
-        endTime,
-        totalDuration,
-        totalPrice,
-        status: needsPix && data.pendingPayment ? "pending_payment" : "confirmed",
-        services: { create: data.serviceIds.map((serviceId) => ({ serviceId })) },
-      },
-      include: { services: { include: { service: true } } },
-    });
+    const clientId = client.id;
+
+    // Checagem de conflito + criacao numa transacao atomica (Serializable)
+    // impede que dois clientes reservem o mesmo horario simultaneamente
+    let appointment;
+    try {
+      appointment = await prisma.$transaction(
+        async (tx) => {
+          const conflicts = await tx.appointment.findMany({
+            where: {
+              barberId: data.barberId,
+              date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
+              status: { notIn: ["cancelled", "no_show"] },
+            },
+            select: { startTime: true, endTime: true },
+          });
+
+          const hasConflict = conflicts.some((apt) => data.startTime < apt.endTime && endTime > apt.startTime);
+          if (hasConflict) throw new Error("SLOT_CONFLICT");
+
+          return tx.appointment.create({
+            data: {
+              shopId: data.shopId,
+              barberId: data.barberId,
+              clientId,
+              date: dateObj,
+              startTime: data.startTime,
+              endTime,
+              totalDuration,
+              totalPrice,
+              status: needsPix && data.pendingPayment ? "pending_payment" : "confirmed",
+              services: { create: data.serviceIds.map((serviceId) => ({ serviceId })) },
+            },
+            include: { services: { include: { service: true } } },
+          });
+        },
+        { isolationLevel: "Serializable" }
+      );
+    } catch (txError) {
+      // Conflito de horario (checagem manual OU serialization failure do Postgres)
+      const msg = txError instanceof Error ? txError.message : "";
+      if (msg === "SLOT_CONFLICT" || msg.includes("could not serialize") || (txError as { code?: string })?.code === "P2034") {
+        return NextResponse.json({ error: "Horario ja ocupado" }, { status: 409 });
+      }
+      throw txError;
+    }
 
     // Envia notificacao WhatsApp ao barbeiro
     const serviceNames = services.map((s) => s.name).join(", ");
