@@ -13,6 +13,7 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   "/api/auth/login":        { max: 10, windowMs: 60_000 },
   "/api/auth/register":     { max: 5,  windowMs: 60_000 },
+  "/api/admin":             { max: 5,  windowMs: 60_000 },
   "/api/appointments":      { max: 15, windowMs: 60_000 },
   "/api/waitlist":          { max: 10, windowMs: 60_000 },
   "/api/me/account":        { max: 5,  windowMs: 60_000 },
