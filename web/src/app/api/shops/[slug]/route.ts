@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
       select: {
         id: true, name: true, slug: true,
         openTime: true, closeTime: true, workDays: true, avgServiceTime: true,
-        pixKey: true, colorTheme: true, bookingMode: true,
+        pixKey: true, logoUrl: true, colorTheme: true, bookingMode: true,
         barbers: {
           where: { active: true },
           select: { id: true, name: true },

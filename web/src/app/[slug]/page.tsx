@@ -39,6 +39,7 @@ interface Shop {
   workDays: number[];
   avgServiceTime: number;
   pixKey: string | null;
+  logoUrl: string | null;
   colorTheme: string;
   bookingMode: string;
   avgRating: number | null;
@@ -411,7 +412,11 @@ export default function BarberPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-dark-800 border-b border-gray-700 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
+          {shop?.logoUrl ? (
+            <img src={shop.logoUrl} alt={shop.name} className="w-10 h-10 rounded-full object-cover border border-brand-500/30" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
+          )}
           <div>
             <p className="font-bold text-brand-400 text-sm">{shop?.name || "..."}</p>
             <div className="flex items-center gap-2">

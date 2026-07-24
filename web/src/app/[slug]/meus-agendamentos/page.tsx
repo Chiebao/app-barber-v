@@ -54,6 +54,7 @@ export default function MeusAgendamentos() {
   const [loading, setLoading] = useState(false);
   const [shopId, setShopId] = useState("");
   const [shopName, setShopName] = useState("");
+  const [shopLogo, setShopLogo] = useState("");
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [shopServices, setShopServices] = useState<ShopService[]>([]);
@@ -67,6 +68,7 @@ export default function MeusAgendamentos() {
       .then((data) => {
         setShopId(data.shop?.id || "");
         setShopName(data.shop?.name || "");
+        setShopLogo(data.shop?.logoUrl || "");
         setShopServices(data.shop?.services || []);
         if (data.shop?.colorTheme) applyWebTheme(data.shop.colorTheme);
       });
@@ -644,7 +646,8 @@ export default function MeusAgendamentos() {
 
   return (
     <main className="min-h-screen bg-dark-900 pb-8">
-      <header className="bg-dark-800 border-b border-gray-800 p-6 text-center">
+      <header className="bg-dark-800 border-b border-gray-800 p-6 flex flex-col items-center gap-2">
+        {shopLogo && <img src={shopLogo} alt={shopName} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />}
         <h1 className="text-2xl font-bold text-brand-400">{shopName || "..."}</h1>
       </header>
 

@@ -32,6 +32,7 @@ model Shop {
   workDays        Int[]    // [1,2,3,4,5,6]
   avgServiceTime  Int      @default(30) // minutos, para calcular limite diario
   pixKey          String?  // chave pix para pagamento antecipado
+  logoUrl         String?  // logo da barbearia (URL no Supabase Storage) — aparece no link do cliente
   colorTheme      String   @default("midnight_gold") // paleta de cores escolhida
   bookingMode     String   @default("steps") // "steps" (etapas) ou "agent" (agente IA chat)
   createdAt       DateTime @default(now())

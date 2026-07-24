@@ -128,7 +128,8 @@ export default function PainelPage() {
   const [clientSearch, setClientSearch] = useState("");
 
   // ── Config state ──
-  const [shopSettings, setShopSettings] = useState<{ openTime: string; closeTime: string; workDays: number[]; pixKey: string; bookingMode: string } | null>(null);
+  const [shopSettings, setShopSettings] = useState<{ openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string } | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -151,6 +152,7 @@ export default function PainelPage() {
           closeTime: data.shop.closeTime || "20:00",
           workDays: data.shop.workDays || [1,2,3,4,5,6],
           pixKey: data.shop.pixKey || "",
+          logoUrl: data.shop.logoUrl || "",
           bookingMode: data.shop.bookingMode || "steps",
         });
       }).catch(() => {});
@@ -338,11 +340,11 @@ export default function PainelPage() {
     const dateFmt = new Date(appt.date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
     const services = appt.services.map(s => s.name).join(", ");
     const msg = encodeURIComponent(
-      `Olá ${appt.client?.name?.split(" ")[0] || ""}! 💈\n` +
+      `Olá ${appt.client?.name?.split(" ")[0] || ""}! 🫡\n` +
       `Passando pra lembrar do seu horário na ${user?.shopName || "barbearia"}:\n\n` +
-      `🗓️ ${dateFmt} às ${appt.startTime}\n` +
-      `✂️ ${services}\n\n` +
-      `Qualquer imprevisto, é só avisar. Até lá!`
+      `📆 ${dateFmt} às ${appt.startTime}\n` +
+      `💇‍♂️ ${services}\n\n` +
+      `Até lá! Deus abençoe 🙏`
     );
     window.open(`https://wa.me/${phoneWA}?text=${msg}`, "_blank");
   };
@@ -467,6 +469,36 @@ export default function PainelPage() {
       toast.success("Configurações salvas!");
     } catch { toast.error("Erro ao salvar"); }
     finally { setSavingSettings(false); }
+  };
+
+  const handleLogoUpload = async (file: File | null) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) { toast.error("Use uma imagem (JPG, PNG ou WEBP)"); return; }
+    if (file.size > 3 * 1024 * 1024) { toast.error("Imagem muito grande (máx 3MB)"); return; }
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/me/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (up.status === 401) { handleUnauthorized(); return; }
+      const upData = await up.json();
+      if (!up.ok || !upData.url) { toast.error(upData.error || "Falha no upload"); return; }
+      // Salva a URL no shop
+      const patch = await fetch("/api/me/shop", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ logoUrl: upData.url }) });
+      if (patch.ok) { setShopSettings(p => p ? { ...p, logoUrl: upData.url } : p); toast.success("Logo atualizado!"); }
+      else toast.error("Erro ao salvar logo");
+    } catch { toast.error("Erro no upload"); }
+    finally { setUploadingLogo(false); }
+  };
+
+  const handleRemoveLogo = async () => {
+    setUploadingLogo(true);
+    try {
+      const patch = await fetch("/api/me/shop", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ logoUrl: null }) });
+      if (patch.ok) { setShopSettings(p => p ? { ...p, logoUrl: "" } : p); toast.success("Logo removido"); }
+      else toast.error("Erro ao remover");
+    } catch { toast.error("Erro ao remover"); }
+    finally { setUploadingLogo(false); }
   };
 
   const handleChangePassword = async () => {
@@ -659,7 +691,7 @@ export default function PainelPage() {
       {/* ── Header ── */}
       <header className="bg-dark-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="BarberPro" className="w-9 h-9 rounded-lg" />
+          <img src={shopSettings?.logoUrl || "/logo.png"} alt={user?.shopName || "BarberPro"} className="w-9 h-9 rounded-lg object-cover" />
           <div>
             <h1 className="text-lg font-bold text-brand-400 leading-tight">{user?.shopName || "Painel"}</h1>
             <p className="text-xs text-gray-400">{getGreeting()}, {user?.name || "proprietario"}</p>
@@ -912,6 +944,33 @@ export default function PainelPage() {
                   </button>
                   <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
                 </div>
+
+                {/* Logo da barbearia */}
+                {shopSettings && (
+                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-white">🖼️ Logo da Barbearia</h3>
+                      <p className="text-xs text-gray-500 mt-1">Aparece no topo do link que você envia para os clientes.</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {shopSettings.logoUrl ? (
+                        <img src={shopSettings.logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-brand-500/10 border border-gray-700 flex items-center justify-center text-2xl shrink-0">✂️</div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                          {uploadingLogo ? "Enviando..." : shopSettings.logoUrl ? "Trocar logo" : "Enviar logo"}
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingLogo} onChange={e => handleLogoUpload(e.target.files?.[0] || null)} />
+                        </label>
+                        {shopSettings.logoUrl && (
+                          <button onClick={handleRemoveLogo} disabled={uploadingLogo} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover logo</button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">JPG, PNG ou WEBP · máx 3MB · de preferência quadrado.</p>
+                  </div>
+                )}
 
                 {/* Shop settings */}
                 {shopSettings && (

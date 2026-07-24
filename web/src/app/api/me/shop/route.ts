@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         workDays: true,
         avgServiceTime: true,
         pixKey: true,
+        logoUrl: true,
         colorTheme: true,
         bookingMode: true,
       },
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest) {
     const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { openTime, closeTime, workDays, avgServiceTime, pixKey, colorTheme, bookingMode } = await req.json();
+    const { openTime, closeTime, workDays, avgServiceTime, pixKey, logoUrl, colorTheme, bookingMode } = await req.json();
 
     const data: Record<string, unknown> = {};
     if (openTime !== undefined) data.openTime = openTime;
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest) {
     if (workDays !== undefined) data.workDays = workDays;
     if (avgServiceTime !== undefined) data.avgServiceTime = parseInt(avgServiceTime);
     if (pixKey !== undefined) data.pixKey = pixKey || null;
+    if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
     if (colorTheme !== undefined) data.colorTheme = colorTheme;
     if (bookingMode !== undefined && ["steps", "agent"].includes(bookingMode)) data.bookingMode = bookingMode;
 
@@ -62,6 +64,7 @@ export async function PATCH(req: NextRequest) {
         workDays: true,
         avgServiceTime: true,
         pixKey: true,
+        logoUrl: true,
         colorTheme: true,
         bookingMode: true,
       },
