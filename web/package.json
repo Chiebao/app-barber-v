@@ -12,7 +12,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "smoke": "node ../scripts/smoke.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
