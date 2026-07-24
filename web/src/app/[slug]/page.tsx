@@ -1058,6 +1058,16 @@ export default function BarberPage() {
                 <span className="font-medium">{bookingResult.startTime}</span>
               </div>
             </div>
+            {/* Aviso de possível atraso — gestão de expectativa */}
+            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 flex items-start gap-3 text-left">
+              <span className="text-xl mt-0.5">⏱️</span>
+              <p className="text-sm text-amber-300 leading-snug">
+                Um pedido: pode haver um atraso de até <span className="font-semibold">15 minutos</span> no seu horário.
+                <span className="block text-amber-200/70 font-normal text-xs mt-1">
+                  É que cada cliente merece o tempo certo na cadeira — inclusive você. Agradecemos a compreensão e a paciência! 🙏
+                </span>
+              </p>
+            </div>
             {/* Lembrete de próximo corte */}
             <div className="rounded-2xl border border-brand-500/25 bg-brand-500/10 px-4 py-3 flex items-start gap-3">
               <span className="text-xl mt-0.5">🗓️</span>
