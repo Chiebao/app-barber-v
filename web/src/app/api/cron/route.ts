@@ -7,9 +7,14 @@ import { ptBR } from "date-fns/locale";
 // Envia lembrete WhatsApp para clientes com agendamento em 1h
 export async function GET(req: NextRequest) {
   try {
-    const cronSecret = req.headers.get("x-cron-secret");
-    if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    // A Vercel envia "Authorization: Bearer <CRON_SECRET>" nas chamadas de cron.
+    // Se CRON_SECRET estiver definido, exigimos ele (fecha o endpoint público).
+    const CRON_SECRET = process.env.CRON_SECRET;
+    if (CRON_SECRET) {
+      const authHeader = req.headers.get("authorization");
+      const legacy = req.headers.get("x-cron-secret");
+      const ok = authHeader === `Bearer ${CRON_SECRET}` || legacy === CRON_SECRET;
+      if (!ok) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const now = new Date();
@@ -33,7 +38,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    let sent = 0;
+    let sent = 0, failedSend = 0, noChannel = 0;
     for (const apt of appointments) {
       const serviceNames = apt.services.map(s => s.service.name).join(", ");
       const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
@@ -43,7 +48,7 @@ export async function GET(req: NextRequest) {
         const phone = apt.client.phone.replace(/\D/g, "");
         const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
 
-        await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
+        const waRes = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
           method: "POST",
           headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}`, "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -55,19 +60,25 @@ export async function GET(req: NextRequest) {
             },
           }),
         });
+
+        // Só marca como enviado se a API confirmou. Se falhar, deixa reminderSentAt
+        // null para não "consumir" o lembrete silenciosamente.
+        if (waRes.ok) {
+          await prisma.appointment.update({ where: { id: apt.id }, data: { reminderSentAt: new Date() } });
+          sent++;
+        } else {
+          failedSend++;
+          console.error(`[CRON] Falha ao enviar WhatsApp para ${apt.client.name}: ${waRes.status}`);
+        }
       } else {
-        console.log(`[CRON] Lembrete (dev): ${apt.client.name} - ${apt.startTime} - ${apt.shop.name}`);
+        // WhatsApp API não configurada — não há canal automático.
+        // O lembrete é feito manualmente pelo barbeiro (botão "Lembrar" no painel).
+        console.log(`[CRON] Lembrete pendente (sem WhatsApp API): ${apt.client.name} - ${apt.startTime} - ${apt.shop.name}`);
+        noChannel++;
       }
-
-      await prisma.appointment.update({
-        where: { id: apt.id },
-        data: { reminderSentAt: new Date() },
-      });
-
-      sent++;
     }
 
-    return NextResponse.json({ sent, checked: appointments.length });
+    return NextResponse.json({ sent, failedSend, noChannel, checked: appointments.length });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

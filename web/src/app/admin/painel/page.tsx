@@ -330,6 +330,23 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao confirmar"); }
   };
 
+  // Lembrete manual via WhatsApp (zero custo, funciona no PWA e no APK)
+  const remindClient = (appt: Appointment) => {
+    const phone = (appt.client?.phone || "").replace(/\D/g, "");
+    if (phone.length < 10) { toast.error("Cliente sem telefone válido"); return; }
+    const phoneWA = phone.startsWith("55") ? phone : `55${phone}`;
+    const dateFmt = new Date(appt.date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+    const services = appt.services.map(s => s.name).join(", ");
+    const msg = encodeURIComponent(
+      `Olá ${appt.client?.name?.split(" ")[0] || ""}! 💈\n` +
+      `Passando pra lembrar do seu horário na ${user?.shopName || "barbearia"}:\n\n` +
+      `🗓️ ${dateFmt} às ${appt.startTime}\n` +
+      `✂️ ${services}\n\n` +
+      `Qualquer imprevisto, é só avisar. Até lá!`
+    );
+    window.open(`https://wa.me/${phoneWA}?text=${msg}`, "_blank");
+  };
+
   const handleConfirmPayment = async (appointmentId: string) => {
     if (!token) return;
     setConfirmingPayId(appointmentId);
@@ -739,12 +756,14 @@ export default function PainelPage() {
                             </div>
                           )}
 
-                          {/* Action buttons: Cancel + No Show */}
+                          {/* Action buttons: Cancel + No Show / Lembrar */}
                           {appt.status === "confirmed" && !isPayingThis && (
                             <div className="flex gap-2">
                               <button onClick={() => openCancelModal(appt.id)} className="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-400 font-medium hover:bg-red-500/20 transition">Cancelar</button>
-                              {isAppointmentPast(appt.date, appt.startTime) && (
+                              {isAppointmentPast(appt.date, appt.startTime) ? (
                                 <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-sm text-yellow-400 font-medium hover:bg-yellow-500/20 transition">Nao veio</button>
+                              ) : (
+                                <button onClick={() => remindClient(appt)} className="flex-1 py-2 rounded-lg border border-green-500/30 bg-green-500/10 text-sm text-green-400 font-medium hover:bg-green-500/20 transition">🔔 Lembrar</button>
                               )}
                             </div>
                           )}
