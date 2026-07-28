@@ -126,6 +126,7 @@ export default function PainelPage() {
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [clientsLoading, setClientsLoading] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
   // ── Config state ──
   const [shopSettings, setShopSettings] = useState<{ openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string } | null>(null);
@@ -438,6 +439,18 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao liberar"); } finally { setSlotsSaving(false); }
   };
 
+  const deleteClient = async (id: string, name: string) => {
+    if (!confirm(`Excluir TODOS os dados de ${name} nesta barbearia?\n\nApaga agendamentos, fidelidade e histórico do cliente. Esta ação não pode ser desfeita (LGPD - direito ao esquecimento).`)) return;
+    setDeletingClientId(id);
+    try {
+      const res = await fetch(`/api/me/clients/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Dados do cliente excluídos"); setClients(prev => prev.filter(c => c.id !== id)); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
+    finally { setDeletingClientId(null); }
+  };
+
   const removeFromWaitlist = async (id: string) => {
     setRemovingWaitId(id);
     try { await fetch(`/api/me/waitlist/${id}`, { method: "DELETE", headers: authHeaders() }); setWaitlist(prev => prev.filter(e => e.id !== id)); }
@@ -641,6 +654,9 @@ export default function PainelPage() {
                   </div>
                   {c.noShowCount > 0 && <p className="text-xs text-red-400 mt-2">⚠️ {c.noShowCount} falta(s)</p>}
                   {c.notes && <p className="text-xs text-gray-500 mt-2 italic">📝 {c.notes}</p>}
+                  <div className="mt-3 pt-3 border-t border-gray-800 flex justify-end">
+                    <button onClick={() => deleteClient(c.id, c.name)} disabled={deletingClientId === c.id} className="text-xs text-gray-500 hover:text-red-400 transition disabled:opacity-50">{deletingClientId === c.id ? "Excluindo..." : "🗑️ Excluir dados (LGPD)"}</button>
+                  </div>
                 </div>
               ))}
             </div>
