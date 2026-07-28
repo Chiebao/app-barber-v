@@ -1,0 +1,60 @@
+# 12 — Roadmap e Backlog
+
+> Priorização por **RICE** = (Reach × Impact × Confidence) / Effort.
+> Escalas: Reach (quantos afeta, 1-10) · Impact (0,25/0,5/1/2/3) · Confidence (%) · Effort (pessoa-semana).
+> Todos os scores são **estimativas de PO** `[INFERIDO]`, para debate — não são verdade absoluta.
+
+---
+
+## Backlog priorizado (RICE)
+
+| Item | R | I | C | E | RICE | Justificativa |
+|------|---|---|---|---|------|---------------|
+| B1 — Confiabilidade do lembrete (SMS pago ou cron pago) | 9 | 2 | 70% | 1 | **12,6** | Ataca R1 (faltas), a dor central; hoje só manual |
+| B2 — Verificação do cliente por telefone (código WhatsApp) antes de listar | 8 | 2 | 70% | 1,5 | **7,5** | Fecha risco LGPD/privacidade (R3) |
+| B3 — Migrar dinheiro para `Decimal` | 10 | 1 | 90% | 1 | **9,0** | Confiança no financeiro (R2); afeta todos |
+| B4 — Pix real (Mercado Pago) p/ pré-pagamento | 7 | 2 | 60% | 2 | **4,2** | Torna anti-no-show efetivo + sinal (R8) |
+| B5 — Corrigir limite diário (considerar duração real) | 8 | 1 | 70% | 0,5 | **11,2** | Evita agenda fechar errado; baixo esforço |
+| B6 — Self-service de reset de senha do dono | 6 | 1 | 80% | 1 | **4,8** | Tira gargalo do Elias (R7) |
+| B7 — Reserva temporária de vaga p/ waitlist | 6 | 1 | 60% | 1,5 | **2,4** | Reduz frustração da fila (RN-027) |
+| B8 — Painel agregado da plataforma (visão do Elias) | 3 | 2 | 70% | 2 | **2,1** | Elias enxerga churn/ativação |
+| B9 — Instrumentar analytics (conversão do link) | 8 | 1 | 60% | 1 | **4,8** | Habilita decisões por dado (ver doc 10) |
+| B10 — Remover/concluir modo chat IA | 5 | 0,5 | 80% | 0,5 | **4,0** | Limpa dívida/escopo (R9) |
+| B11 — Atualizar CLAUDE.md | 4 | 0,5 | 90% | 0,25 | **7,2** | Barato; evita erro de novos no time |
+| B12 — Publicar no Google Play (R$ 125) | 6 | 2 | 60% | 1,5 | **4,8** | Canal/credibilidade; custo único baixo |
+| B13 — Relatório de comissões dedicado | 5 | 1 | 70% | 1 | **3,5** | Valor para donos com equipe |
+
+> Nota: RICE serve para **ordenar conversa**, não para decidir sozinho. B3/B5/B11 são
+> "quick wins" (esforço baixo, confiança alta) e provavelmente vêm antes mesmo com RICE médio.
+
+---
+
+## Roadmap em 3 horizontes
+
+### 🟢 Agora (0–4 semanas) — confiança e higiene
+- B3 (Decimal), B5 (limite diário), B11 (CLAUDE.md) — quick wins de confiança.
+- B1 (lembrete confiável) — decisão: SMS pago barato vs. manter manual.
+- B2 (privacidade do cliente) — mitiga risco legal antes de escalar.
+
+### 🟡 Próximo (1–3 meses) — monetização e escala
+- B4 (Pix real) — se a venda pedir sinal de verdade.
+- B6 (reset self-service), B9 (analytics), B12 (Google Play).
+- B8 (painel do Elias) para medir churn/ativação.
+
+### 🔵 Depois (3+ meses) — expansão
+- B7 (reserva de vaga), B13 (comissões), multi-barbearia por dono, agenda semanal visual,
+  publicação Apple. `[itens também listados como "pendentes" no CLAUDE.md:427-438]`
+
+---
+
+## Dependências e sequenciamento
+
+```mermaid
+flowchart LR
+  B9[Analytics] --> B1[Lembrete confiável]
+  B9 --> Exp[Medir experimento aviso de atraso]
+  B3[Decimal] --> B4[Pix real]
+  B2[Verificação cliente] --> Escala[Escalar com segurança]
+  B8[Painel plataforma] --> Churn[Gestão de churn]
+```
+`[INFERIDO]` — B9 (analytics) destrava decisões baseadas em dado; B3 antes de B4 (dinheiro correto antes de cobrar de verdade).
