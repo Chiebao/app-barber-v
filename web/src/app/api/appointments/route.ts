@@ -171,6 +171,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get("phone");
     const shopId = searchParams.get("shopId");
+    const nameParam = searchParams.get("name");
 
     if (!phone || !shopId) {
       return NextResponse.json({ error: "Parametros phone e shopId obrigatorios" }, { status: 400 });
@@ -178,7 +179,14 @@ export async function GET(req: NextRequest) {
 
     const cleanPhone = phone.replace(/\D/g, "");
     const client = await prisma.client.findUnique({ where: { phone: cleanPhone } });
-    if (!client) return NextResponse.json({ appointments: [], pendingRating: null, loyaltyCount: 0, loyaltyProgress: 0, loyaltyTarget: 10 });
+    if (!client) return NextResponse.json({ appointments: [], verified: false, pendingRating: null, loyaltyCount: 0, loyaltyProgress: 0, loyaltyTarget: 10 });
+
+    // Privacidade (LGPD): a lista detalhada de agendamentos só é liberada se o nome informado
+    // bater com o cadastrado (defesa contra alguém que digita o telefone de terceiros).
+    const norm = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ");
+    const entered = nameParam ? norm(nameParam) : "";
+    const stored = norm(client.name);
+    const verified = entered.length >= 2 && (stored === entered || stored.split(" ")[0] === entered || stored.startsWith(entered));
 
     const appointments = await prisma.appointment.findMany({
       where: { clientId: client.id, shopId },
@@ -212,7 +220,10 @@ export async function GET(req: NextRequest) {
     const loyaltyCount = loyalty?.count ?? 0;
 
     return NextResponse.json({
-      appointments: appointments.map((apt) => ({
+      verified,
+      // A lista só é enviada quando o nome confere (privacidade/LGPD).
+      // O fluxo de agendamento não usa esta lista — ele lê loyalty/lastBooking/pendingRating.
+      appointments: verified ? appointments.map((apt) => ({
         id: apt.id,
         date: apt.date.toISOString().split("T")[0],
         startTime: apt.startTime,
@@ -222,7 +233,7 @@ export async function GET(req: NextRequest) {
         barberId: apt.barberId,
         barberName: apt.barber.name,
         services: apt.services.map((as) => ({ serviceId: as.serviceId, name: as.service.name, price: as.service.price })),
-      })),
+      })) : [],
       pendingRating,
       loyaltyCount,
       loyaltyProgress: loyaltyCount % LOYALTY_TARGET,

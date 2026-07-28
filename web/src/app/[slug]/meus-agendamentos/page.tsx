@@ -49,6 +49,8 @@ export default function MeusAgendamentos() {
   const slug = params.slug as string;
 
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [verified, setVerified] = useState(true);
   const [searched, setSearched] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,8 +78,9 @@ export default function MeusAgendamentos() {
     try {
       const saved = localStorage.getItem("client_identity");
       if (saved) {
-        const { phone: savedPhone } = JSON.parse(saved);
+        const { phone: savedPhone, name: savedName } = JSON.parse(saved);
         if (savedPhone) setPhone(savedPhone);
+        if (savedName) setName(savedName);
       }
     } catch { /* ignore */ }
   }, [slug]);
@@ -90,18 +93,23 @@ export default function MeusAgendamentos() {
   };
 
   const search = useCallback(async () => {
-    if (!shopId || phone.replace(/\D/g, "").length < 10) return;
+    if (!shopId || phone.replace(/\D/g, "").length < 10 || name.trim().length < 2) return;
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/\D/g, "");
-      const res = await fetch(`/api/appointments?phone=${cleanPhone}&shopId=${shopId}`);
+      const res = await fetch(`/api/appointments?phone=${cleanPhone}&shopId=${shopId}&name=${encodeURIComponent(name.trim())}`);
       const data = await res.json();
       setAppointments(data.appointments || []);
+      setVerified(data.verified !== false);
       setSearched(true);
+      // Guarda identidade para pré-preencher na próxima vez (só se confirmou)
+      if (data.verified) {
+        try { localStorage.setItem("client_identity", JSON.stringify({ name: name.trim(), phone: cleanPhone })); } catch { /* ignore */ }
+      }
     } finally {
       setLoading(false);
     }
-  }, [shopId, phone]);
+  }, [shopId, phone, name]);
 
   const handleCancel = async (id: string) => {
     if (!confirm("Deseja cancelar este agendamento?")) return;
@@ -666,21 +674,33 @@ export default function MeusAgendamentos() {
       <div className="max-w-lg mx-auto px-4 pt-6">
         {!searched ? (
           <div className="animate-slide-up space-y-4">
-            <h2 className="text-lg font-semibold">Digite seu telefone para ver seus agendamentos</h2>
+            <div>
+              <h2 className="text-lg font-semibold">Ver meus agendamentos</h2>
+              <p className="text-sm text-gray-400 mt-1">Informe seu nome e telefone — os mesmos usados no agendamento.</p>
+            </div>
+            <input
+              type="text"
+              placeholder="Seu nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors"
+            />
             <input
               type="tel"
               placeholder="(00) 00000-0000"
               value={phone}
               onChange={(e) => setPhone(formatPhone(e.target.value))}
+              onKeyDown={(e) => { if (e.key === "Enter") search(); }}
               className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors"
             />
             <button
-              disabled={phone.replace(/\D/g, "").length < 10 || loading}
+              disabled={phone.replace(/\D/g, "").length < 10 || name.trim().length < 2 || loading}
               onClick={search}
               className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? "Buscando..." : "Buscar agendamentos"}
+              {loading ? "Buscando..." : "Ver agendamentos"}
             </button>
+            <p className="text-xs text-gray-600 text-center">🔒 Pedimos o nome para proteger seus dados — só você vê seus agendamentos.</p>
           </div>
         ) : (
           <div className="animate-slide-up space-y-4">
@@ -700,7 +720,15 @@ export default function MeusAgendamentos() {
             </div>
 
             {appointments.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">Nenhum agendamento encontrado</p>
+              !verified ? (
+                <div className="text-center py-8 space-y-2">
+                  <p className="text-3xl">🔒</p>
+                  <p className="text-gray-300 font-medium">Não encontramos agendamentos com esses dados</p>
+                  <p className="text-sm text-gray-500">Confira se o <strong>nome</strong> e o <strong>telefone</strong> são exatamente os usados no agendamento.</p>
+                </div>
+              ) : (
+                <p className="text-center text-gray-400 py-8">Nenhum agendamento encontrado</p>
+              )
             ) : (
               <>
                 <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 flex justify-between items-center">
@@ -800,7 +828,7 @@ export default function MeusAgendamentos() {
               onClick={() => setSearched(false)}
               className="w-full rounded-xl border border-gray-700 py-3 text-gray-400 hover:text-white transition-colors"
             >
-              Buscar outro telefone
+              Consultar com outros dados
             </button>
           </div>
         )}
