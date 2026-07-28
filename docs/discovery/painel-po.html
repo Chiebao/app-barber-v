@@ -1,0 +1,340 @@
+<title>BarberPro — Painel do PO</title>
+<style>
+  :root {
+    --bg: #0B0B14; --panel: #15151f; --panel-2: #1d1d2b; --line: #2a2a3c;
+    --ink: #F5F3EE; --ink-soft: #b9bccb; --ink-mute: #7d8196;
+    --gold: #E8960A; --gold-lt: #F5B731; --gold-dim: rgba(232,150,10,.14);
+    --ok: #22c55e; --warn: #eab308; --crit: #ef4444; --info: #4f8cf5;
+    --ok-bg: rgba(34,197,94,.13); --warn-bg: rgba(234,179,8,.13);
+    --crit-bg: rgba(239,68,68,.13); --info-bg: rgba(79,140,245,.13);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --radius: 14px; --shadow: 0 1px 0 rgba(255,255,255,.03), 0 8px 30px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #FAF8F3; --panel: #ffffff; --panel-2: #f4f1ea; --line: #e7e2d6;
+      --ink: #1a1a24; --ink-soft: #4a4b57; --ink-mute: #7c7d8c;
+      --gold: #B4740A; --gold-lt: #9a6408; --gold-dim: rgba(180,116,10,.12);
+      --shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px rgba(80,60,10,.08);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B0B14; --panel: #15151f; --panel-2: #1d1d2b; --line: #2a2a3c;
+    --ink: #F5F3EE; --ink-soft: #b9bccb; --ink-mute: #7d8196;
+    --gold: #E8960A; --gold-lt: #F5B731; --gold-dim: rgba(232,150,10,.14);
+    --shadow: 0 1px 0 rgba(255,255,255,.03), 0 8px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #FAF8F3; --panel: #ffffff; --panel-2: #f4f1ea; --line: #e7e2d6;
+    --ink: #1a1a24; --ink-soft: #4a4b57; --ink-mute: #7c7d8c;
+    --gold: #B4740A; --gold-lt: #9a6408; --gold-dim: rgba(180,116,10,.12);
+    --shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px rgba(80,60,10,.08);
+  }
+
+  * { box-sizing: border-box; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  body, .po { background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  .po { max-width: 1080px; margin: 0 auto; padding: 28px 22px 64px; line-height: 1.5; }
+  .po h1, .po h2, .po h3 { text-wrap: balance; margin: 0; }
+  .num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+
+  /* Header */
+  .hd { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 20px; justify-content: space-between;
+        padding-bottom: 20px; border-bottom: 1px solid var(--line); margin-bottom: 26px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .pole { width: 40px; height: 40px; border-radius: 10px; background:
+        repeating-linear-gradient(135deg, var(--gold) 0 7px, #fff 7px 14px, var(--crit) 14px 21px);
+        box-shadow: var(--shadow); flex: none; }
+  .brand h1 { font-family: var(--serif); font-size: 27px; letter-spacing: .3px; }
+  .brand h1 b { color: var(--gold); font-weight: 700; }
+  .brand .sub { color: var(--ink-mute); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; margin-top: 3px; }
+  .status-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Pills */
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+          padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink-soft); white-space: nowrap; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .pill.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: var(--warn-bg); }
+  .pill.crit { color: var(--crit); border-color: color-mix(in srgb, var(--crit) 35%, transparent); background: var(--crit-bg); }
+  .pill.ok  { color: var(--ok);  border-color: color-mix(in srgb, var(--ok) 35%, transparent);  background: var(--ok-bg); }
+  .pill.gold{ color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); background: var(--gold-dim); }
+
+  /* Section scaffolding */
+  section { margin-top: 30px; }
+  .eyebrow { font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); font-weight: 700; }
+  .sec-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .sec-h h2 { font-family: var(--serif); font-size: 20px; }
+  .sec-h .hint { color: var(--ink-mute); font-size: 13px; margin-left: auto; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 760px) { .cols-3 { grid-template-columns: repeat(3,1fr); } .cols-2 { grid-template-columns: repeat(2,1fr); } }
+
+  /* Launch path */
+  .launch { padding: 18px; }
+  .prog { height: 8px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin: 12px 0 4px; }
+  .prog > i { display: block; height: 100%; width: 22%; background: linear-gradient(90deg, var(--gold), var(--gold-lt)); border-radius: 999px; }
+  .prog-cap { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-mute); }
+  .task { display: flex; gap: 12px; align-items: flex-start; padding: 12px 4px; border-top: 1px solid var(--line); }
+  .task:first-of-type { border-top: 0; }
+  .chk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--line); flex: none; margin-top: 1px; display: grid; place-items: center; font-size: 11px; color: var(--bg); }
+  .chk.crit { border-color: var(--crit); }
+  .chk.warn { border-color: var(--warn); }
+  .chk.ok { background: var(--ok); border-color: var(--ok); }
+  .task .tt { font-weight: 600; }
+  .task .td { color: var(--ink-soft); font-size: 13.5px; margin-top: 2px; }
+  .tag { font-size: 11px; font-family: var(--mono); color: var(--ink-mute); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 8px; }
+
+  /* Roadmap */
+  .horizon { padding: 16px; }
+  .horizon .htitle { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 16px; margin-bottom: 3px; }
+  .horizon .when { color: var(--ink-mute); font-size: 12px; margin-bottom: 12px; }
+  .htitle .badge { width: 10px; height: 10px; border-radius: 50%; }
+  .item { display: flex; align-items: baseline; gap: 8px; padding: 8px 0; border-top: 1px dashed var(--line); font-size: 14px; }
+  .item:first-of-type { border-top: 0; }
+  .item .rice { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--gold); background: var(--gold-dim); border-radius: 6px; padding: 1px 7px; }
+  .item .code { font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+
+  /* Risks */
+  .risk { display: grid; grid-template-columns: 6px 1fr auto; gap: 0 14px; padding: 0; overflow: hidden; }
+  .risk > .stripe { background: var(--crit); }
+  .risk.med > .stripe { background: var(--warn); }
+  .risk .body { padding: 13px 4px 13px 0; }
+  .risk .rt { font-weight: 600; }
+  .risk .rd { color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .risk .lvl { align-self: center; padding-right: 14px; }
+
+  /* Stats */
+  .stat { padding: 16px; text-align: left; }
+  .stat .big { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .stat .lbl { color: var(--ink-mute); font-size: 12.5px; margin-top: 7px; }
+  .stat .foot { font-size: 12px; margin-top: 8px; }
+  .bar { display: flex; height: 7px; border-radius: 999px; overflow: hidden; margin-top: 10px; background: var(--panel-2); }
+  .bar > i { display: block; height: 100%; }
+
+  /* Docs index */
+  .doc { display: flex; gap: 12px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .doc:first-of-type { border-top: 0; }
+  .doc .n { font-family: var(--mono); font-size: 12px; color: var(--gold); flex: none; width: 26px; }
+  .doc .dt { font-weight: 600; }
+  .doc .dd { color: var(--ink-mute); }
+  .doc-wrap { padding: 6px 18px 14px; }
+
+  footer { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-mute); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--ink-mute); margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 9px; height: 9px; border-radius: 50%; }
+  p.lead { color: var(--ink-soft); font-size: 14.5px; max-width: 66ch; margin: 2px 0 0; }
+</style>
+
+<h2 class="sr-only">Painel de Product Owner do BarberPro: status pré-lançamento, caminho até o lançamento em janeiro, roadmap em três horizontes, riscos e índice do discovery.</h2>
+
+<div class="po">
+
+  <header class="hd">
+    <div class="brand">
+      <div class="pole" aria-hidden="true"></div>
+      <div>
+        <h1>Barber<b>Pro</b> · Painel do PO</h1>
+        <div class="sub">Discovery vivo · atualizado a cada decisão</div>
+      </div>
+    </div>
+    <div class="status-row">
+      <span class="pill warn"><span class="dot"></span>Pré-lançamento</span>
+      <span class="pill"><span class="num">0</span>&nbsp;clientes pagantes</span>
+      <span class="pill gold"><span class="dot"></span>Pronto em dez · lança em jan</span>
+      <span class="pill ok"><span class="dot"></span>Custo R$ 0</span>
+    </div>
+  </header>
+
+  <p class="lead">Piloto com um amigo barbeiro para fidelizar clientes rápido, provar o modelo e então
+  escalar às lojas (Play/Apple). Monetização planejada por assinatura (mensal ~R$79,90 / semestral
+  ~R$64,90 / anual ~R$49,90 ao mês). A prioridade agora é chegar em janeiro <strong>sem risco legal
+  nem bug crítico</strong>.</p>
+
+  <!-- ===== CAMINHO ATÉ JANEIRO ===== -->
+  <section>
+    <div class="sec-h">
+      <span class="eyebrow">Foco</span>
+      <h2>Caminho até janeiro</h2>
+      <span class="hint">o que precisa acontecer antes de vender</span>
+    </div>
+    <div class="card launch">
+      <div class="prog"><i></i></div>
+      <div class="prog-cap"><span>Progresso do lançamento</span><span>2 bloqueadores + quick wins pendentes</span></div>
+
+      <div class="task">
+        <span class="chk crit" aria-hidden="true"></span>
+        <div><div class="tt">Fechar o furo de privacidade do cliente <span class="tag">B2 · bloqueador</span></div>
+        <div class="td">Hoje, digitar só o telefone em "Meus agendamentos" mostra os agendamentos de qualquer número. Corrigir com código de verificação por WhatsApp antes de listar.</div></div>
+      </div>
+      <div class="task">
+        <span class="chk crit" aria-hidden="true"></span>
+        <div><div class="tt">Botão "Excluir cliente" (LGPD) <span class="tag">B17 · bloqueador</span></div>
+        <div class="td">Direito ao esquecimento: o dono precisa conseguir apagar um cliente e seu histórico. Quick win de alto valor legal.</div></div>
+      </div>
+      <div class="task">
+        <span class="chk warn" aria-hidden="true"></span>
+        <div><div class="tt">Revisar textos de Termos e Privacidade <span class="tag">P4</span></div>
+        <div class="td">Deixar claro os papéis: barbearia = controladora dos dados; BarberPro = operador. Dono aceita no cadastro.</div></div>
+      </div>
+      <div class="task">
+        <span class="chk warn" aria-hidden="true"></span>
+        <div><div class="tt">Quick wins de confiança <span class="tag">B3 · B5 · B11</span></div>
+        <div class="td">Dinheiro em Decimal (relatório sempre bate), corrigir cálculo do limite diário de agenda, atualizar o CLAUDE.md.</div></div>
+      </div>
+      <div class="task">
+        <span class="chk" aria-hidden="true"></span>
+        <div><div class="tt">Regras do pré-pagamento Pix (opcional no piloto) <span class="tag">B15 · B16</span></div>
+        <div class="td">Pré-agendado expira em 12h; cliente comum tem preferência sobre a lista negra. Só se o amigo barbeiro considerar essencial agora.</div></div>
+      </div>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i style="background:var(--crit)"></i>Bloqueador de lançamento</span>
+      <span><i style="background:var(--warn)"></i>Importante</span>
+      <span><i style="background:var(--line)"></i>Desejável</span>
+    </div>
+  </section>
+
+  <!-- ===== ROADMAP ===== -->
+  <section>
+    <div class="sec-h">
+      <span class="eyebrow">Roadmap</span>
+      <h2>Três horizontes</h2>
+      <span class="hint">priorizado por RICE</span>
+    </div>
+    <div class="grid cols-3">
+      <div class="card horizon">
+        <div class="htitle"><span class="badge" style="background:var(--ok)"></span>Agora</div>
+        <div class="when">até dezembro — pronto para lançar</div>
+        <div class="item"><span>Privacidade do cliente</span><span class="rice">7.5</span></div>
+        <div class="item"><span>Excluir dados (LGPD)</span><span class="rice">25.6</span></div>
+        <div class="item"><span>Dinheiro em Decimal</span><span class="rice">9.0</span></div>
+        <div class="item"><span>Corrigir limite de agenda</span><span class="rice">11.2</span></div>
+        <div class="item"><span>Atualizar CLAUDE.md</span><span class="rice">7.2</span></div>
+        <div class="item"><span>Lembrete confiável</span><span class="rice">12.6</span></div>
+      </div>
+      <div class="card horizon">
+        <div class="htitle"><span class="badge" style="background:var(--warn)"></span>Próximo</div>
+        <div class="when">1–3 meses — monetizar e escalar</div>
+        <div class="item"><span>Billing / assinatura</span><span class="rice">7.0</span></div>
+        <div class="item"><span>Pix real (Mercado Pago)</span><span class="rice">4.2</span></div>
+        <div class="item"><span>Reset de senha self-service</span><span class="rice">4.8</span></div>
+        <div class="item"><span>Analytics (conversão)</span><span class="rice">4.8</span></div>
+        <div class="item"><span>Publicar no Google Play</span><span class="rice">4.8</span></div>
+        <div class="item"><span>Painel da plataforma</span><span class="rice">2.1</span></div>
+      </div>
+      <div class="card horizon">
+        <div class="htitle"><span class="badge" style="background:var(--info)"></span>Depois</div>
+        <div class="when">3+ meses — expansão</div>
+        <div class="item"><span>Reserva de vaga (waitlist)</span><span class="rice">2.4</span></div>
+        <div class="item"><span>Relatório de comissões</span><span class="rice">3.5</span></div>
+        <div class="item"><span>Multi-barbearia por dono</span><span class="code">—</span></div>
+        <div class="item"><span>Agenda semanal visual</span><span class="code">—</span></div>
+        <div class="item"><span>Publicar na Apple Store</span><span class="code">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RISCOS ===== -->
+  <section>
+    <div class="sec-h">
+      <span class="eyebrow">Riscos</span>
+      <h2>O que vigiar</h2>
+      <span class="hint">impacto × probabilidade</span>
+    </div>
+    <div class="grid cols-2">
+      <div class="card risk"><span class="stripe"></span>
+        <div class="body"><div class="rt">Privacidade do cliente</div><div class="rd">Qualquer um com o telefone lista agendamentos. Confirmado. Bloqueador de lançamento.</div></div>
+        <span class="lvl pill crit">Alto</span>
+      </div>
+      <div class="card risk"><span class="stripe"></span>
+        <div class="body"><div class="rt">Sem cobrança no produto</div><div class="rd">O modelo é assinatura, mas não há billing — sem isso, escalar não vira receita.</div></div>
+        <span class="lvl pill crit">Alto</span>
+      </div>
+      <div class="card risk med"><span class="stripe"></span>
+        <div class="body"><div class="rt">Lembrete automático frágil</div><div class="rd">Cron 1x/dia (free tier) + WhatsApp instável. Mitigado pelo botão manual.</div></div>
+        <span class="lvl pill warn">Médio</span>
+      </div>
+      <div class="card risk med"><span class="stripe"></span>
+        <div class="body"><div class="rt">Dinheiro em Float</div><div class="rd">Risco de relatório "não bater" por centavos. Migrar para Decimal.</div></div>
+        <span class="lvl pill warn">Médio</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SAÚDE DO PRODUTO ===== -->
+  <section>
+    <div class="sec-h">
+      <span class="eyebrow">Saúde</span>
+      <h2>Estado do produto</h2>
+    </div>
+    <div class="grid cols-3">
+      <div class="card stat">
+        <div class="big">42</div>
+        <div class="lbl">funcionalidades mapeadas</div>
+        <div class="bar" aria-hidden="true">
+          <i style="width:83%;background:var(--ok)"></i><i style="width:12%;background:var(--warn)"></i><i style="width:5%;background:var(--crit)"></i>
+        </div>
+        <div class="foot"><span style="color:var(--ok)">■</span> maioria funcional · <span style="color:var(--warn)">■</span> parcial · <span style="color:var(--crit)">■</span> desativada</div>
+      </div>
+      <div class="card stat">
+        <div class="big">10<span style="color:var(--ink-mute);font-size:18px">/25</span></div>
+        <div class="lbl">perguntas de discovery respondidas</div>
+        <div class="bar" aria-hidden="true"><i style="width:40%;background:var(--gold)"></i><i style="width:60%;background:var(--panel-2)"></i></div>
+        <div class="foot">Todas as 🔴 críticas respondidas. Faltam as 🟡/🟢.</div>
+      </div>
+      <div class="card stat">
+        <div class="big">46<span style="color:var(--ink-mute);font-size:18px">+5</span></div>
+        <div class="lbl">regras de negócio documentadas</div>
+        <div class="foot">RN-001 a RN-046 confirmadas no código · 5 regras desejadas (a construir).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DOCUMENTAÇÃO ===== -->
+  <section>
+    <div class="sec-h">
+      <span class="eyebrow">Discovery</span>
+      <h2>Documentação completa</h2>
+      <span class="hint">arquivos em docs/discovery/</span>
+    </div>
+    <div class="card doc-wrap">
+      <div class="doc"><span class="n">00</span><span><span class="dt">Visão de Produto</span> — <span class="dd">problema, público, proposta de valor, pitch</span></span></div>
+      <div class="doc"><span class="n">01</span><span><span class="dt">Contexto e Problema</span> — <span class="dd">dor original, baseline, por que construir</span></span></div>
+      <div class="doc"><span class="n">02</span><span><span class="dt">Personas e Stakeholders</span> — <span class="dd">quem usa, decide e é impactado</span></span></div>
+      <div class="doc"><span class="n">03</span><span><span class="dt">Escopo e MVP</span> — <span class="dd">dentro/fora, MVP vs. evolução</span></span></div>
+      <div class="doc"><span class="n">04</span><span><span class="dt">Mapa de Funcionalidades</span> — <span class="dd">todas as features + status</span></span></div>
+      <div class="doc"><span class="n">05</span><span><span class="dt">Jornadas e Fluxos</span> — <span class="dd">fluxos ponta a ponta + fricções</span></span></div>
+      <div class="doc"><span class="n">06</span><span><span class="dt">Regras de Negócio</span> — <span class="dd">RN-001…046 + regras desejadas</span></span></div>
+      <div class="doc"><span class="n">07</span><span><span class="dt">User Stories</span> — <span class="dd">épicos e critérios (Gherkin)</span></span></div>
+      <div class="doc"><span class="n">08</span><span><span class="dt">Modelo de Dados</span> — <span class="dd">ER, ciclo de vida, glossário</span></span></div>
+      <div class="doc"><span class="n">09</span><span><span class="dt">Decisões Técnicas</span> — <span class="dd">ADR-001…012</span></span></div>
+      <div class="doc"><span class="n">10</span><span><span class="dt">Métricas e Sucesso</span> — <span class="dd">North Star, medível vs. instrumentar</span></span></div>
+      <div class="doc"><span class="n">11</span><span><span class="dt">Riscos, Premissas, Dívidas</span> — <span class="dd">CSD, riscos, débitos</span></span></div>
+      <div class="doc"><span class="n">12</span><span><span class="dt">Roadmap e Backlog</span> — <span class="dd">RICE + 3 horizontes</span></span></div>
+      <div class="doc"><span class="n">13</span><span><span class="dt">Perguntas Abertas</span> — <span class="dd">10 respondidas · 15 pendentes</span></span></div>
+      <div class="doc"><span class="n">14</span><span><span class="dt">Storytelling</span> — <span class="dd">narrativa STAR + entrevista</span></span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>BarberPro · Painel do Product Owner</span>
+    <span>v1 — discovery inicial + respostas P1–P10 · documento vivo</span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    // Sincroniza com o tema do visualizador quando alternado no host.
+    function sync() {
+      try {
+        var t = document.documentElement.getAttribute('data-theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    }
+    sync();
+  })();
+</script>
