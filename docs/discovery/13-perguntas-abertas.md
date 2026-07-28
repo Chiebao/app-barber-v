@@ -6,10 +6,14 @@
 ---
 
 ## 🔴 Negócio e monetização
-1. Quantas barbearias e quantos clientes reais existem hoje? (não há métrica no código)
-2. Como o BarberPro é cobrado? Mensalidade? Por barbeiro? Valor único? Gratuito por enquanto?
-3. Qual a meta dos próximos 3–6 meses (nº de barbearias, receita)?
-4. Existe contrato/termo com os donos clientes? Quem é responsável pelos dados (LGPD)?
+1. ✅ **RESPONDIDA:** 0 clientes pagantes hoje. Estratégia = piloto com um amigo barbeiro para
+   fidelizar clientes rápido, provar o modelo e então escalar/publicar nas lojas.
+2. ✅ **RESPONDIDA (preliminar):** assinatura mensal por barbearia, com planos (mensal ~R$79,90 /
+   semestral ~R$64,90 / anual ~R$49,90 por mês), evoluindo funcionalidades por plano.
+   ↳ **Novo desdobramento:** não existe **billing/controle de assinatura no sistema** — os planos
+   são conceito comercial, não há cobrança nem bloqueio por plano no código. Ver B14 no roadmap.
+3. Qual a meta dos próximos 3–6 meses (nº de barbearias, receita)? *(ainda aberta)*
+4. Existe contrato/termo com os donos clientes? Quem é responsável pelos dados (LGPD)? *(ainda aberta)*
 
 ## 🔴 Faltas e pagamento
 5. Qual o volume de faltas hoje? O anti-no-show (2 faltas → Pix) está sendo usado/eficaz?

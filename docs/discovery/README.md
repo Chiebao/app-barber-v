@@ -23,9 +23,11 @@ Papéis reais no sistema: `owner`, `barber` e `client` (sem login, identificado 
 do agendamento. O sistema ataca a falta com uma regra automática (2 faltas → pré-pagamento Pix),
 dá dashboard financeiro ao dono e tira o dono do meio com o link público.
 
-**Estado.** Em produção (`barberpro-mauve.vercel.app`) e em início de comercialização, com pelo
-menos um cliente pagante real. Base funcional ampla (agendamento, painel, financeiro, fidelidade,
-lista de espera, avaliações, notificações, PWA) validada por smoke test. `[CONFIRMADO: scripts/smoke.mjs]`
+**Estado.** Em produção técnica (`barberpro-mauve.vercel.app`), porém em **fase pré-lançamento
+comercial**: **0 clientes pagantes** — a estratégia é um piloto com um amigo barbeiro para
+fidelizar clientes rápido e então escalar às lojas (Play/Apple). Base funcional ampla
+(agendamento, painel, financeiro, fidelidade, lista de espera, avaliações, notificações, PWA)
+validada por smoke test. `[CONFIRMADO: Elias P1; scripts/smoke.mjs]`
 
 **Diferenciais.** Cliente sem app; marca própria por barbearia (slug, tema, logo); anti-no-show
 automático; fidelidade e lista de espera embutidas; custo zero.

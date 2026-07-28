@@ -42,11 +42,12 @@ e caderno. Isso gera três problemas que o código do BarberPro ataca diretament
 
 ## Contexto de negócio atual
 
-- Produto **em produção** (`barberpro-mauve.vercel.app`) e **em início de comercialização**.
-  `[INFERIDO: sessão]`
-- Estratégia declarada: **focar no PWA sem gastos** antes de investir em lojas de apps
+- Produto **em produção técnica** (`barberpro-mauve.vercel.app`), mas em **fase pré-lançamento
+  comercial**: **0 clientes pagantes hoje**. `[CONFIRMADO: Elias, resposta P1]`
+- Estratégia declarada: **piloto com um amigo barbeiro** para fidelizar clientes o mais rápido
+  possível, provar o modelo e então **escalar e publicar nas lojas (Play/Apple)**. `[CONFIRMADO: Elias, resposta P1]`
+- Enquanto valida: **focar no PWA sem gastos** antes de investir nas lojas
   (Google Play R$ 125 / Apple US$ 99/ano). `[INFERIDO: sessão]`
-- Pelo menos **um cliente pagante real** já usando. `[INFERIDO: sessão]` — número total: **A VALIDAR**.
 
 ## Restrições conhecidas
 

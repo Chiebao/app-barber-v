@@ -50,7 +50,10 @@ Estes números o dashboard/relatório já calculam sob demanda: `[CONFIRMADO: me
 - **Aquisição:** nº de barbearias cadastradas. `[calculável: count Owner/Shop]`
 - **Ativação:** barbearia que recebeu 1º agendamento. `[calculável com query]`
 - **Retenção:** barbearia com agendamentos em meses consecutivos. `[calculável]`
-- **Receita:** **A VALIDAR** (modelo de cobrança do Elias não está no código).
+- **Receita:** modelo = **assinatura mensal por barbearia, com planos** (mensal/semestral/anual;
+  quanto maior o compromisso, menor a mensalidade). Faixa preliminar ~R$ 49,90–79,90/mês.
+  `[CONFIRMADO: Elias, P2]`. MRR/ARR concretos: **A VALIDAR** (0 clientes pagantes hoje). A cobrança
+  ocorre **fora do sistema** hoje — não há billing no código, então receita não é medível pela app.
 - **Indicação:** **A VALIDAR** (não há tracking de origem).
 
 ### HEART (experiência do cliente final)

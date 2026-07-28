@@ -23,6 +23,7 @@
 | B11 — Atualizar CLAUDE.md | 4 | 0,5 | 90% | 0,25 | **7,2** | Barato; evita erro de novos no time |
 | B12 — Publicar no Google Play (R$ 125) | 6 | 2 | 60% | 1,5 | **4,8** | Canal/credibilidade; custo único baixo |
 | B13 — Relatório de comissões dedicado | 5 | 1 | 70% | 1 | **3,5** | Valor para donos com equipe |
+| B14 — **Billing/assinatura** (planos, cobrança, gate por plano) | 10 | 3 | 70% | 3 | **7,0** | O modelo é assinatura (P2), mas **não existe cobrança no produto** — sem isso não há receita recorrente ao escalar |
 
 > Nota: RICE serve para **ordenar conversa**, não para decidir sozinho. B3/B5/B11 são
 > "quick wins" (esforço baixo, confiança alta) e provavelmente vêm antes mesmo com RICE médio.
@@ -37,6 +38,8 @@
 - B2 (privacidade do cliente) — mitiga risco legal antes de escalar.
 
 ### 🟡 Próximo (1–3 meses) — monetização e escala
+- **B14 (billing/assinatura)** — pré-requisito de receita recorrente; começar assim que o
+  piloto indicar que o modelo cola. Sem isso, "escalar" não vira faturamento.
 - B4 (Pix real) — se a venda pedir sinal de verdade.
 - B6 (reset self-service), B9 (analytics), B12 (Google Play).
 - B8 (painel do Elias) para medir churn/ativação.

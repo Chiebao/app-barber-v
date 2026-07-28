@@ -47,9 +47,14 @@ horário. `[INFERIDO a partir das features que o código resolve: anti no-show, 
 
 ## Objetivos de negócio
 
-- **Comercializar o produto para barbearias** (já vendido a pelo menos 1 cliente). `[INFERIDO: sessão]`
-- **Manter custo operacional em R$ 0** enquanto valida o produto. `[INFERIDO: sessão — "foco sem gastos"]`
-- Meta de aquisição/receita: **A VALIDAR** (não há métrica no código).
+- **Validar com um piloto** — construir para um amigo barbeiro e ajudá-lo a fidelizar clientes
+  o mais rápido possível (0 clientes pagantes hoje). `[CONFIRMADO: Elias, resposta P1]`
+- **Escalar e publicar nas lojas** (Google Play e Apple) após provar o modelo no piloto. `[CONFIRMADO: Elias, P1]`
+- **Manter custo operacional em R$ 0** durante a validação. `[INFERIDO: sessão]`
+- **Monetizar por assinatura mensal com planos** (quanto maior o compromisso, menor a mensalidade),
+  estilo SaaS. Faixa preliminar em estudo: ~R$ 79,90 mensal / R$ 64,90 semestral / R$ 49,90 anual
+  (por mês); evoluir funcionalidades por plano. `[CONFIRMADO: Elias, P2 — valores preliminares]`
+- Meta numérica de aquisição/receita: **A VALIDAR** (P3).
 
 ## O que NÃO é (anti-visão)
 

@@ -34,8 +34,8 @@ e o sistema ataca ativamente a maior dor — as faltas.
   WhatsApp. Pragmatismo sobre perfeição.
 
 ### Resultado
-- Produto **em produção** e **em início de comercialização**, com pelo menos um cliente
-  pagante real. `[INFERIDO: sessão]`
+- Produto **em produção técnica**, em **fase pré-lançamento** (0 clientes pagantes): estratégia
+  de piloto com um amigo barbeiro para validar e depois escalar às lojas. `[CONFIRMADO: Elias, resposta P1]`
 - Custo operacional **R$ 0** (Supabase + Vercel free tier). `[CONFIRMADO: CLAUDE.md:19]`
 - Base funcional ampla (agendamento, painel, financeiro, fidelidade, waitlist, avaliações)
   validada por smoke test verde. `[scripts/smoke.mjs]`
