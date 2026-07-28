@@ -105,3 +105,27 @@
   waitlist 10/min, admin 5/min. `[middleware.ts]`
 - **RN-045 — CORS por whitelist de origens.** `[middleware.ts]`
 - **RN-046 — Upload: imagem até 3MB, tipos jpg/png/webp.** `[me/upload/route.ts]`
+
+---
+
+## Regras DESEJADAS (definidas pelo negócio, ainda NÃO no código)
+
+> Fonte: respostas P6/P9 do Elias. Marcadas para não confundir com o que já roda.
+> Viram backlog (B15, B16, B17).
+
+- **RN-D01 — Pré-agendamento expira em 12h.** Um agendamento `pending_payment` sem confirmação
+  do barbeiro em 12h deve **sumir** e liberar o horário. *Hoje:* fica `pending_payment`
+  indefinidamente. `[DESEJADA — P6; B15]`
+- **RN-D02 — Cliente comum tem preferência sobre a lista negra no mesmo horário.** O
+  `pending_payment` (cliente com 2+ faltas) deve ser **provisório e cedível**: se um cliente
+  comum marca o mesmo horário, ele ganha; o da lista negra recebe "horário não disponível" ao
+  tentar pagar. *Hoje:* o `pending_payment` **bloqueia** o slot para todos (lógica inversa).
+  `[DESEJADA — P6; B16]` ⚠️ *Requer inverter RN-001/RN-012 para esse status.*
+- **RN-D03 — Aviso ao barbeiro de "cliente diz que pagou".** Loop explícito: cliente sinaliza
+  pagamento → barbeiro é notificado para confirmar. *Hoje:* só há aviso no ato do agendamento.
+  `[DESEJADA — P6]`
+- **RN-D04 — Exclusão de dados do cliente (LGPD).** O dono pode apagar um cliente e todo o seu
+  histórico (direito ao esquecimento). *Hoje:* não existe. `[DESEJADA — P9; B17]`
+- **RN-D05 — Verificação antes de exibir agendamentos do cliente.** A página
+  `/{slug}/meus-agendamentos` deve exigir um código (ex.: WhatsApp) antes de listar, para não
+  expor dados por telefone. *Hoje:* lista só com o telefone, sem verificação. `[DESEJADA — P8; B2]`

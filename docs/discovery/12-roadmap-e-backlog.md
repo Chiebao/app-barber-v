@@ -24,6 +24,9 @@
 | B12 — Publicar no Google Play (R$ 125) | 6 | 2 | 60% | 1,5 | **4,8** | Canal/credibilidade; custo único baixo |
 | B13 — Relatório de comissões dedicado | 5 | 1 | 70% | 1 | **3,5** | Valor para donos com equipe |
 | B14 — **Billing/assinatura** (planos, cobrança, gate por plano) | 10 | 3 | 70% | 3 | **7,0** | O modelo é assinatura (P2), mas **não existe cobrança no produto** — sem isso não há receita recorrente ao escalar |
+| B15 — Expiração de 12h do pré-agendamento Pix | 7 | 1 | 80% | 1 | **5,6** | Regra desejada (P6): sem confirmação em 12h, o pré-agendado some e libera a agenda |
+| B16 — Preferência do cliente comum sobre lista negra no mesmo horário | 6 | 2 | 60% | 2 | **3,6** | Regra desejada (P6): inverter a lógica atual (hoje o pré-agendado trava o slot); comum tem prioridade e o da lista negra é avisado ao pagar |
+| B17 — Excluir dados do cliente (LGPD, painel do dono) | 8 | 2 | 80% | 0,5 | **25,6** | Direito ao esquecimento (P9/P4); quick win de baixo esforço e alto valor legal |
 
 > Nota: RICE serve para **ordenar conversa**, não para decidir sozinho. B3/B5/B11 são
 > "quick wins" (esforço baixo, confiança alta) e provavelmente vêm antes mesmo com RICE médio.
@@ -32,10 +35,16 @@
 
 ## Roadmap em 3 horizontes
 
-### 🟢 Agora (0–4 semanas) — confiança e higiene
+> **Marco de negócio (P3):** app 100% pronto e testado até **dezembro**; **lançamento comercial
+> em janeiro**. O horizonte "Agora" existe para chegar em janeiro sem risco legal nem bug crítico.
+
+### 🟢 Agora (até dezembro) — pronto para lançar em janeiro
+- **B2 (privacidade do cliente)** e **B17 (excluir dados)** — fechar risco LGPD **antes** de
+  comercializar (P8/P9). Inegociáveis para o lançamento.
 - B3 (Decimal), B5 (limite diário), B11 (CLAUDE.md) — quick wins de confiança.
 - B1 (lembrete confiável) — decisão: SMS pago barato vs. manter manual.
-- B2 (privacidade do cliente) — mitiga risco legal antes de escalar.
+- Revisar `/termos` e `/privacidade` (papéis controladora/operador — P4).
+- B15/B16 (regras do pré-pagamento Pix — P6) se o amigo barbeiro considerar essencial para o piloto.
 
 ### 🟡 Próximo (1–3 meses) — monetização e escala
 - **B14 (billing/assinatura)** — pré-requisito de receita recorrente; começar assim que o

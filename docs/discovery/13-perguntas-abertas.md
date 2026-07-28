@@ -12,18 +12,37 @@
    semestral ~R$64,90 / anual ~R$49,90 por mês), evoluindo funcionalidades por plano.
    ↳ **Novo desdobramento:** não existe **billing/controle de assinatura no sistema** — os planos
    são conceito comercial, não há cobrança nem bloqueio por plano no código. Ver B14 no roadmap.
-3. Qual a meta dos próximos 3–6 meses (nº de barbearias, receita)? *(ainda aberta)*
-4. Existe contrato/termo com os donos clientes? Quem é responsável pelos dados (LGPD)? *(ainda aberta)*
+3. ✅ **RESPONDIDA:** meta = app 100% pronto e testado até **dezembro**; **comercialização
+   oficial em janeiro** (divulgação + prospecção ativa de clientes).
+4. ✅ **RESPONDIDA (decisão tomada):** ainda não existe contrato/termo. Decisão: **Termos +
+   Política de Privacidade universais** (um para todas as barbearias), aproveitando as páginas
+   `/termos` e `/privacidade` já existentes; dono aceita no cadastro. Papéis LGPD: **barbearia =
+   controladora** dos dados dos clientes dela, **BarberPro = operador**. Riscos LGPD priorizados
+   em `11-riscos` (R3) e backlog B2/B17.
 
 ## 🔴 Faltas e pagamento
-5. Qual o volume de faltas hoje? O anti-no-show (2 faltas → Pix) está sendo usado/eficaz?
-6. O pré-pagamento Pix é realmente cobrado e conferido, ou é só um "aviso"? Há reembolso?
-7. Vale integrar Pix real (Mercado Pago)? Qual o apetite por fee por transação?
+5. ✅ **RESPONDIDA:** sem dados de volume ainda. A regra 2 faltas → Pix foi **pedido do próprio
+   amigo barbeiro (piloto)**; manter por enquanto.
+6. ✅ **RESPONDIDA — revela feature a construir.** O Pix é realmente cobrado, mas **sem
+   verificação pelo app** (confiança). Regras DESEJADAS (nem todas existem):
+   - Barbeiro é avisado que foi pago e **confirma manualmente** → aí o corte é agendado. *(existe)*
+   - Sem confirmação, fica **pré-agendado por 12h e some**. ❌ *(a construir — B15)*
+   - Se um **cliente comum** pega o mesmo horário do cliente em lista negra, o comum tem
+     **preferência**; ao ir pagar, o da lista negra recebe "horário não disponível". ❌ *(a construir — B16)*
+   Reembolso: **A VALIDAR**.
+7. 🟡 *Parcialmente:* indeciso entre modal manual e confirmação própria, **evitando as taxas**
+   do gateway. Decisão final depende do amigo barbeiro. *(segue aberta)*
 
 ## 🔴 Privacidade / LGPD
-8. É aceitável que qualquer pessoa com um telefone veja os agendamentos daquele número?
-9. Como tratar solicitação de exclusão de dados de um cliente (existe fluxo real além da página)?
-10. Onde ficam os backups e qual a política de retenção assumida com os clientes?
+8. ✅ **RESPONDIDA — furo confirmado.** NÃO é o login do barbeiro (esse é seguro). É a página
+   do cliente `/{slug}/meus-agendamentos`: digitando **só o telefone** (sem senha) qualquer um
+   vê os agendamentos daquele número. Correção: código de verificação por WhatsApp antes de
+   listar. Backlog **B2** (prioridade antes de janeiro). `[CONFIRMADO: meus-agendamentos + appointments GET sem auth]`
+9. ✅ **RESPONDIDA (decisão):** criar botão "Excluir cliente" no painel (dono) que apaga o
+   cliente + histórico — atende o direito ao esquecimento da LGPD. Backlog **B17**.
+10. ✅ **RESPONDIDA (decisão):** confiar no backup automático do Supabase (retenção curta, ~diária)
+    na fase piloto; export diário via `pg_dump` quando escalar; nos Termos, prometer só o que o
+    Supabase entrega. Retenção exata do plano: **A VALIDAR** no painel Supabase.
 
 ## 🟡 Notificações
 11. A WhatsApp Cloud API está aprovada/estável para produção ou segue em teste?

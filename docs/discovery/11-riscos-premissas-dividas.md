@@ -30,7 +30,7 @@
 |---|-------|---------|-------|-----------|
 | R1 | **Lembrete não entrega** (cron 1x/dia + WhatsApp instável) → faltas continuam | Alto | Alta | Botão "Lembrar" manual (feito); avaliar SMS pago ou plano cron |
 | R2 | **Float em dinheiro** gera divergência de centavos no relatório | Médio | Média | Migrar para `Decimal`; arredondar centralizado |
-| R3 | **Privacidade do cliente** — qualquer um com o telefone lista agendamentos | Alto | Média | Avaliar verificação (código por WhatsApp) antes de listar |
+| R3 | **Privacidade do cliente** — qualquer um com o telefone lista agendamentos (CONFIRMADO com o Elias, P8) | Alto | **Alta** | **Bloqueador de lançamento (jan):** verificação por código WhatsApp antes de listar (B2) |
 | R4 | **Isolamento multi-tenant** — um filtro `shopId` esquecido vaza dados entre lojas | Alto | Média | Revisão sistemática das rotas; testes; helper de query por tenant |
 | R5 | **JWT 7 dias sem revogação** — token vazado dá acesso longo | Médio | Baixa | Reduzir expiração + refresh; invalidar no servidor |
 | R6 | **Dependência de free tier** (Vercel/Supabase) — limites/crescimento | Médio | Média | Monitorar limites; plano de upgrade quando escalar |
