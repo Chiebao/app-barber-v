@@ -181,9 +181,19 @@
         <div class="td">Deixar claro os papéis: barbearia = controladora dos dados; BarberPro = operador. Dono aceita no cadastro.</div></div>
       </div>
       <div class="task">
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Limite diário da agenda — corrigido <span class="tag">B5</span></div>
+        <div class="td">A capacidade do dia agora conta <strong>tempo real ocupado</strong>, não número de agendamentos. Antes a agenda podia fechar cedo e perder vagas quando os serviços eram mais curtos que a média.</div></div>
+      </div>
+      <div class="task">
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Documentação técnica atualizada <span class="tag">B11</span></div>
+        <div class="td">CLAUDE.md corrigido: URL de produção, JWT 7 dias, cron 1x/dia, novas variáveis, 13 features entregues e lista de pendências realista.</div></div>
+      </div>
+      <div class="task">
         <span class="chk warn" aria-hidden="true"></span>
-        <div><div class="tt">Quick wins de confiança <span class="tag">B3 · B5 · B11</span></div>
-        <div class="td">Dinheiro em Decimal (relatório sempre bate), corrigir cálculo do limite diário de agenda, atualizar o CLAUDE.md.</div></div>
+        <div><div class="tt">Dinheiro em Decimal <span class="tag">B3</span></div>
+        <div class="td">Valores são <code>Float</code> — risco de divergência de centavos no relatório. <strong>Não é quick win:</strong> a troca muda o tipo em todo cálculo e exige teste cuidadoso.</div></div>
       </div>
       <div class="task">
         <span class="chk" aria-hidden="true"></span>
@@ -274,12 +284,12 @@
     </div>
     <div class="grid cols-3">
       <div class="card stat">
-        <div class="big">42</div>
-        <div class="lbl">funcionalidades mapeadas</div>
+        <div class="big">40</div>
+        <div class="lbl">funcionalidades entregues</div>
         <div class="bar" aria-hidden="true">
-          <i style="width:83%;background:var(--ok)"></i><i style="width:12%;background:var(--warn)"></i><i style="width:5%;background:var(--crit)"></i>
+          <i style="width:85%;background:var(--ok)"></i><i style="width:12%;background:var(--warn)"></i><i style="width:3%;background:var(--crit)"></i>
         </div>
-        <div class="foot"><span style="color:var(--ok)">■</span> maioria funcional · <span style="color:var(--warn)">■</span> parcial · <span style="color:var(--crit)">■</span> desativada</div>
+        <div class="foot"><span style="color:var(--ok)">■</span> funcional · <span style="color:var(--warn)">■</span> parcial · <span style="color:var(--crit)">■</span> desativada</div>
       </div>
       <div class="card stat">
         <div class="big">10<span style="color:var(--ink-mute);font-size:18px">/25</span></div>
@@ -323,7 +333,7 @@
 
   <footer>
     <span>BarberPro · Painel do Product Owner</span>
-    <span>v1 — discovery inicial + respostas P1–P10 · documento vivo</span>
+    <span>v2 — bloqueadores B2/B17 resolvidos · B5/B11 entregues · documento vivo</span>
   </footer>
 </div>
 
