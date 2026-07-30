@@ -162,8 +162,8 @@
       <span class="hint">o que precisa acontecer antes de vender</span>
     </div>
     <div class="card launch">
-      <div class="prog"><i style="width:55%"></i></div>
-      <div class="prog-cap"><span>Progresso do lançamento</span><span>bloqueadores resolvidos · quick wins em andamento</span></div>
+      <div class="prog"><i style="width:78%"></i></div>
+      <div class="prog-cap"><span>Progresso do lançamento</span><span>bloqueadores e higiene resolvidos · faltam textos legais e lembrete</span></div>
 
       <div class="task">
         <span class="chk ok" aria-hidden="true">✓</span>
@@ -191,9 +191,9 @@
         <div class="td">CLAUDE.md corrigido: URL de produção, JWT 7 dias, cron 1x/dia, novas variáveis, 13 features entregues e lista de pendências realista.</div></div>
       </div>
       <div class="task">
-        <span class="chk warn" aria-hidden="true"></span>
-        <div><div class="tt">Dinheiro em Decimal <span class="tag">B3</span></div>
-        <div class="td">Valores são <code>Float</code> — risco de divergência de centavos no relatório. <strong>Não é quick win:</strong> a troca muda o tipo em todo cálculo e exige teste cuidadoso.</div></div>
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Dinheiro exato no banco — resolvido <span class="tag">B3</span></div>
+        <div class="td">Valores migrados de <code>Float</code> para <code>Decimal(10,2)</code>: o banco guarda o centavo exato. Toda conta passa por um helper que arredonda, e a API sempre devolve número puro — relatório não tem mais como "não bater".</div></div>
       </div>
       <div class="task">
         <span class="chk" aria-hidden="true"></span>
@@ -223,8 +223,8 @@
         <div class="item"><span style="color:var(--ok)">✓ Excluir dados (LGPD)</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
         <div class="item"><span style="color:var(--ok)">✓ Corrigir limite de agenda</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
         <div class="item"><span style="color:var(--ok)">✓ Atualizar CLAUDE.md</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
+        <div class="item"><span style="color:var(--ok)">✓ Dinheiro em Decimal</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
         <div class="item"><span>Revisar Termos e Privacidade</span><span class="code">P4</span></div>
-        <div class="item"><span>Dinheiro em Decimal</span><span class="rice">9.0</span></div>
         <div class="item"><span>Lembrete confiável</span><span class="rice">12.6</span></div>
       </div>
       <div class="card horizon">
@@ -269,9 +269,9 @@
         <div class="body"><div class="rt">Lembrete automático frágil</div><div class="rd">Cron 1x/dia (free tier) + WhatsApp instável. Mitigado pelo botão manual.</div></div>
         <span class="lvl pill warn">Médio</span>
       </div>
-      <div class="card risk med"><span class="stripe"></span>
-        <div class="body"><div class="rt">Dinheiro em Float</div><div class="rd">Risco de relatório "não bater" por centavos. Migrar para Decimal.</div></div>
-        <span class="lvl pill warn">Médio</span>
+      <div class="card risk" style="opacity:.7"><span class="stripe" style="background:var(--ok)"></span>
+        <div class="body"><div class="rt">Dinheiro em Float <span style="color:var(--ok);font-weight:400">· mitigado</span></div><div class="rd">Migrado para <code>Decimal(10,2)</code> com arredondamento centralizado (B3).</div></div>
+        <span class="lvl pill ok">Resolvido</span>
       </div>
     </div>
   </section>
@@ -333,7 +333,7 @@
 
   <footer>
     <span>BarberPro · Painel do Product Owner</span>
-    <span>v2 — bloqueadores B2/B17 resolvidos · B5/B11 entregues · documento vivo</span>
+    <span>v3 — B2/B17 (LGPD) · B5 (agenda) · B11 (docs) · B3 (dinheiro exato) · documento vivo</span>
   </footer>
 </div>
 
