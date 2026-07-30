@@ -13,7 +13,7 @@
 | **Versao** | 1.0.0 |
 | **Desenvolvedor** | Elias Henrique Dias Godoy |
 | **Repositorio** | `https://github.com/eliashenr/app_barber.git` |
-| **Producao Web** | Vercel — `https://barberpro-black.vercel.app` |
+| **Producao Web** | Vercel (projeto `barberpro`) — `https://barberpro-mauve.vercel.app` |
 | **Banco** | Supabase (PostgreSQL gerenciado) |
 | **Storage** | Supabase Storage (bucket `products`) |
 | **Custo operacional** | R$ 0 (free tier Supabase + Vercel) |
@@ -193,7 +193,7 @@ app_barber/
 | Funcionalidade | Descricao |
 |----------------|-----------|
 | Registro | Dono cadastra barbearia + servicos + horarios em uma unica tela |
-| Login por telefone + senha | JWT com expiracao de 30 dias |
+| Login por telefone + senha | JWT com expiracao de 7 dias (`auth.ts`) |
 | Roles | `owner` (acesso total) e `barber` (ve apenas sua agenda) |
 | Perfil owner-barber | Dono e automaticamente o primeiro barbeiro da barbearia |
 | Troca de senha | Qualquer usuario autenticado pode alterar |
@@ -338,7 +338,11 @@ app_barber/
 ### Notificacoes
 - WhatsApp disparado de forma fire-and-forget (`.catch(console.error)`)
 - Push via Expo Push API (batch de tokens)
-- Lembrete via Vercel Cron a cada 30 minutos (1h antes do horario)
+- Lembrete via Vercel Cron **1x/dia** (`0 11 * * *` — limite do free tier), buscando quem tem
+  horario ~1h a frente. Cobertura parcial: o caminho confiavel e o botao **"Lembrar"** no painel,
+  que abre o WhatsApp do cliente com mensagem pronta
+- Cron protegido por `CRON_SECRET` (header `Authorization: Bearer`)
+- `reminderSentAt` so e gravado quando a API do WhatsApp confirma o envio
 
 ---
 
@@ -421,21 +425,39 @@ app_barber/
 | 25 | QR Code compartilhavel | ✅ | — | — |
 | 26 | Config barbearia (horarios, Pix, tema) | ✅ | — | ✅ |
 | 27 | Troca de senha | — | — | ✅ |
+| 28 | Logo proprio por barbearia (`Shop.logoUrl`) | ✅ | — | ✅ |
+| 29 | Sistema de toast (substitui `alert()`) | ✅ | — | — |
+| 30 | Rate limiting + CORS + security headers | ✅ | — | ✅ |
+| 31 | Politica de privacidade + Termos (`/privacidade`, `/termos`) | ✅ | — | — |
+| 32 | Reset de senha: super-admin (`/admin/reset`) + dono reseta barbeiro | ✅ | — | ✅ |
+| 33 | Gate de privacidade em "Meus agendamentos" (nome + telefone) | ✅ | — | ✅ |
+| 34 | Exclusao de dados do cliente (LGPD, escopada a loja) | ✅ | — | ✅ |
+| 35 | Botao "Lembrar" cliente via WhatsApp (manual, confiavel) | ✅ | — | — |
+| 36 | Toggle de lista de espera ao cancelar | ✅ | — | ✅ |
+| 37 | Aviso de tolerancia de atraso (15 min) na confirmacao | ✅ | — | — |
+| 38 | Smoke test de producao (`scripts/smoke.mjs`) | — | — | ✅ |
+| 39 | Booking atomico (transacao Serializable anti double-booking) | — | — | ✅ |
+| 40 | Service worker network-first (deploy aparece na hora) | ✅ | — | — |
 
 ### Pendentes / Melhorias
 
 | # | Modulo | Descricao | Complexidade |
 |---|--------|-----------|-------------|
-| 1 | **Relatorio PDF** | Gerar PDF do relatorio financeiro para download | Media |
-| 2 | **Notificacoes in-app** | Central de notificacoes no painel web | Media |
-| 3 | **Rate limiting** | Proteger API routes contra abuso | Baixa |
-| 4 | **CORS restritivo** | Configurar origens permitidas | Baixa |
-| 5 | **Politica de privacidade** | Pagina LGPD obrigatoria para stores | Media |
-| 6 | **Exclusao de dados (LGPD)** | Cliente pode solicitar remocao dos seus dados | Media |
-| 7 | **Multi-shop** | Dono gerencia multiplas barbearias | Alta |
-| 8 | **Relatorio de comissoes** | PDF/tela dedicada de comissoes por periodo | Baixa |
-| 9 | **Agenda semanal visual** | Visualizacao semanal no estilo Google Calendar | Alta |
-| 10 | **Lembretes por SMS** | Alternativa ao WhatsApp para clientes | Media |
+| 1 | **Billing / assinatura** | Planos (mensal/semestral/anual), cobranca e bloqueio por plano. Modelo comercial definido, **sem nada no codigo** | Alta |
+| 2 | **Dinheiro em `Decimal`** | Valores monetarios sao `Float` — risco de divergencia de centavos no relatorio | Media |
+| 3 | **Expiracao do pre-agendamento** | `pending_payment` sem confirmacao deve sumir em 12h e liberar a vaga | Baixa |
+| 4 | **Preferencia sobre lista negra** | Cliente comum tem prioridade sobre `pending_payment` no mesmo horario | Media |
+| 5 | **Verificacao por WhatsApp (OTP)** | Upgrade do gate de privacidade: codigo em vez de nome + telefone | Media |
+| 6 | **Relatorio PDF do financeiro** | PDF do relatorio do dono (o PDF do cliente ja existe) | Media |
+| 7 | **Notificacoes in-app** | Central de notificacoes no painel web | Media |
+| 8 | **Multi-shop** | Dono gerencia multiplas barbearias | Alta |
+| 9 | **Relatorio de comissoes** | Tela dedicada de comissoes por periodo | Baixa |
+| 10 | **Agenda semanal visual** | Visualizacao semanal estilo Google Calendar | Alta |
+| 11 | **Lembretes por SMS** | Alternativa paga e confiavel ao WhatsApp | Media |
+| 12 | **Analytics de conversao** | Medir visitas do link → agendamento (nao ha instrumentacao) | Baixa |
+
+> Discovery de produto completo (visao, personas, regras, roadmap RICE, riscos) em
+> **`docs/discovery/`** — comecar pelo `README.md` ou pelo painel visual `painel-po.html`.
 
 ---
 
@@ -530,6 +552,7 @@ npx expo start         # Abre Expo Dev Tools
 | web | db:migrate | `npm run db:migrate` | Cria migration Prisma |
 | web | db:seed | `npm run db:seed` | Popula banco com dados de exemplo |
 | web | test | `npm run test` | Roda testes Playwright |
+| web | smoke | `npm run smoke` | Smoke test contra producao (9 checagens, ~5s) — rodar apos cada deploy |
 | mobile | start | `npm start` | Expo dev server |
 | mobile | android | `npm run android` | Abre no emulador Android |
 | mobile | ios | `npm run ios` | Abre no simulador iOS |
@@ -548,6 +571,8 @@ npx expo start         # Abre Expo Dev Tools
 | `SUPABASE_URL` | Nao | URL do projeto Supabase (para upload de imagens) |
 | `SUPABASE_SERVICE_KEY` | Nao | Service key do Supabase (para upload server-side) |
 | `CRON_SECRET` | Nao | Segredo para autenticar chamadas do Vercel Cron |
+| `ADMIN_SECRET` | Nao | Senha-mestra da pagina `/admin/reset` (reset de senha super-admin) |
+| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Nao | WhatsApp do suporte (55+DDD+numero) para o fluxo "Esqueci minha senha" |
 
 ---
 

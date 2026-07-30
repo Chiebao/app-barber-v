@@ -29,25 +29,27 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const booked = await prisma.appointment.findMany({
       where,
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, totalDuration: true },
     });
 
-    // Limite diario: se atingiu o maximo de slots calculado pelo avgServiceTime
+    // Capacidade do dia por TEMPO REAL ocupado (não por número de agendamentos).
+    // O contador antigo comparava a quantidade de agendamentos com uma estimativa
+    // baseada no tempo médio — o que fechava a agenda cedo quando os serviços eram
+    // mais curtos que a média (vaga ociosa) e não refletia a ocupação real.
     const [openH, openM] = shop.openTime.split(":").map(Number);
     const [closeH, closeM] = shop.closeTime.split(":").map(Number);
     const totalMinutes = (closeH * 60 + closeM) - (openH * 60 + openM);
-    const maxSlots = Math.floor(totalMinutes / shop.avgServiceTime);
 
-    const dayBookings = await prisma.appointment.count({
-      where: {
-        shopId: shop.id,
-        date: { gte: startOfDay, lte: endOfDay },
-        status: { not: "cancelled" },
-        ...(barberId ? { barberId } : {}),
-      },
-    });
+    const bookedMinutes = booked.reduce((sum, apt) => {
+      if (apt.totalDuration && apt.totalDuration > 0) return sum + apt.totalDuration;
+      // Fallback: calcula pela diferença startTime/endTime
+      const [sh, sm] = apt.startTime.split(":").map(Number);
+      const [eh, em] = apt.endTime.split(":").map(Number);
+      return sum + Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+    }, 0);
 
-    if (dayBookings >= maxSlots) {
+    // Só declara "agenda cheia" quando não cabe mais o serviço pedido no tempo restante.
+    if (totalMinutes - bookedMinutes < parseInt(duration)) {
       return NextResponse.json({ slots: [], message: "Agenda cheia para este dia" });
     }
 

@@ -162,18 +162,18 @@
       <span class="hint">o que precisa acontecer antes de vender</span>
     </div>
     <div class="card launch">
-      <div class="prog"><i></i></div>
-      <div class="prog-cap"><span>Progresso do lançamento</span><span>2 bloqueadores + quick wins pendentes</span></div>
+      <div class="prog"><i style="width:55%"></i></div>
+      <div class="prog-cap"><span>Progresso do lançamento</span><span>bloqueadores resolvidos · quick wins em andamento</span></div>
 
       <div class="task">
-        <span class="chk crit" aria-hidden="true"></span>
-        <div><div class="tt">Fechar o furo de privacidade do cliente <span class="tag">B2 · bloqueador</span></div>
-        <div class="td">Hoje, digitar só o telefone em "Meus agendamentos" mostra os agendamentos de qualquer número. Corrigir com código de verificação por WhatsApp antes de listar.</div></div>
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Furo de privacidade do cliente — resolvido <span class="tag">B2</span></div>
+        <div class="td">"Meus agendamentos" agora exige <strong>nome + telefone</strong>; a lista só sai quando o nome confere. Validado em produção: sem nome ou nome errado não retorna nada.</div></div>
       </div>
       <div class="task">
-        <span class="chk crit" aria-hidden="true"></span>
-        <div><div class="tt">Botão "Excluir cliente" (LGPD) <span class="tag">B17 · bloqueador</span></div>
-        <div class="td">Direito ao esquecimento: o dono precisa conseguir apagar um cliente e seu histórico. Quick win de alto valor legal.</div></div>
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Excluir dados do cliente (LGPD) — resolvido <span class="tag">B17</span></div>
+        <div class="td">Dono apaga cliente e histórico pela aba Clientes. Escopado à barbearia: não afeta dados de outras lojas que atendem o mesmo telefone.</div></div>
       </div>
       <div class="task">
         <span class="chk warn" aria-hidden="true"></span>
@@ -209,11 +209,12 @@
       <div class="card horizon">
         <div class="htitle"><span class="badge" style="background:var(--ok)"></span>Agora</div>
         <div class="when">até dezembro — pronto para lançar</div>
-        <div class="item"><span>Privacidade do cliente</span><span class="rice">7.5</span></div>
-        <div class="item"><span>Excluir dados (LGPD)</span><span class="rice">25.6</span></div>
+        <div class="item"><span style="color:var(--ok)">✓ Privacidade do cliente</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
+        <div class="item"><span style="color:var(--ok)">✓ Excluir dados (LGPD)</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
+        <div class="item"><span style="color:var(--ok)">✓ Corrigir limite de agenda</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
+        <div class="item"><span style="color:var(--ok)">✓ Atualizar CLAUDE.md</span><span class="rice" style="color:var(--ok);background:var(--ok-bg)">feito</span></div>
+        <div class="item"><span>Revisar Termos e Privacidade</span><span class="code">P4</span></div>
         <div class="item"><span>Dinheiro em Decimal</span><span class="rice">9.0</span></div>
-        <div class="item"><span>Corrigir limite de agenda</span><span class="rice">11.2</span></div>
-        <div class="item"><span>Atualizar CLAUDE.md</span><span class="rice">7.2</span></div>
         <div class="item"><span>Lembrete confiável</span><span class="rice">12.6</span></div>
       </div>
       <div class="card horizon">
@@ -246,9 +247,9 @@
       <span class="hint">impacto × probabilidade</span>
     </div>
     <div class="grid cols-2">
-      <div class="card risk"><span class="stripe"></span>
-        <div class="body"><div class="rt">Privacidade do cliente</div><div class="rd">Qualquer um com o telefone lista agendamentos. Confirmado. Bloqueador de lançamento.</div></div>
-        <span class="lvl pill crit">Alto</span>
+      <div class="card risk" style="opacity:.7"><span class="stripe" style="background:var(--ok)"></span>
+        <div class="body"><div class="rt">Privacidade do cliente <span style="color:var(--ok);font-weight:400">· mitigado</span></div><div class="rd">Fechado com verificação nome + telefone (B2). Upgrade futuro: código por WhatsApp.</div></div>
+        <span class="lvl pill ok">Resolvido</span>
       </div>
       <div class="card risk"><span class="stripe"></span>
         <div class="body"><div class="rt">Sem cobrança no produto</div><div class="rd">O modelo é assinatura, mas não há billing — sem isso, escalar não vira receita.</div></div>
