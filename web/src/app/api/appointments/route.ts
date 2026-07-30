@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
+import { num, sumMoney } from "@/app/lib/money";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (services.length === 0) return NextResponse.json({ error: "Servicos invalidos" }, { status: 400 });
 
     const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
-    const totalPrice = services.reduce((sum, s) => sum + s.price, 0);
+    const totalPrice = sumMoney(services.map((s) => s.price));
 
     const [startH, startM] = data.startTime.split(":").map(Number);
     const endMinutes = startH * 60 + startM + totalDuration;
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         totalDuration: appointment.totalDuration,
-        totalPrice: appointment.totalPrice,
+        totalPrice: num(appointment.totalPrice),
         services: appointment.services.map((as) => as.service.name),
         shopName: shop.name,
       },
@@ -228,11 +229,11 @@ export async function GET(req: NextRequest) {
         date: apt.date.toISOString().split("T")[0],
         startTime: apt.startTime,
         endTime: apt.endTime,
-        totalPrice: apt.totalPrice,
+        totalPrice: num(apt.totalPrice),
         status: apt.status,
         barberId: apt.barberId,
         barberName: apt.barber.name,
-        services: apt.services.map((as) => ({ serviceId: as.serviceId, name: as.service.name, price: as.service.price })),
+        services: apt.services.map((as) => ({ serviceId: as.serviceId, name: as.service.name, price: num(as.service.price) })),
       })) : [],
       pendingRating,
       loyaltyCount,
@@ -247,7 +248,7 @@ export async function GET(req: NextRequest) {
           barberName: last.barber.name,
           serviceIds: last.services.map((as) => as.serviceId),
           serviceNames: last.services.map((as) => as.service.name),
-          totalPrice: last.totalPrice,
+          totalPrice: num(last.totalPrice),
         };
       })(),
     });

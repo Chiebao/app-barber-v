@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
+import { num } from "@/app/lib/money";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +13,8 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ products });
+    // price é Decimal no banco — devolve como número puro para o cliente
+    return NextResponse.json({ products: products.map(p => ({ ...p, price: num(p.price) })) });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ product });
+    return NextResponse.json({ product: { ...product, price: num(product.price) } });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -52,7 +54,7 @@ export async function PATCH(req: NextRequest) {
 
     const { id, ...data } = await req.json();
     const product = await prisma.product.update({ where: { id }, data });
-    return NextResponse.json({ product });
+    return NextResponse.json({ product: { ...product, price: num(product.price) } });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

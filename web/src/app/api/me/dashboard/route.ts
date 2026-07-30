@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
+import { num, money, sumMoney, percentOf } from "@/app/lib/money";
 
 export async function GET(req: NextRequest) {
   try {
@@ -48,22 +49,22 @@ export async function GET(req: NextRequest) {
     ]);
 
     // ── Hoje ──────────────────────────────────────────────────────────────────
-    const todayReceived = todayApts.filter(a => a.paidAt).reduce((s, a) => s + a.totalPrice, 0);
-    const todayExpected = todayApts.filter(a => !a.paidAt).reduce((s, a) => s + a.totalPrice, 0);
+    const todayReceived = sumMoney(todayApts.filter(a => a.paidAt).map(a => a.totalPrice));
+    const todayExpected = sumMoney(todayApts.filter(a => !a.paidAt).map(a => a.totalPrice));
 
     // ── Mês atual ─────────────────────────────────────────────────────────────
     const paidThisMonth      = monthApts.filter(a => a.paidAt);
     const unpaidThisMonth    = monthApts.filter(a => !a.paidAt);
-    const monthRevenue       = paidThisMonth.reduce((s, a) => s + a.totalPrice, 0);
-    const monthToReceive     = unpaidThisMonth.reduce((s, a) => s + a.totalPrice, 0);
+    const monthRevenue       = sumMoney(paidThisMonth.map(a => a.totalPrice));
+    const monthToReceive     = sumMoney(unpaidThisMonth.map(a => a.totalPrice));
     // Ticket médio correto: receita recebida / total de atendimentos (não cancelados)
-    const avgTicket = monthApts.length > 0 ? monthRevenue / monthApts.length : 0;
+    const avgTicket = monthApts.length > 0 ? money(monthRevenue / monthApts.length) : 0;
     // Taxa de cancelamento
     const totalBookings = monthApts.length + cancelledThisMonth;
     const cancelRate = totalBookings > 0 ? Math.round((cancelledThisMonth / totalBookings) * 100) : 0;
 
     // ── Mês anterior ──────────────────────────────────────────────────────────
-    const prevMonthRevenue = prevMonthApts.filter(a => a.paidAt).reduce((s, a) => s + a.totalPrice, 0);
+    const prevMonthRevenue = sumMoney(prevMonthApts.filter(a => a.paidAt).map(a => a.totalPrice));
     const prevMonthAptCount = prevMonthApts.length;
     const revenueGrowth = prevMonthRevenue > 0
       ? Math.round(((monthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
@@ -92,9 +93,10 @@ export async function GET(req: NextRequest) {
       }
       barberMap[apt.barberId].count++;
       if (apt.paidAt) {
-        const rev = apt.totalPrice;
-        barberMap[apt.barberId].revenue += rev;
-        barberMap[apt.barberId].commissionValue += rev * (barberCommMap[apt.barberId] || 0) / 100;
+        const rev = num(apt.totalPrice);
+        const pct = barberCommMap[apt.barberId] || 0;
+        barberMap[apt.barberId].revenue = money(barberMap[apt.barberId].revenue + rev);
+        barberMap[apt.barberId].commissionValue = money(barberMap[apt.barberId].commissionValue + percentOf(rev, pct));
       }
     }
     const barberStats = Object.values(barberMap).sort((a, b) => b.revenue - a.revenue);

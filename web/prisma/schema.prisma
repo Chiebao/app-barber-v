@@ -79,7 +79,7 @@ model Service {
   shopId   String
   name     String
   duration Int
-  price    Float
+  price    Decimal @db.Decimal(10, 2)
   category String  // "corte","barba","sobrancelha","pezinho","luzes"
   imageUrl String?
   active   Boolean @default(true)
@@ -95,7 +95,7 @@ model Product {
   id          String  @id @default(cuid())
   shopId      String
   name        String
-  price       Float
+  price       Decimal @db.Decimal(10, 2)
   description String?
   imageUrl    String?
   imageUrl2   String?
@@ -134,7 +134,7 @@ model Appointment {
   startTime       String
   endTime         String
   totalDuration   Int
-  totalPrice      Float
+  totalPrice      Decimal   @db.Decimal(10, 2)
   status          String    @default("confirmed") // confirmed, completed, cancelled, no_show
   paymentMethod        String?   // pix, dinheiro, cartao, adiado
   paidAt               DateTime?
@@ -185,11 +185,11 @@ model Rating {
 
 // Itens da comanda (produtos vendidos no atendimento)
 model ComandaItem {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   appointmentId String
   productId     String
-  quantity      Int    @default(1)
-  price         Float
+  quantity      Int     @default(1)
+  price         Decimal @db.Decimal(10, 2)
 
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
   product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)

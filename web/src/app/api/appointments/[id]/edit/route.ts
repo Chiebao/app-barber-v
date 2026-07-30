@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { num, sumMoney } from "@/app/lib/money";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -33,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // Busca os serviços selecionados
     const selectedServices = appointment.shop.services.filter((s) => serviceIds.includes(s.id));
-    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+    const totalPrice = sumMoney(selectedServices.map((s) => s.price));
     const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
 
     // Recalcula endTime
@@ -62,8 +63,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         id: updated.id,
         startTime: updated.startTime,
         endTime: updated.endTime,
-        totalPrice: updated.totalPrice,
-        services: updated.services.map((as) => ({ name: as.service.name, price: as.service.price })),
+        totalPrice: num(updated.totalPrice),
+        services: updated.services.map((as) => ({ name: as.service.name, price: num(as.service.price) })),
       },
     });
   } catch (error) {

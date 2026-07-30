@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
+import { num } from "@/app/lib/money";
 
 // GET — lista serviços da barbearia
 export async function GET(req: NextRequest) {
@@ -14,7 +15,8 @@ export async function GET(req: NextRequest) {
       where: { shopId: payload.shopId },
       orderBy: { category: "asc" },
     });
-    return NextResponse.json({ services });
+    // price é Decimal no banco — devolve como número puro para o cliente
+    return NextResponse.json({ services: services.map(s => ({ ...s, price: num(s.price) })) });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     const service = await prisma.service.create({
       data: { shopId: payload.shopId, name, duration: Number(duration), price: Number(price), category, imageUrl: imageUrl || null },
     });
-    return NextResponse.json({ service });
+    return NextResponse.json({ service: { ...service, price: num(service.price) } });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -67,7 +69,7 @@ export async function PATCH(req: NextRequest) {
         ...(active !== undefined && { active }),
       },
     });
-    return NextResponse.json({ service });
+    return NextResponse.json({ service: { ...service, price: num(service.price) } });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

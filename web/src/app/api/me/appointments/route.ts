@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
+import { num, money, multiplyMoney } from "@/app/lib/money";
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,16 +41,16 @@ export async function GET(req: NextRequest) {
         date: a.date.toISOString().split("T")[0],
         startTime: a.startTime,
         endTime: a.endTime,
-        totalPrice: a.totalPrice,
+        totalPrice: num(a.totalPrice),
         status: a.status,
         paymentMethod: a.paymentMethod,
         paidAt: a.paidAt,
         barberName: a.barber.name,
         client: a.client,
-        services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: as.service.price })),
+        services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,
-        comanda: a.comandaItems.map(ci => ({ name: ci.product.name, quantity: ci.quantity, price: ci.price })),
-        comandaTotal: a.comandaItems.reduce((s, ci) => s + ci.price * ci.quantity, 0),
+        comanda: a.comandaItems.map(ci => ({ name: ci.product.name, quantity: ci.quantity, price: num(ci.price) })),
+        comandaTotal: money(a.comandaItems.reduce((s, ci) => s + multiplyMoney(ci.price, ci.quantity), 0)),
       })),
     });
   } catch (error) {

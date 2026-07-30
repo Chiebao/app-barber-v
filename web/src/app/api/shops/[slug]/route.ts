@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { num } from "@/app/lib/money";
 
 export async function GET(_req: NextRequest, { params }: { params: { slug: string } }) {
   try {
@@ -32,6 +33,8 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({
       shop: {
         ...shop,
+        // price é Decimal no banco — devolve como número puro para o cliente
+        services: shop.services.map((s) => ({ ...s, price: num(s.price) })),
         avgRating: ratingAgg._avg.score ? Math.round(ratingAgg._avg.score * 10) / 10 : null,
         ratingCount: ratingAgg._count.score,
       },

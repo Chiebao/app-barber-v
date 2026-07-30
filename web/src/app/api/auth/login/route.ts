@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyPassword, signToken } from "@/app/lib/auth";
+import { num } from "@/app/lib/money";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,7 +33,8 @@ export async function POST(req: NextRequest) {
           openTime: shop.openTime, closeTime: shop.closeTime,
           workDays: shop.workDays, avgServiceTime: shop.avgServiceTime,
           pixKey: shop.pixKey, link: `${base}/${shop.slug}`,
-          services: shop.services, barbers: shop.barbers.map(b => ({ id: b.id, name: b.name, phone: b.phone })),
+          services: shop.services.map(s => ({ ...s, price: num(s.price) })),
+          barbers: shop.barbers.map(b => ({ id: b.id, name: b.name, phone: b.phone })),
         },
       });
     }
@@ -53,7 +55,8 @@ export async function POST(req: NextRequest) {
           id: barber.shop.id, name: barber.shop.name, slug: barber.shop.slug,
           openTime: barber.shop.openTime, closeTime: barber.shop.closeTime,
           workDays: barber.shop.workDays, avgServiceTime: barber.shop.avgServiceTime,
-          link: `${base}/${barber.shop.slug}`, services: barber.shop.services,
+          link: `${base}/${barber.shop.slug}`,
+          services: barber.shop.services.map(s => ({ ...s, price: num(s.price) })),
         },
       });
     }

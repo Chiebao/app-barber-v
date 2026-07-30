@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
+import { num, money, sumMoney, multiplyMoney } from "@/app/lib/money";
 
 // Confirmar pagamento
 export async function PATCH(req: NextRequest) {
@@ -37,12 +38,12 @@ export async function PATCH(req: NextRequest) {
     // Recalculate price from remaining services or use customPrice
     let finalPrice: number;
     if (typeof customPrice === "number" && customPrice >= 0) {
-      finalPrice = customPrice;
+      finalPrice = money(customPrice);
     } else {
       const remaining = appointment.services.filter(
         (as) => !Array.isArray(removedServiceIds) || !removedServiceIds.includes(as.serviceId)
       );
-      finalPrice = remaining.reduce((sum, as) => sum + as.service.price, 0);
+      finalPrice = sumMoney(remaining.map((as) => as.service.price));
     }
 
     await prisma.appointment.update({
@@ -110,9 +111,12 @@ export async function GET(req: NextRequest) {
 
     const paid = appointments.filter(a => a.paidAt);
     const unpaid = appointments.filter(a => !a.paidAt);
-    const totalPaid = paid.reduce((s, a) => s + a.totalPrice, 0);
-    const totalUnpaid = unpaid.reduce((s, a) => s + a.totalPrice, 0);
-    const comandaTotal = appointments.reduce((s, a) => s + a.comandaItems.reduce((cs, ci) => cs + ci.price * ci.quantity, 0), 0);
+    const totalPaid = sumMoney(paid.map(a => a.totalPrice));
+    const totalUnpaid = sumMoney(unpaid.map(a => a.totalPrice));
+    const comandaTotal = money(appointments.reduce(
+      (s, a) => s + a.comandaItems.reduce((cs, ci) => cs + multiplyMoney(ci.price, ci.quantity), 0),
+      0,
+    ));
 
     const serviceCounts: Record<string, number> = {};
     for (const apt of appointments)
@@ -124,7 +128,7 @@ export async function GET(req: NextRequest) {
       const m = apt.paymentMethod || "indefinido";
       if (!paymentCounts[m]) paymentCounts[m] = { count: 0, total: 0 };
       paymentCounts[m].count++;
-      paymentCounts[m].total += apt.totalPrice;
+      paymentCounts[m].total = money(paymentCounts[m].total + num(apt.totalPrice));
     }
 
     const avgRating = paid.filter(a => a.rating).reduce((s, a) => s + (a.rating?.score || 0), 0) / (paid.filter(a => a.rating).length || 1);
@@ -133,23 +137,23 @@ export async function GET(req: NextRequest) {
       summary: {
         totalAppointments: appointments.length,
         totalPaid, totalUnpaid, paidCount: paid.length, unpaidCount: unpaid.length,
-        comandaTotal, totalRevenue: totalPaid + comandaTotal,
+        comandaTotal, totalRevenue: money(totalPaid + comandaTotal),
         serviceCounts, paymentCounts, avgRating: isNaN(avgRating) ? null : parseFloat(avgRating.toFixed(1)),
       },
       appointments: appointments.map(a => ({
         id: a.id,
         date: a.date.toISOString().split("T")[0],
         startTime: a.startTime,
-        totalPrice: a.totalPrice,
+        totalPrice: num(a.totalPrice),
         status: a.status,
         paymentMethod: a.paymentMethod,
         paidAt: a.paidAt,
         deferredPaymentDate: a.deferredPaymentDate,
         barberName: a.barber.name,
         client: a.client,
-        services: a.services.map(as => ({ name: as.service.name, category: as.service.category, price: as.service.price })),
+        services: a.services.map(as => ({ name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,
-        comandaTotal: a.comandaItems.reduce((s, ci) => s + ci.price * ci.quantity, 0),
+        comandaTotal: money(a.comandaItems.reduce((s, ci) => s + multiplyMoney(ci.price, ci.quantity), 0)),
       })),
     });
   } catch (error) {
