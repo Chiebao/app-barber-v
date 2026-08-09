@@ -21,7 +21,7 @@
 | Feature | Objetivo | Status | Fonte |
 |---------|----------|--------|-------|
 | Fluxo por etapas | Marcar em segundos, sem app | Funcional | `[slug]/page.tsx` |
-| Fluxo por chat/IA | Experiência diferenciada | **Desativado** | `_chat-page.tsx`, comentário `[slug]/page.tsx:1078` |
+| Fluxo por chat/IA | Experiência diferenciada | **Ativo** (o cliente escolhe na tela "Como prefere agendar?") | `_chat-page.tsx`, `[slug]/page.tsx (mode_select)` |
 | Cálculo de horários | Ofertar só horários válidos | Funcional | `shops/[slug]/slots/route.ts` |
 | Anti no-show (Pix) | Reduzir faltas | Funcional | `appointments/route.ts:62-66` |
 | Meus agendamentos | Autoatendimento pós-marcação | Funcional | `meus-agendamentos/page.tsx` |
@@ -78,6 +78,18 @@
 
 ## Resumo por saúde
 
-- **Funcional:** a grande maioria (agendamento, painel, financeiro, fidelidade, waitlist, segurança).
+- **Funcional:** a grande maioria (agendamento nos dois modos, painel, financeiro, fidelidade,
+  waitlist, segurança, LGPD).
 - **Parcial:** notificações WhatsApp automáticas (dependência externa instável), esqueci-senha (manual).
-- **Desativado:** modo chat/agente IA.
+
+> **Correção de discovery (20/05/2026):** o modo chat/IA havia sido documentado como "desativado"
+> com base em um comentário no fim de `[slug]/page.tsx`. Na verificação com o Elias, confirmou-se
+> que ele **está acessível** — o cliente escolhe entre "Etapas clássico" e "Chatbot IA" na tela
+> `mode_select`. O comentário no código está obsoleto.
+
+## Decisão registrada — lembrete (P12)
+
+**Manter o lembrete manual** (botão 🔔 no painel) durante o piloto. O automático (SMS pago)
+fica para depois dos testes com o barbeiro. Objetivo declarado: chegar num app 100% automático
+que livre o barbeiro de esquecimentos — mas só investir depois de validar o hábito no piloto.
+`[CONFIRMADO: Elias, 20/05/2026]`

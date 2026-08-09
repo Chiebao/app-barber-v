@@ -24,7 +24,18 @@ type ChatStep =
   | "name" | "phone" | "rating" | "services"
   | "barber" | "date" | "time" | "confirm" | "booking" | "pix" | "done";
 
-export default function BarberPageChat({ shop, slug }: { shop: ChatShop; slug: string }) {
+export default function BarberPageChat({
+  shop,
+  slug,
+  initialName = "",
+  initialPhone = "",
+}: {
+  shop: ChatShop;
+  slug: string;
+  /** Nome/telefone já informados no fluxo anterior — evita perguntar de novo. */
+  initialName?: string;
+  initialPhone?: string;
+}) {
   const router = useRouter();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -32,8 +43,8 @@ export default function BarberPageChat({ shop, slug }: { shop: ChatShop; slug: s
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [pixCopied, setPixCopied] = useState(false);
 
-  const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
+  const [clientName, setClientName] = useState(initialName);
+  const [clientPhone, setClientPhone] = useState(initialPhone);
   const [inputValue, setInputValue] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState("");
@@ -65,17 +76,35 @@ export default function BarberPageChat({ shop, slug }: { shop: ChatShop; slug: s
   }, [messages, step]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("client_identity");
-      if (saved) {
-        const { name, phone } = JSON.parse(saved);
-        if (name) setClientName(name);
-        if (phone) setClientPhone(phone);
-      }
-    } catch { /* ignore */ }
+    // 1) Usa o que veio do fluxo anterior; 2) senão, tenta o que ficou salvo no aparelho
+    let name = initialName;
+    let phone = initialPhone;
+    if (!name || !phone) {
+      try {
+        const saved = localStorage.getItem("client_identity");
+        if (saved) {
+          const s = JSON.parse(saved);
+          if (!name && s.name) name = s.name;
+          if (!phone && s.phone) phone = String(s.phone).replace(/\D/g, "");
+        }
+      } catch { /* ignore */ }
+    }
+
+    const cleanPhone = String(phone || "").replace(/\D/g, "");
+
+    // Já conhecemos o cliente → não perguntar nome/telefone de novo
+    if (name && cleanPhone.length >= 10) {
+      setClientName(name);
+      setClientPhone(cleanPhone);
+      addBot(`Olá de novo, ${name.split(" ")[0]}! 😊 Sou o assistente de *${shop.name}*.`);
+      setTimeout(() => { addBot("Por qual serviço você está procurando?"); setStep("services"); }, 500);
+      return;
+    }
+
+    // Cliente novo → fluxo completo
     addBot(`Olá! Sou o assistente virtual de *${shop.name}*. Qual é o seu nome completo?`);
     setStep("name");
-  }, [shop]);
+  }, [shop, initialName, initialPhone]);
 
   const totalPrice = shop
     ? shop.services.filter((s) => selectedServices.includes(s.id)).reduce((sum, s) => sum + s.price, 0) : 0;
@@ -100,11 +129,11 @@ export default function BarberPageChat({ shop, slug }: { shop: ChatShop; slug: s
       if (data.pendingRating) {
         setPendingRating(data.pendingRating);
         setTimeout(() => { addBot(`Antes de continuar, como foi sua última visita com ${data.pendingRating.barberName}?`); setStep("rating"); }, 400);
-        try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone: inputValue })); } catch { /* ignore */ }
+        try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone })); } catch { /* ignore */ }
         return;
       }
     } catch { /* ignore */ }
-    try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone: inputValue })); } catch { /* ignore */ }
+    try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone })); } catch { /* ignore */ }
     goToServices();
   };
 

@@ -46,7 +46,9 @@
 
 ## 🟡 Notificações
 11. A WhatsApp Cloud API está aprovada/estável para produção ou segue em teste?
-12. Preferência para o lembrete confiável: SMS pago (~R$0,05–0,08/msg) ou manter manual?
+12. ✅ **RESPONDIDA:** manter o **manual** durante o piloto; migrar para o automático (SMS pago)
+    depois dos testes com o barbeiro. Meta declarada: app 100% automático que livre o barbeiro
+    de esquecimentos.
 13. Qual a taxa de resposta esperada do lembrete? Vale medir?
 
 ## 🟡 Operação e escala
@@ -57,7 +59,9 @@
 ## 🟡 Experimentos de produto
 17. O aviso de tolerância de atraso deve ser global ou configurável por barbearia?
 18. Como vamos medir se o aviso retém ou irrita? (janela, métrica, critério de sucesso)
-19. O modo chat/IA será concluído ou removido? Por que foi desativado?
+19. ✅ **RESPONDIDA (por verificação):** o modo chat/IA **está ativo e em uso** — o cliente escolhe
+    entre "Etapas" e "Chatbot IA". O comentário "DESATIVADA TEMPORARIAMENTE" no código está
+    obsoleto e deve ser removido. *(Segue aberto: haverá IA de verdade ou continua guiado?)*
 
 ## 🟢 Personalização e catálogo
 20. As 5 paletas de tema atendem? Há demanda por cores livres?

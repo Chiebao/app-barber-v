@@ -404,7 +404,7 @@ export default function BarberPage() {
   // Modo efetivo: escolha do cliente sobrepõe configuração da barbearia
   const effectiveMode = clientMode ?? shop?.bookingMode ?? "steps";
   if (step !== "loading" && step !== "name" && step !== "phone" && step !== "mode_select" && step !== "rating" && effectiveMode === "agent" && shop) {
-    return <BarberPageChat shop={shop} slug={slug} />;
+    return <BarberPageChat shop={shop} slug={slug} initialName={clientName} initialPhone={clientPhone} />;
   }
 
   return (
@@ -1103,5 +1103,6 @@ export default function BarberPage() {
   );
 }
 
-// INTERFACE CHAT (AGENTE) — DESATIVADA TEMPORARIAMENTE
-// O código completo está em: src/app/[slug]/_chat-page.tsx
+// INTERFACE CHAT (AGENTE): src/app/[slug]/_chat-page.tsx
+// Ativa — o cliente escolhe entre "Etapas clássico" e "Chatbot IA" no passo `mode_select`.
+// Recebe nome/telefone por prop para não perguntar de novo o que o cliente já informou.
