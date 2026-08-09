@@ -14,7 +14,7 @@ export default function PrivacidadePage() {
             Politica de Privacidade
           </h1>
           <p className="text-sm text-gray-500">
-            Ultima atualizacao: 18 de maio de 2026
+            Ultima atualizacao: 20 de maio de 2026
           </p>
         </header>
 
@@ -24,20 +24,56 @@ export default function PrivacidadePage() {
           </h2>
           <p>
             O <strong className="text-white">BarberPro</strong> e uma plataforma
-            de agendamento online para barbearias, disponivel como aplicativo
-            mobile e site. O responsavel pelo tratamento dos dados e Elias
-            Henrique Dias Godoy, inscrito no CPF sob o numero informado ao
-            titular mediante solicitacao.
+            de agendamento online para barbearias, disponivel como site (web) e
+            aplicativo mobile. A plataforma e desenvolvida e operada por Elias
+            Henrique Dias Godoy, que se identifica ao titular mediante
+            solicitacao pelos canais da secao 11.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            2. Dados que coletamos
+            2. Quem responde por quais dados
+          </h2>
+          <p>
+            A LGPD separa dois papeis. No BarberPro eles funcionam assim:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              <strong className="text-gray-200">A barbearia e a controladora</strong>{" "}
+              dos dados dos clientes dela. E a barbearia que decide atender aquele
+              cliente, quais anotacoes registra e por quanto tempo mantem o
+              historico.
+            </li>
+            <li>
+              <strong className="text-gray-200">O BarberPro e o operador:</strong>{" "}
+              tratamos esses dados em nome da barbearia, apenas para fazer a
+              plataforma funcionar (agendar, notificar, gerar relatorio). Nao
+              usamos os dados dos clientes de uma barbearia para nenhuma outra
+              finalidade.
+            </li>
+            <li>
+              <strong className="text-gray-200">
+                Quanto aos dados da propria conta
+              </strong>{" "}
+              do dono ou barbeiro (nome, telefone, senha), o BarberPro atua como
+              controlador.
+            </li>
+          </ul>
+          <p>
+            Na pratica: se voce e cliente de uma barbearia e quer apagar seus
+            dados, pode falar diretamente com a barbearia (que consegue excluir
+            pelo painel) ou conosco pelos canais da secao 11.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">
+            3. Dados que coletamos
           </h2>
 
           <h3 className="text-lg font-medium text-gray-200">
-            2.1 Dados do barbeiro/dono (usuario cadastrado)
+            3.1 Dados do barbeiro/dono (usuario cadastrado)
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Nome completo</li>
@@ -48,7 +84,7 @@ export default function PrivacidadePage() {
           </ul>
 
           <h3 className="text-lg font-medium text-gray-200">
-            2.2 Dados do cliente (quem agenda)
+            3.2 Dados do cliente (quem agenda)
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Nome</li>
@@ -59,7 +95,7 @@ export default function PrivacidadePage() {
           </ul>
 
           <h3 className="text-lg font-medium text-gray-200">
-            2.3 Dados coletados automaticamente
+            3.3 Dados coletados automaticamente
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Endereco IP (logs do servidor)</li>
@@ -70,7 +106,7 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            3. Finalidade do tratamento
+            4. Finalidade do tratamento
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>
@@ -95,7 +131,7 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            4. Base legal (LGPD)
+            5. Base legal (LGPD)
           </h2>
           <p>
             O tratamento dos dados pessoais se fundamenta nas seguintes bases
@@ -125,7 +161,7 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            5. Compartilhamento de dados
+            6. Compartilhamento de dados
           </h2>
           <p>Seus dados podem ser compartilhados com:</p>
           <ul className="list-disc pl-6 space-y-1">
@@ -156,27 +192,39 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            6. Retencao dos dados
+            7. Retencao dos dados
           </h2>
-          <ul className="list-disc pl-6 space-y-1">
+          <ul className="list-disc pl-6 space-y-2">
             <li>
-              Dados de conta: mantidos enquanto a conta estiver ativa. Apos
-              exclusao, removidos em ate 30 dias.
+              <strong className="text-gray-200">Dados de conta:</strong> mantidos
+              enquanto a conta estiver ativa. Ao excluir a conta, os dados sao
+              removidos <strong className="text-gray-200">imediatamente</strong> do
+              banco de dados.
             </li>
             <li>
-              Historico de agendamentos: mantido por 5 anos para fins fiscais e
-              de auditoria.
+              <strong className="text-gray-200">Dados de cliente da barbearia:</strong>{" "}
+              mantidos enquanto a barbearia mantiver o relacionamento. A barbearia
+              pode excluir os dados de um cliente a qualquer momento pelo painel, e
+              a remocao e imediata.
             </li>
             <li>
-              Logs de acesso: mantidos por 6 meses conforme Marco Civil da
-              Internet.
+              <strong className="text-gray-200">Copias de seguranca (backup):</strong>{" "}
+              o banco de dados possui backup automatico do provedor de hospedagem.
+              Um dado excluido pode permanecer em backup por ate 7 dias ate o ciclo
+              ser sobrescrito. Backups sao usados apenas para recuperacao de
+              desastre, nunca para consulta.
+            </li>
+            <li>
+              <strong className="text-gray-200">Registros de acesso:</strong>{" "}
+              mantidos pelo periodo de retencao dos nossos provedores de
+              infraestrutura, utilizados apenas para seguranca e diagnostico.
             </li>
           </ul>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            7. Seus direitos (LGPD Art. 18)
+            8. Seus direitos (LGPD Art. 18)
           </h2>
           <p>Voce tem direito a:</p>
           <ul className="list-disc pl-6 space-y-1">
@@ -193,20 +241,35 @@ export default function PrivacidadePage() {
               diretamente pelo app ou painel web
             </li>
           </ul>
-          <p>
-            Para exercer seus direitos, entre em contato pelo e-mail:{" "}
-            <a
-              href="mailto:contato@barberpro.com.br"
-              className="text-brand-400 underline"
-            >
-              contato@barberpro.com.br
-            </a>
+
+          <h3 className="text-lg font-medium text-gray-200">
+            Como exercer seus direitos
+          </h3>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              <strong className="text-gray-200">
+                Se voce e dono de barbearia ou barbeiro:
+              </strong>{" "}
+              use a opcao de excluir conta no painel, ou fale conosco pelos canais
+              da secao 12.
+            </li>
+            <li>
+              <strong className="text-gray-200">
+                Se voce e cliente de uma barbearia:
+              </strong>{" "}
+              peca diretamente a barbearia onde voce se atende — ela consegue
+              excluir seus dados pelo painel dela na hora. Se preferir, fale
+              conosco e encaminhamos o pedido.
+            </li>
+          </ul>
+          <p className="text-sm text-gray-400">
+            Respondemos as solicitacoes em ate 15 dias.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            8. Seguranca
+            9. Seguranca
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>Senhas armazenadas com bcrypt (12 rounds de salt)</li>
@@ -220,7 +283,7 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            9. Cookies
+            10. Cookies
           </h2>
           <p>
             O BarberPro nao utiliza cookies de rastreamento. Utilizamos apenas
@@ -231,7 +294,7 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            10. Alteracoes nesta politica
+            11. Alteracoes nesta politica
           </h2>
           <p>
             Esta politica pode ser atualizada periodicamente. Alteracoes
@@ -242,23 +305,26 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            11. Contato
+            12. Contato
           </h2>
           <p>
-            Para duvidas, solicitacoes ou reclamacoes relacionadas a
-            privacidade:
+            Para duvidas, solicitacoes ou reclamacoes relacionadas a privacidade,
+            fale com o encarregado pelo tratamento de dados:
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              E-mail:{" "}
+              <strong className="text-gray-200">WhatsApp:</strong>{" "}
               <a
-                href="mailto:contato@barberpro.com.br"
+                href="https://wa.me/5515997767794"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-brand-400 underline"
               >
-                contato@barberpro.com.br
-              </a>
+                (15) 99776-7794
+              </a>{" "}
+              — canal principal, com resposta mais rapida
             </li>
-            <li>Responsavel: Elias Henrique Dias Godoy</li>
+            <li>Encarregado (DPO): Elias Henrique Dias Godoy</li>
           </ul>
         </section>
 

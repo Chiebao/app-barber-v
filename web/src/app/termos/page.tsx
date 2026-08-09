@@ -14,7 +14,7 @@ export default function TermosPage() {
             Termos de Uso
           </h1>
           <p className="text-sm text-gray-500">
-            Ultima atualizacao: 18 de maio de 2026
+            Ultima atualizacao: 20 de maio de 2026
           </p>
         </header>
 
@@ -124,7 +124,77 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            6. Propriedade intelectual
+            6. Planos, assinatura e cancelamento
+          </h2>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              O BarberPro e oferecido as barbearias mediante{" "}
+              <strong className="text-gray-200">assinatura</strong>, em planos com
+              periodicidade mensal, semestral ou anual. Os valores e o que cada
+              plano inclui sao apresentados no momento da contratacao.
+            </li>
+            <li>
+              A assinatura da direito ao uso da plataforma durante a vigencia
+              contratada, incluindo atualizacoes e correcoes lancadas no periodo.
+            </li>
+            <li>
+              <strong className="text-gray-200">Cancelamento:</strong> voce pode
+              cancelar quando quiser. O acesso permanece ativo ate o fim do periodo
+              ja pago e nao ha multa por cancelamento.
+            </li>
+            <li>
+              <strong className="text-gray-200">Reajuste:</strong> mudancas de preco
+              nao afetam o periodo ja contratado e serao comunicadas com pelo menos
+              30 dias de antecedencia antes da renovacao.
+            </li>
+            <li>
+              <strong className="text-gray-200">Falta de pagamento:</strong> em caso
+              de inadimplencia, o acesso ao painel pode ser suspenso apos aviso
+              previo. Seus dados sao preservados por 60 dias para eventual
+              reativacao ou exportacao.
+            </li>
+            <li>
+              Periodos de teste ou uso gratuito, quando oferecidos, sao informados
+              expressamente e nao geram obrigacao de contratacao.
+            </li>
+          </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">
+            7. Dados dos clientes da barbearia
+          </h2>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              Os dados dos clientes atendidos pela barbearia pertencem a relacao
+              entre a barbearia e o cliente dela. Nos termos da LGPD, a{" "}
+              <strong className="text-gray-200">barbearia e a controladora</strong>{" "}
+              desses dados e o <strong className="text-gray-200">BarberPro e o
+              operador</strong>, tratando-os apenas para operar a plataforma.
+            </li>
+            <li>
+              A barbearia se compromete a coletar e usar os dados dos seus clientes
+              de forma licita, informando-os quando necessario e atendendo pedidos
+              de exclusao — o painel permite excluir os dados de um cliente a
+              qualquer momento.
+            </li>
+            <li>
+              O BarberPro nao comercializa, cede ou usa os dados de clientes de uma
+              barbearia para qualquer finalidade alheia a prestacao do servico.
+            </li>
+            <li>
+              Detalhes completos na{" "}
+              <a href="/privacidade" className="text-brand-400 underline">
+                Politica de Privacidade
+              </a>
+              .
+            </li>
+          </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">
+            8. Propriedade intelectual
           </h2>
           <p>
             O BarberPro, incluindo seu codigo-fonte, design, logotipo, textos e
@@ -139,7 +209,7 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            7. Disponibilidade do servico
+            9. Disponibilidade do servico
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
@@ -159,7 +229,7 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            8. Limitacao de responsabilidade
+            10. Limitacao de responsabilidade
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
@@ -183,7 +253,7 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            9. Rescisao
+            11. Rescisao
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
@@ -206,7 +276,7 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            10. Alteracoes nos termos
+            12. Alteracoes nos termos
           </h2>
           <p>
             Estes termos podem ser atualizados a qualquer momento. Alteracoes
@@ -217,7 +287,7 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            11. Legislacao aplicavel
+            13. Legislacao aplicavel
           </h2>
           <p>
             Estes termos sao regidos pelas leis da Republica Federativa do
@@ -228,18 +298,21 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            12. Contato
+            14. Contato
           </h2>
-          <p>Para duvidas sobre estes termos:</p>
+          <p>Para duvidas sobre estes termos ou sobre sua assinatura:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              E-mail:{" "}
+              <strong className="text-gray-200">WhatsApp:</strong>{" "}
               <a
-                href="mailto:contato@barberpro.com.br"
+                href="https://wa.me/5515997767794"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-brand-400 underline"
               >
-                contato@barberpro.com.br
-              </a>
+                (15) 99776-7794
+              </a>{" "}
+              — canal principal de atendimento
             </li>
             <li>Responsavel: Elias Henrique Dias Godoy</li>
           </ul>
