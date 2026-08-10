@@ -158,6 +158,25 @@ export default function PainelPage() {
     if (!t) { router.replace("/admin"); return; }
     setToken(t);
     if (u) { try { setUser(JSON.parse(u)); } catch {} }
+
+    // Sessão deslizante: renova o prazo sempre que o app é aberto, para o
+    // barbeiro não ser deslogado do nada. No máximo 1x a cada 6h.
+    (() => {
+      const LAST = "admin_token_renewed_at";
+      const SIX_HOURS = 6 * 60 * 60 * 1000;
+      const last = Number(localStorage.getItem(LAST) || 0);
+      if (Date.now() - last < SIX_HOURS) return;
+      fetch("/api/auth/refresh", { method: "POST", headers: { Authorization: `Bearer ${t}` } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d?.token) {
+            localStorage.setItem("admin_token", d.token);
+            localStorage.setItem(LAST, String(Date.now()));
+            setToken(d.token);
+          }
+        })
+        .catch(() => { /* renovação é best-effort; o token atual segue valendo */ });
+    })();
     fetch("/api/me/shop", { headers: { Authorization: `Bearer ${t}` } })
       .then(r => r.json())
       .then(data => {
@@ -187,6 +206,7 @@ export default function PainelPage() {
   const handleUnauthorized = useCallback(() => {
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
+    localStorage.removeItem("admin_token_renewed_at");
     toast.info("Sua sessão expirou. Faça login novamente.");
     router.replace("/admin");
   }, [router]);
@@ -542,7 +562,7 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao alterar senha"); } finally { setChangingPassword(false); }
   };
 
-  const handleLogout = () => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); router.push("/admin"); };
+  const handleLogout = () => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); localStorage.removeItem("admin_token_renewed_at"); router.push("/admin"); };
 
   const isAppointmentPast = (dateStr: string, startTime: string) => {
     const [h, m] = startTime.split(":").map(Number);
