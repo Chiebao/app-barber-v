@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num, money, multiplyMoney } from "@/app/lib/money";
+import { isPendingExpired } from "@/app/lib/pending-deadline";
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,9 +36,14 @@ export async function GET(req: NextRequest) {
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
 
+    const now = new Date();
+
     return NextResponse.json({
       appointments: appointments.map(a => ({
         id: a.id,
+        // Pré-agendamento por Pix: prazo e se já venceu (barbeiro resolve na mão)
+        pendingExpiresAt: a.pendingExpiresAt,
+        pendingExpired: isPendingExpired(a.status, a.pendingExpiresAt, now),
         date: a.date.toISOString().split("T")[0],
         startTime: a.startTime,
         endTime: a.endTime,

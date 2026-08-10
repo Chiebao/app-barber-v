@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { generateTimeSlots } from "@/app/lib/time-slots";
+import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   try {
@@ -20,10 +21,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     const startOfDay = new Date(date + "T00:00:00");
     const endOfDay = new Date(date + "T23:59:59");
 
+    // Pré-agendamentos vencidos não ocupam mais o horário
     const where: Record<string, unknown> = {
       shopId: shop.id,
       date: { gte: startOfDay, lte: endOfDay },
-      status: { not: "cancelled" },
+      ...occupiesSlotWhere(),
     };
     if (barberId) where.barberId = barberId;
 

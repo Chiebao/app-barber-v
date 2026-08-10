@@ -373,8 +373,17 @@ export default function BarberPage() {
       if (res.ok) {
         setBookingResult(data.appointment);
         setStep("pix_sent");
+      } else if (res.status === 409) {
+        // Alguém pegou o horário enquanto o cliente pagava
+        toast.error(data.error || "Esse horário acabou de ser ocupado.");
+        setBookError(data.error || "Esse horário acabou de ser ocupado.");
+        setPixKey(null);
+        setStep("time");
+        if (selectedDate) handleSelectDate(selectedDate);
+      } else {
+        toast.error(data.error || "Erro ao registrar. Tente novamente.");
       }
-    } catch { /* ignore */ }
+    } catch { toast.error("Erro de conexão. Tente novamente."); }
     setPixSending(false);
   };
 
@@ -1015,8 +1024,17 @@ export default function BarberPage() {
               <div className="text-6xl mb-4">⏳</div>
               <h2 className="text-2xl font-bold text-yellow-400">Aguardando confirmação</h2>
               <p className="text-gray-400 mt-2">
-                Seu agendamento foi registrado e o barbeiro foi notificado. Assim que o comprovante for verificado, o agendamento será confirmado.
+                Seu agendamento foi registrado e o barbeiro foi avisado. Assim que ele confirmar o Pix, seu horário está garantido.
               </p>
+              <div className="mt-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 px-4 py-3 text-left flex items-start gap-3">
+                <span className="text-lg mt-0.5">⏳</span>
+                <p className="text-sm text-yellow-300 leading-snug">
+                  O horário fica reservado para você enquanto o barbeiro confirma.
+                  <span className="block text-yellow-200/70 text-xs mt-1">
+                    Se ele não confirmar em até 6 horas de expediente, o horário volta a ficar disponível — nesse caso, fale com a barbearia.
+                  </span>
+                </p>
+              </div>
             </div>
             {bookingResult && (
               <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 text-left space-y-2">

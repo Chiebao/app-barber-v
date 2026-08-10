@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { num, sumMoney } from "@/app/lib/money";
+import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
@@ -62,17 +63,20 @@ export async function POST(req: NextRequest) {
     try {
       appointment = await prisma.$transaction(
         async (tx) => {
+          // Pré-agendamentos vencidos não seguram mais o horário
           const conflicts = await tx.appointment.findMany({
             where: {
               barberId: data.barberId,
               date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
-              status: { notIn: ["cancelled", "no_show"] },
+              ...occupiesSlotWhere(),
             },
             select: { startTime: true, endTime: true },
           });
 
           const hasConflict = conflicts.some((apt) => data.startTime < apt.endTime && endTime > apt.startTime);
           if (hasConflict) throw new Error("SLOT_CONFLICT");
+
+          const isPending = needsPix && data.pendingPayment;
 
           return tx.appointment.create({
             data: {
@@ -84,7 +88,15 @@ export async function POST(req: NextRequest) {
               endTime,
               totalDuration,
               totalPrice,
-              status: needsPix && data.pendingPayment ? "pending_payment" : "confirmed",
+              status: isPending ? "pending_payment" : "confirmed",
+              // Prazo do Pix: 6h de barbearia aberta, nunca depois da hora do corte
+              pendingExpiresAt: isPending
+                ? computePendingDeadline(
+                    new Date(),
+                    { openTime: shop.openTime, closeTime: shop.closeTime, workDays: shop.workDays },
+                    appointmentStartUtc(dateObj, data.startTime),
+                  )
+                : null,
               services: { create: data.serviceIds.map((serviceId) => ({ serviceId })) },
             },
             include: { services: { include: { service: true } } },
@@ -96,6 +108,13 @@ export async function POST(req: NextRequest) {
       // Conflito de horario (checagem manual OU serialization failure do Postgres)
       const msg = txError instanceof Error ? txError.message : "";
       if (msg === "SLOT_CONFLICT" || msg.includes("could not serialize") || (txError as { code?: string })?.code === "P2034") {
+        // Cliente estava pagando o Pix e o horário foi preenchido nesse meio-tempo
+        if (data.pendingPayment) {
+          return NextResponse.json({
+            error: "Esse horário foi preenchido enquanto você fazia o pagamento. Se você já enviou o Pix, fale com a barbearia — eles vão te reagendar ou devolver o valor.",
+            slotTaken: true,
+          }, { status: 409 });
+        }
         return NextResponse.json({ error: "Horario ja ocupado" }, { status: 409 });
       }
       throw txError;
@@ -116,7 +135,11 @@ export async function POST(req: NextRequest) {
     }).catch(console.error);
 
     // Envia push notification ao barbeiro (Expo Push API)
-    const pushBody = `${data.clientName} — ${serviceNames} às ${data.startTime}`;
+    const isPendingPix = needsPix && data.pendingPayment;
+    const pushTitle = isPendingPix ? "Pix declarado — confirme 💰" : "Novo agendamento! 💈";
+    const pushBody = isPendingPix
+      ? `${data.clientName} informou que pagou o Pix de ${serviceNames} às ${data.startTime}. Confirme no painel.`
+      : `${data.clientName} — ${serviceNames} às ${data.startTime}`;
     const pushToken = (barber as Record<string, unknown>).pushToken as string | null;
     const pushTargets: string[] = [];
     if (pushToken && pushToken.startsWith("ExponentPushToken")) pushTargets.push(pushToken);
@@ -138,7 +161,7 @@ export async function POST(req: NextRequest) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pushTargets.map((to) => ({
           to,
-          title: "Novo agendamento! 💈",
+          title: pushTitle,
           body: pushBody,
           sound: "default",
         }))),

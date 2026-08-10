@@ -23,6 +23,7 @@ interface Appointment {
   id: string; startTime: string; endTime: string; date: string;
   status: string; paidAt: string | null; paymentMethod: string | null;
   totalPrice: number; barberName: string;
+  pendingExpiresAt?: string | null; pendingExpired?: boolean;
   client: { id: string; name: string; phone: string; noShowCount: number; notes: string | null };
   services: AppointmentService[];
 }
@@ -54,6 +55,18 @@ const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
 type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos";
+
+/** "faltam 3h20" / "faltam 45min" a partir de um prazo ISO. */
+function timeLeftLabel(iso?: string | null): string {
+  if (!iso) return "";
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return "";
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `faltam ${h}h${m > 0 ? String(m).padStart(2, "0") : ""}`;
+  return `faltam ${m}min`;
+}
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -325,11 +338,14 @@ export default function PainelPage() {
   };
 
   const confirmPixPayment = async (id: string) => {
-    if (!confirm("Confirmar pagamento via Pix?")) return;
+    if (!confirm("Confirmar que o Pix caiu na conta?")) return;
     try {
-      await fetch(`/api/appointments/${id}/confirm-payment`, { method: "PATCH", headers: authHeaders() });
-      toast.success("Pagamento confirmado");
-      fetchAppointments();
+      const res = await fetch(`/api/appointments/${id}/confirm-payment`, { method: "PATCH", headers: authHeaders() });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Pix confirmado — agendamento garantido"); fetchAppointments(); return; }
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error || "Erro ao confirmar");
+      if (d.slotTaken) fetchAppointments();
     } catch { toast.error("Erro ao confirmar"); }
   };
 
@@ -793,15 +809,32 @@ export default function PainelPage() {
                               <p className="text-sm text-gray-400">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
                               <p className="text-xs text-gray-500">{appt.client?.phone}</p>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[appt.status] || STATUS_COLORS.pending}`}>{STATUS_LABELS[appt.status] || appt.status}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${appt.pendingExpired ? "bg-gray-500/20 text-gray-400 border border-gray-600" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>
                           </div>
 
-                          {/* Pending Pix */}
+                          {/* Pré-agendamento por Pix: dentro do prazo ou expirado */}
                           {isPendingPix && (
-                            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 space-y-2">
-                              <p className="text-sm text-orange-400">⏳ Aguardando confirmacao do Pix</p>
-                              <button onClick={() => confirmPixPayment(appt.id)} className="w-full rounded-lg bg-orange-500 py-2 text-sm font-semibold text-dark-900 hover:bg-orange-400 transition">✓ Confirmar Pix</button>
-                            </div>
+                            appt.pendingExpired ? (
+                              <div className="bg-gray-500/10 border border-gray-600 rounded-lg p-3 space-y-2">
+                                <p className="text-sm text-gray-300">⌛ Prazo do Pix expirou — o horário foi liberado</p>
+                                <p className="text-xs text-gray-500">O cliente tentou agendar mas o pagamento não foi confirmado a tempo. Se o Pix caiu depois, você ainda pode confirmar (se o horário continuar livre).</p>
+                                <div className="flex gap-2">
+                                  <button onClick={() => confirmPixPayment(appt.id)} className="flex-1 rounded-lg border border-gray-600 py-2 text-sm text-gray-300 hover:text-white hover:border-gray-500 transition">✓ Confirmar mesmo assim</button>
+                                  <button onClick={() => remindClient(appt)} className="flex-1 rounded-lg border border-green-500/30 py-2 text-sm text-green-400 hover:bg-green-500/10 transition">💬 Falar com o cliente</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm text-orange-400">⏳ Cliente informou que pagou — confirme o Pix</p>
+                                  {timeLeftLabel(appt.pendingExpiresAt) && (
+                                    <span className="text-xs text-orange-300/80 shrink-0 whitespace-nowrap">{timeLeftLabel(appt.pendingExpiresAt)}</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-400">Se não confirmar dentro do prazo, o horário volta a ficar livre para outros clientes.</p>
+                                <button onClick={() => confirmPixPayment(appt.id)} className="w-full rounded-lg bg-orange-500 py-2 text-sm font-semibold text-dark-900 hover:bg-orange-400 transition">✓ Confirmar Pix</button>
+                              </div>
+                            )
                           )}
 
                           {/* Action buttons: Cancel + No Show / Lembrar */}

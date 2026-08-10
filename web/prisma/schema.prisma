@@ -140,6 +140,9 @@ model Appointment {
   paidAt               DateTime?
   deferredPaymentDate  DateTime?
   reminderSentAt  DateTime?
+  // Pré-agendamento (Pix declarado, aguardando o barbeiro confirmar):
+  // vence após 6h de barbearia aberta, nunca depois da hora do corte.
+  pendingExpiresAt DateTime?
   cancelledAt     DateTime?
   cancelledBy     String?   // "client" | "barber" | "owner"
   pixRequested    Boolean   @default(false)
