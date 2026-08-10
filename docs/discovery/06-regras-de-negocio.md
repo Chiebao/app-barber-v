@@ -108,24 +108,34 @@
 
 ---
 
-## Regras DESEJADAS (definidas pelo negócio, ainda NÃO no código)
+## Pré-pagamento Pix, LGPD e notificações (B15, B16, B17, Web Push)
 
-> Fonte: respostas P6/P9 do Elias. Marcadas para não confundir com o que já roda.
-> Viram backlog (B15, B16, B17).
+> Origem: respostas P6/P8/P9 do Elias.
 
-- **RN-D01 — Pré-agendamento expira em 12h.** Um agendamento `pending_payment` sem confirmação
-  do barbeiro em 12h deve **sumir** e liberar o horário. *Hoje:* fica `pending_payment`
-  indefinidamente. `[DESEJADA — P6; B15]`
-- **RN-D02 — Cliente comum tem preferência sobre a lista negra no mesmo horário.** O
-  `pending_payment` (cliente com 2+ faltas) deve ser **provisório e cedível**: se um cliente
-  comum marca o mesmo horário, ele ganha; o da lista negra recebe "horário não disponível" ao
-  tentar pagar. *Hoje:* o `pending_payment` **bloqueia** o slot para todos (lógica inversa).
-  `[DESEJADA — P6; B16]` ⚠️ *Requer inverter RN-001/RN-012 para esse status.*
-- **RN-D03 — Aviso ao barbeiro de "cliente diz que pagou".** Loop explícito: cliente sinaliza
-  pagamento → barbeiro é notificado para confirmar. *Hoje:* só há aviso no ato do agendamento.
-  `[DESEJADA — P6]`
-- **RN-D04 — Exclusão de dados do cliente (LGPD).** O dono pode apagar um cliente e todo o seu
-  histórico (direito ao esquecimento). *Hoje:* não existe. `[DESEJADA — P9; B17]`
-- **RN-D05 — Verificação antes de exibir agendamentos do cliente.** A página
-  `/{slug}/meus-agendamentos` deve exigir um código (ex.: WhatsApp) antes de listar, para não
-  expor dados por telefone. *Hoje:* lista só com o telefone, sem verificação. `[DESEJADA — P8; B2]`
+> ✅ **Todas implementadas em 20/05/2026.** Ficam registradas abaixo com o número definitivo.
+
+- **RN-047 — Pré-agendamento expira em 6 horas de barbearia ABERTA.** O relógio só corre no
+  expediente: pré-agendou 22h → começa a contar na próxima abertura. Assim o barbeiro sempre
+  tem um turno inteiro para confirmar, em vez de o prazo morrer de madrugada.
+  `[pending-deadline.ts; B15]`
+- **RN-048 — O prazo nunca passa da hora do corte.** `deadline = min(6h úteis, início do corte)`.
+  `[pending-deadline.ts (capAtAppointment)]`
+- **RN-049 — Pré-agendamento vencido não ocupa mais o horário.** Vale na checagem de conflito
+  do booking e na geração de slots — o horário volta para qualquer cliente. `[occupiesSlotWhere]`
+- **RN-050 — Quem declarou o Pix fica protegido durante o prazo.** Enquanto vigente, o
+  `pending_payment` segura a vaga (decisão do negócio: não passar para trás quem já pagou).
+  Antes de declarar o pagamento, nada é reservado — aí o cliente comum leva o horário.
+  `[decisão P6-1a]`
+- **RN-051 — Confirmação tardia só vale se o horário continuar livre.** O barbeiro pode
+  confirmar um Pix vencido, mas o sistema checa conflito antes e devolve 409 se a vaga já foi
+  ocupada. `[confirm-payment/route.ts]`
+- **RN-052 — Aviso ao barbeiro quando o cliente declara o Pix.** Push/WhatsApp com texto próprio
+  ("Pix declarado — confirme"), distinto do aviso de agendamento normal. `[appointments/route.ts]`
+- **RN-053 — Exclusão de dados do cliente (LGPD).** O dono apaga cliente e histórico, escopado
+  à barbearia. `[me/clients/[id] DELETE; B17]`
+- **RN-054 — Verificação por nome + telefone em "Meus agendamentos".** A lista só sai quando o
+  nome confere. `[appointments GET; B2]`
+- **RN-055 — Notificação no navegador (Web Push).** Barbeiro/dono recebem aviso de novo
+  agendamento, Pix declarado e cancelamento com o app fechado. Uma inscrição por aparelho;
+  inscrições mortas são removidas sozinhas. No iPhone exige iOS 16.4+ com o PWA instalado.
+  `[lib/webpush.ts, sw.js, me/push-subscription]`

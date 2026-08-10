@@ -162,8 +162,8 @@
       <span class="hint">o que precisa acontecer antes de vender</span>
     </div>
     <div class="card launch">
-      <div class="prog"><i style="width:96%"></i></div>
-      <div class="prog-cap"><span>Progresso do lançamento</span><span>pronto para o piloto — próximo passo é uso real</span></div>
+      <div class="prog"><i style="width:100%"></i></div>
+      <div class="prog-cap"><span>Progresso do lançamento</span><span>tudo entregue — próximo passo é uso real com o barbeiro</span></div>
 
       <div class="task">
         <span class="chk ok" aria-hidden="true">✓</span>
@@ -201,9 +201,14 @@
         <div class="td"><strong>Manual durante o piloto</strong> (botão 🔔 no painel). O automático por SMS entra depois dos testes com o barbeiro — a meta é o app 100% automático, sem depender da memória de ninguém.</div></div>
       </div>
       <div class="task">
-        <span class="chk" aria-hidden="true"></span>
-        <div><div class="tt">Regras do pré-pagamento Pix (opcional no piloto) <span class="tag">B15 · B16</span></div>
-        <div class="td">Pré-agendado expira em 12h; cliente comum tem preferência sobre a lista negra. Só se o amigo barbeiro considerar essencial agora.</div></div>
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Regras do pré-pagamento Pix <span class="tag">B15 · B16</span></div>
+        <div class="td">Pré-agendado vence em <strong>6 horas de barbearia aberta</strong> (o relógio pausa quando fecha, então nada morre de madrugada) e nunca passa da hora do corte. Vencido, o horário volta para qualquer cliente. Barbeiro vê o tempo restante e o estado "Pix expirado".</div></div>
+      </div>
+      <div class="task">
+        <span class="chk ok" aria-hidden="true">✓</span>
+        <div><div class="tt" style="color:var(--ok)">Notificações no PWA (Web Push)</div>
+        <div class="td">O barbeiro é avisado de novo agendamento, Pix declarado e cancelamento <strong>mesmo com o app fechado</strong> — custo R$ 0. No iPhone exige instalar na tela de início.</div></div>
       </div>
     </div>
     <div class="legend" aria-hidden="true">
@@ -247,6 +252,7 @@
         <div class="htitle"><span class="badge" style="background:var(--info)"></span>Depois</div>
         <div class="when">3+ meses — expansão</div>
         <div class="item"><span>Reserva de vaga (waitlist)</span><span class="rice">2.4</span></div>
+        <div class="item"><span>Analytics de conversão</span><span class="rice">4.8</span></div>
         <div class="item"><span>Relatório de comissões</span><span class="rice">3.5</span></div>
         <div class="item"><span>Multi-barbearia por dono</span><span class="code">—</span></div>
         <div class="item"><span>Agenda semanal visual</span><span class="code">—</span></div>
@@ -339,7 +345,7 @@
 
   <footer>
     <span>BarberPro · Painel do Product Owner</span>
-    <span>v5 — pronto para o piloto: LGPD, dinheiro exato, textos legais, chat sem repetir dados · documento vivo</span>
+    <span>v6 — regras do Pix (6h úteis) e notificações no PWA entregues · pronto para o piloto · documento vivo</span>
   </footer>
 </div>
 
