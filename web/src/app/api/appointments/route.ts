@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { num, sumMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
+import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
@@ -154,6 +155,16 @@ export async function POST(req: NextRequest) {
         pushTargets.push(ownerBarber.pushToken);
       }
     }
+
+    // Notificação no navegador (PWA) — chega mesmo com o app fechado
+    notifyTargets(data.shopId, data.barberId)
+      .then((ids) => sendWebPush(ids, {
+        title: pushTitle,
+        body: pushBody,
+        url: "/admin/painel",
+        tag: isPendingPix ? "pix-declarado" : "novo-agendamento",
+      }))
+      .catch(console.error);
 
     if (pushTargets.length > 0) {
       fetch("https://exp.host/--/api/v2/push/send", {

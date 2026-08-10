@@ -64,13 +64,31 @@ model Barber {
   commission      Float    @default(0)       // % comissão sobre serviços (ex: 10 = 10%)
   createdAt       DateTime @default(now())
 
-  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
-  blockedSlots BlockedSlot[]
-  waitlist     Waitlist[]
+  shop          Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments  Appointment[]
+  blockedSlots  BlockedSlot[]
+  waitlist      Waitlist[]
+  pushSubs      PushSubscription[]
 
   @@unique([shopId, phone])
   @@map("barbers")
+}
+
+// Inscricoes de notificacao do navegador (Web Push) — PWA do barbeiro/dono.
+// Um registro por aparelho, para o mesmo barbeiro receber no celular e no PC.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  barberId  String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId])
+  @@map("push_subscriptions")
 }
 
 // Servicos da barbearia

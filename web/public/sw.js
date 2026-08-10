@@ -1,4 +1,4 @@
-const CACHE_NAME = "barberpro-v2";
+const CACHE_NAME = "barberpro-v3";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon-192.png",
@@ -20,6 +20,50 @@ self.addEventListener("activate", (event) => {
     )
   );
   self.clients.claim();
+});
+
+/* ── Notificações (Web Push) ─────────────────────────────────────────
+   Chega mesmo com o app fechado. No iPhone exige iOS 16.4+ e o PWA
+   instalado na tela de início. */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: "BarberPro", body: event.data ? event.data.text() : "" };
+  }
+
+  const title = data.title || "BarberPro";
+  const options = {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: data.tag || "barberpro",
+    renotify: true,
+    data: { url: data.url || "/admin/painel" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Tocar na notificação: foca a janela já aberta ou abre o painel
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/admin/painel";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url.includes(target) && "focus" in client) return client.focus();
+      }
+      for (const client of list) {
+        if ("navigate" in client && "focus" in client) {
+          return client.navigate(target).then((c) => (c ? c.focus() : undefined));
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })
+  );
 });
 
 self.addEventListener("fetch", (event) => {

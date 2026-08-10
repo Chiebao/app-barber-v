@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
+import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -60,6 +61,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
       // Push notification ao barbeiro + owner
       const cancelBody = `${appointment.client.name} cancelou ${serviceNames} às ${appointment.startTime}`;
+
+      // Notificação no navegador (PWA)
+      notifyTargets(appointment.shopId, appointment.barberId)
+        .then((ids) => sendWebPush(ids, {
+          title: "Agendamento cancelado ❌",
+          body: cancelBody,
+          url: "/admin/painel",
+          tag: "cancelamento",
+        }))
+        .catch(console.error);
       const pushTargets: string[] = [];
       if (appointment.barber.pushToken?.startsWith("ExponentPushToken")) pushTargets.push(appointment.barber.pushToken);
 

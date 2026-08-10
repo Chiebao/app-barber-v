@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
+import PushToggle from "./_push-toggle";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -993,6 +994,9 @@ export default function PainelPage() {
                   </button>
                   <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
                 </div>
+
+                {/* Notificações do navegador (Web Push) */}
+                <PushToggle token={token} />
 
                 {/* Logo da barbearia */}
                 {shopSettings && (
