@@ -66,6 +66,30 @@ export async function GET(req: NextRequest) {
     const WHATSAPP_PHONE_ID = envClean("WHATSAPP_PHONE_ID");
     const temCanal = !!(WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID);
 
+    // ?check=1 — diagnostico do canal sem enviar nada a ninguem.
+    // Serve para conferir se o token da Meta esta valido apos configurar.
+    if (new URL(req.url).searchParams.get("check") === "1") {
+      if (!temCanal) {
+        return NextResponse.json({
+          canal: "nao configurado",
+          temToken: !!WHATSAPP_API_TOKEN,
+          temPhoneId: !!WHATSAPP_PHONE_ID,
+        });
+      }
+      const probe = await fetch(
+        `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}?fields=verified_name,display_phone_number,quality_rating`,
+        { headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}` } },
+      );
+      const corpo = await probe.json().catch(() => ({}));
+      return NextResponse.json({
+        canal: probe.ok ? "OK — token valido" : "FALHA",
+        status: probe.status,
+        detalhe: corpo,
+        tokenTamanho: WHATSAPP_API_TOKEN.length,
+        phoneId: WHATSAPP_PHONE_ID,
+      });
+    }
+
     let sent = 0, failedSend = 0, noChannel = 0;
 
     for (const apt of aVencer) {
