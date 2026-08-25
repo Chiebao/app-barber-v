@@ -139,3 +139,25 @@
   agendamento, Pix declarado e cancelamento com o app fechado. Uma inscrição por aparelho;
   inscrições mortas são removidas sozinhas. No iPhone exige iOS 16.4+ com o PWA instalado.
   `[lib/webpush.ts, sw.js, me/push-subscription]`
+
+---
+
+## Recuperacao de senha, inteligencia de agenda e medicao (25/08/2026)
+
+- **RN-056 — Reset de senha por código no WhatsApp.** O usuário informa o telefone, recebe um
+  código de 6 dígitos, digita e cria a senha nova. O código vale 10 minutos, aceita 5 tentativas
+  e é de uso único; pedir outro invalida o anterior. `[auth/forgot, auth/reset; B23]`
+- **RN-057 — A resposta do "esqueci a senha" não revela cadastro.** Telefone existente ou não,
+  a resposta é idêntica — impede descobrir quais números estão na plataforma. `[auth/forgot]`
+- **RN-058 — Código de recuperação criado no cadastro.** Toda conta nasce com um código
+  `BARB-XXXX-XXXX`, mostrado uma única vez na tela de boas-vindas. É o plano B de quem perdeu
+  acesso ao WhatsApp. `[auth/register; correção do furo achado no piloto]`
+- **RN-059 — Ocupação conta minutos, não agendamentos.** Capacidade = dias úteis × expediente ×
+  barbeiros ativos, menos o tempo bloqueado. Só dias já passados entram na conta. `[me/ocupacao; B18]`
+- **RN-060 — Cliente sumido é medido pelo ritmo dele.** Alerta quando passa de 1,5× o próprio
+  intervalo médio e ao menos 20 dias, com no mínimo 2 visitas. Quem tem agendamento futuro é
+  excluído. `[me/clientes-sumidos; B19]`
+- **RN-061 — Medição de uso é anônima.** Só um id de sessão aleatório; visita repetida na mesma
+  sessão não conta duas vezes. Sem cookie, IP ou nome. `[api/track; B9]`
+- **RN-062 — Lembrete dispara a cada 30 minutos.** Cron externo (GitHub Actions) chama o
+  endpoint; `reminderSentAt` impede aviso repetido. `[.github/workflows/lembretes.yml]`
