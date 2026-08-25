@@ -89,19 +89,28 @@ export async function GET(req: NextRequest) {
       );
       const num = await numRes.json().catch(() => ({}));
 
-      // 3) Quais contas de WhatsApp o token alcanca (ajuda a achar o ID certo)
-      const wabaRes = await fetch(
-        "https://graph.facebook.com/v21.0/me/businesses?fields=id,name",
-        { headers: h },
-      );
-      const waba = await wabaRes.json().catch(() => ({}));
+      // 3) O token enxerga a conta do WhatsApp Business? (?waba=ID)
+      // Se o System User nao tiver a WABA vinculada como ativo, falha aqui.
+      const wabaId = new URL(req.url).searchParams.get("waba");
+      let waba: unknown = "informe ?waba=ID para testar";
+      let wabaRes = { ok: false };
+      if (wabaId) {
+        const r = await fetch(
+          `https://graph.facebook.com/v21.0/${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name`,
+          { headers: h },
+        );
+        wabaRes = { ok: r.ok };
+        const corpo = await r.json().catch(() => ({}));
+        waba = r.ok ? corpo : (corpo as { error?: { message?: string } })?.error?.message;
+      }
 
       return NextResponse.json({
         tokenValido: meRes.ok,
         tokenPertenceA: meRes.ok ? me : me?.error?.message,
         numeroAcessivel: numRes.ok,
         numeroDetalhe: numRes.ok ? num : num?.error?.message,
-        negociosVisiveis: wabaRes.ok ? waba : waba?.error?.message,
+        contaWhatsAppAcessivel: wabaRes.ok,
+        numerosDaConta: waba,
         tokenTamanho: WHATSAPP_API_TOKEN.length,
         phoneIdConfigurado: WHATSAPP_PHONE_ID,
         diagnostico: meRes.ok && !numRes.ok
