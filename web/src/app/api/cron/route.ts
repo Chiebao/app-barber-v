@@ -104,7 +104,28 @@ export async function GET(req: NextRequest) {
         waba = r.ok ? corpo : (corpo as { error?: { message?: string } })?.error?.message;
       }
 
+      // ?send=55DDDNUMERO — envia uma mensagem de teste para validar o canal.
+      // Protegido pelo CRON_SECRET, igual ao resto da rota.
+      const destino = new URL(req.url).searchParams.get("send");
+      let envioTeste: unknown = null;
+      if (destino) {
+        const tel = destino.replace(/\D/g, "");
+        const r = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
+          method: "POST",
+          headers: { ...h, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: tel.startsWith("55") ? tel : `55${tel}`,
+            type: "text",
+            text: { body: "BarberPro: teste de canal ✅ Se voce recebeu isso, os lembretes automaticos estao prontos para funcionar." },
+          }),
+        });
+        const corpo = await r.json().catch(() => ({}));
+        envioTeste = { ok: r.ok, status: r.status, resposta: corpo };
+      }
+
       return NextResponse.json({
+        envioTeste,
         tokenValido: meRes.ok,
         tokenPertenceA: meRes.ok ? me : me?.error?.message,
         numeroAcessivel: numRes.ok,
