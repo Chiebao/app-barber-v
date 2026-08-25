@@ -52,21 +52,58 @@ export default function AdminPage() {
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Esqueci senha (fluxo manual via WhatsApp de suporte)
+  // Esqueci senha — self-service com codigo de recuperacao,
+  // com o WhatsApp do suporte como saida caso a pessoa nao tenha o codigo.
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotCode, setForgotCode] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [recovering, setRecovering] = useState(false);
   const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "";
 
-  const handleForgotPassword = () => {
+  const closeForgot = () => {
+    setForgotOpen(false);
+    setForgotPhone(""); setForgotCode(""); setForgotNewPassword("");
+  };
+
+  const handleRecover = async () => {
     const cleanPhone = forgotPhone.replace(/\D/g, "");
     if (cleanPhone.length < 10) { toast.error("Informe seu telefone de cadastro"); return; }
-    if (!SUPPORT_WHATSAPP) { toast.error("Suporte indisponível no momento. Contate a barbearia."); return; }
+    if (forgotCode.trim().length < 6) { toast.error("Informe o código de recuperação"); return; }
+    if (forgotNewPassword.length < 6) { toast.error("A nova senha precisa ter no mínimo 6 caracteres"); return; }
+
+    setRecovering(true);
+    try {
+      const res = await fetch("/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone, code: forgotCode, newPassword: forgotNewPassword }),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        toast.success("Senha alterada! Entre com a nova senha.");
+        setLoginPhone(cleanPhone);
+        setLoginPassword("");
+        closeForgot();
+      } else {
+        toast.error(d.error || "Não foi possível redefinir");
+      }
+    } catch {
+      toast.error("Erro de conexão. Tente novamente.");
+    } finally {
+      setRecovering(false);
+    }
+  };
+
+  const handleAskSupport = () => {
+    const cleanPhone = forgotPhone.replace(/\D/g, "");
+    if (!SUPPORT_WHATSAPP) { toast.error("Suporte indisponível no momento."); return; }
     const msg = encodeURIComponent(
-      `Olá! Esqueci minha senha do BarberPro. Meu telefone de cadastro é ${cleanPhone}. Podem me ajudar a redefinir?`
+      `Olá! Esqueci minha senha do BarberPro e não tenho o código de recuperação.` +
+      (cleanPhone.length >= 10 ? ` Meu telefone de cadastro é ${cleanPhone}.` : "") +
+      ` Podem me ajudar?`
     );
     window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${msg}`, "_blank");
-    setForgotOpen(false);
-    setForgotPhone("");
   };
 
   const toggleDay = (d: number) =>
@@ -207,18 +244,53 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Modal: Esqueci senha */}
+        {/* Modal: Esqueci senha — self-service com código de recuperação */}
         {forgotOpen && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)" }} onClick={() => setForgotOpen(false)}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">Recuperar senha</h3>
-              <p className="text-sm text-gray-400">Informe seu telefone de cadastro. Vamos abrir o WhatsApp do suporte para redefinir sua senha com segurança.</p>
-              <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)} placeholder="Telefone com DDD"
-                className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-              <div className="flex gap-3">
-                <button onClick={() => setForgotOpen(false)} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
-                <button onClick={handleForgotPassword} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-semibold text-white hover:bg-green-600 transition">Abrir WhatsApp</button>
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={closeForgot}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={(e) => e.stopPropagation()}>
+              <div>
+                <h3 className="text-lg font-bold text-white">Criar uma nova senha</h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Use o código de recuperação que você gerou no painel (em Config).
+                </p>
               </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Telefone de cadastro</label>
+                  <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)} placeholder="(00) 00000-0000"
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Código de recuperação</label>
+                  <input type="text" value={forgotCode} onChange={(e) => setForgotCode(e.target.value.toUpperCase())} placeholder="BARB-XXXX-XXXX"
+                    autoCapitalize="characters" spellCheck={false}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 font-mono tracking-wider focus:border-brand-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Nova senha</label>
+                  <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres"
+                    onKeyDown={(e) => { if (e.key === "Enter") handleRecover(); }}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                </div>
+              </div>
+
+              <button onClick={handleRecover} disabled={recovering}
+                className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                {recovering ? "Alterando..." : "Alterar minha senha"}
+              </button>
+
+              <div className="pt-3 border-t border-gray-700 space-y-2">
+                <p className="text-xs text-gray-500 text-center">Não tem o código de recuperação?</p>
+                <button onClick={handleAskSupport}
+                  className="w-full rounded-xl border border-green-500/30 py-2.5 text-sm text-green-400 hover:bg-green-500/10 transition">
+                  Falar com o suporte no WhatsApp
+                </button>
+              </div>
+
+              <button onClick={closeForgot} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
+                Voltar ao login
+              </button>
             </div>
           </div>
         )}

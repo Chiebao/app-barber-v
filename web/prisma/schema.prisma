@@ -14,6 +14,8 @@ model Owner {
   name         String
   phone        String   @unique
   passwordHash String
+  // Codigo de recuperacao (hash) para redefinir a senha sem depender do suporte
+  recoveryCodeHash String?
   createdAt    DateTime @default(now())
 
   shops        Shop[]
@@ -57,6 +59,8 @@ model Barber {
   name         String
   phone        String
   passwordHash String
+  // Codigo de recuperacao (hash) para redefinir a senha sem depender do dono
+  recoveryCodeHash String?
   active          Boolean  @default(true)
   role            String   @default("barber") // "barber" | "owner"
   isOwnerProfile  Boolean  @default(false)    // true = perfil do dono para gerenciar própria agenda

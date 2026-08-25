@@ -7,6 +7,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import PushToggle from "./_push-toggle";
+import RecoveryCode from "./_recovery-code";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -1017,6 +1018,9 @@ export default function PainelPage() {
 
                 {/* Notificações do navegador (Web Push) */}
                 <PushToggle token={token} />
+
+                {/* Código de recuperação de senha */}
+                <RecoveryCode token={token} />
 
                 {/* Logo da barbearia */}
                 {shopSettings && (
