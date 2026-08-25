@@ -95,22 +95,30 @@ export async function PUT(req: NextRequest) {
     const token = await tokenDaBarbearia(payload.shopId);
     if (!token) return NextResponse.json({ error: "Mercado Pago nao conectado" }, { status: 400 });
 
-    const expira = new Date(Date.now() + 60 * 60 * 1000);
-    const corpo = {
-      transaction_amount: 1,
+    // Parametros ajustaveis para isolar qual campo o MP recusa
+    const q = new URL(req.url).searchParams;
+    const valor = Number(q.get("valor") || 1);
+    const minutos = Number(q.get("minutos") || 60);
+    const comNotificacao = q.get("notif") === "1";
+    const base = (process.env.NEXT_PUBLIC_BASE_URL || "https://barberpro-mauve.vercel.app").trim();
+
+    const expira = new Date(Date.now() + minutos * 60 * 1000);
+    const corpo: Record<string, unknown> = {
+      transaction_amount: valor,
       description: "Teste BarberPro",
       payment_method_id: "pix",
       external_reference: `teste-${Date.now()}`,
       date_of_expiration: expira.toISOString(),
       payer: { email: `teste-${Date.now()}@barberpro.app`, first_name: "Teste", last_name: "BarberPro" },
     };
+    if (comNotificacao) corpo.notification_url = `${base}/api/webhooks/mercadopago`;
 
     const r = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-        "X-Idempotency-Key": corpo.external_reference,
+        "X-Idempotency-Key": String(corpo.external_reference),
       },
       body: JSON.stringify(corpo),
     });
