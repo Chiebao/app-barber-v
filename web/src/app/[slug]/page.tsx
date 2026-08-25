@@ -6,6 +6,36 @@ import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import BarberPageChat from "./_chat-page";
 
+/**
+ * Id anonimo da sessao — sobrevive ao recarregar a aba, morre ao fechar.
+ * Nao identifica ninguem, so evita contar a mesma visita duas vezes.
+ */
+function getSessionId(): string {
+  try {
+    const KEY = "bp_sid";
+    let sid = sessionStorage.getItem(KEY);
+    if (!sid) {
+      sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      sessionStorage.setItem(KEY, sid);
+    }
+    return sid;
+  } catch {
+    return "anon";
+  }
+}
+
+/** Registra um evento do funil. Silencioso: nunca atrapalha o agendamento. */
+function track(shopId: string, type: "view" | "book") {
+  try {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopId, type, sessionId: getSessionId() }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* ignore */ }
+}
+
 function applyWebTheme(themeId: string) {
   const p = getPaletteById(themeId);
   const vars = paletteToVars(p);
@@ -140,6 +170,7 @@ export default function BarberPage() {
       })
       .then((data) => {
         setShop(data.shop);
+        if (data.shop?.id) track(data.shop.id, "view");
         // Aplicar tema da barbearia via CSS variables
         if (data.shop?.colorTheme) {
           applyWebTheme(data.shop.colorTheme);
@@ -343,6 +374,7 @@ export default function BarberPage() {
 
       const data = await res.json();
       setBookingResult(data.appointment);
+      if (shop?.id) track(shop.id, "book");
       setStep("done");
     } catch {
       setBookError("Erro ao agendar. Tente novamente.");

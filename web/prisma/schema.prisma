@@ -95,6 +95,21 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
+// Eventos anonimos de uso do link publico — base do funil de conversao.
+// Nao guarda nada que identifique a pessoa: so um id de sessao aleatorio
+// gerado no navegador, que morre quando a aba fecha.
+model ShopEvent {
+  id        String   @id @default(cuid())
+  shopId    String
+  type      String   // "view" = abriu o link | "book" = concluiu o agendamento
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([shopId, createdAt])
+  @@index([shopId, type, sessionId])
+  @@map("shop_events")
+}
+
 // Servicos da barbearia
 model Service {
   id       String  @id @default(cuid())

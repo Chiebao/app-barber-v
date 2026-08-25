@@ -8,6 +8,7 @@ import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import PushToggle from "./_push-toggle";
 import RecoveryCode from "./_recovery-code";
+import Conversao from "./_conversao";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -960,6 +961,9 @@ export default function PainelPage() {
             )}
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}
+            {activeTab === "financeiro" && user?.role === "owner" && (
+              <div className="mb-5"><Conversao token={token} /></div>
+            )}
             {activeTab === "financeiro" && (
               <div className="space-y-5">
                 {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-gray-500 py-10">Nao foi possivel carregar</p> : (
