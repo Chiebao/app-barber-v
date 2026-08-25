@@ -123,6 +123,12 @@ export async function criarCobrancaPix(params: {
     const base = env("NEXT_PUBLIC_BASE_URL") || "https://barberpro-mauve.vercel.app";
     const [primeiro, ...resto] = (params.nomePagador || "Cliente").trim().split(" ");
 
+    // O Mercado Pago recusa vencimento no passado (ou perto demais). Se o
+    // prazo do agendamento ja passou, damos uma janela minima de 30 minutos
+    // — melhor cobrar com prazo curto do que nao conseguir cobrar.
+    const minimo = new Date(Date.now() + 30 * 60 * 1000);
+    const vencimento = params.expiraEm > minimo ? params.expiraEm : minimo;
+
     const res = await fetch(`${MP_API}/v1/payments`, {
       method: "POST",
       headers: {
@@ -137,7 +143,7 @@ export async function criarCobrancaPix(params: {
         payment_method_id: "pix",
         external_reference: params.referencia,
         notification_url: `${base}/api/webhooks/mercadopago`,
-        date_of_expiration: params.expiraEm.toISOString(),
+        date_of_expiration: vencimento.toISOString(),
         payer: {
           email: params.emailPagador || `cliente-${params.referencia}@barberpro.app`,
           first_name: primeiro || "Cliente",

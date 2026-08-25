@@ -116,10 +116,24 @@ function capAtAppointment(deadline: Date, appointmentStart: Date | null): Date {
 /**
  * Instante (UTC) em que um agendamento começa, a partir da data + "HH:mm"
  * interpretados no fuso da barbearia.
+ *
+ * O campo `date` guarda apenas o DIA (gravado como meia-noite), então lemos
+ * ano/mês/dia em UTC — que é como foram gravados — e só então aplicamos o
+ * horário no fuso da barbearia.
+ *
+ * Converter o dia com `toZonedTime` antes seria errado: num servidor em UTC,
+ * meia-noite convertida para São Paulo cai às 21h do dia ANTERIOR, e o
+ * agendamento inteiro andava um dia para trás.
  */
 export function appointmentStartUtc(date: Date, startTime: string): Date {
-  const local = toZonedTime(date, SHOP_TIMEZONE);
-  return shopTimeToUtc(local, startTime);
+  const ano = date.getUTCFullYear();
+  const mes = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const dia = String(date.getUTCDate()).padStart(2, "0");
+  const [h, m] = startTime.split(":");
+  return fromZonedTime(
+    `${ano}-${mes}-${dia}T${h.padStart(2, "0")}:${(m || "00").padStart(2, "0")}:00`,
+    SHOP_TIMEZONE,
+  );
 }
 
 /** Um pré-agendamento está vencido? */
