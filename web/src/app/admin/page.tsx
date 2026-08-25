@@ -27,7 +27,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [step, setStep] = useState<"register" | "login" | "done">("register");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ link: string; shopName: string } | null>(null);
+  const [result, setResult] = useState<{ link: string; shopName: string; recoveryCode?: string } | null>(null);
 
   // Register
   const [name, setName] = useState("");
@@ -139,7 +139,10 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem("admin_token", data.token);
       localStorage.setItem("admin_user", JSON.stringify({ ...data.user, shopName: data.shop.name, shopSlug: data.shop.slug, role: data.role }));
-      router.push("/admin/painel");
+      // Mostra a tela de boas-vindas com o link e o codigo de recuperacao
+      // antes de entrar no painel — o codigo so aparece aqui, uma unica vez.
+      setResult({ link: data.shop.link, shopName: data.shop.name, recoveryCode: data.recoveryCode });
+      setStep("done");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Erro ao cadastrar");
     } finally {
@@ -198,6 +201,35 @@ export default function AdminPage() {
           <p className="text-xs text-gray-500">
             Envie esse link para seus clientes via WhatsApp, Instagram ou Status!
           </p>
+
+          {result.recoveryCode && (
+            <div className="rounded-xl bg-brand-500/10 border-2 border-brand-400/50 p-5 space-y-3 text-left">
+              <div className="text-center">
+                <p className="text-xs text-brand-300 font-bold uppercase tracking-widest">
+                  🔑 Anote seu código de recuperação
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  É com ele que você cria uma nova senha se esquecer a sua. Não mostraremos de novo.
+                </p>
+              </div>
+              <p className="text-2xl font-mono font-bold text-white text-center tracking-wider select-all">
+                {result.recoveryCode}
+              </p>
+              <button
+                onClick={() => navigator.clipboard.writeText(result.recoveryCode!).then(() => toast.success("Código copiado — guarde em um lugar seguro"))}
+                className="w-full rounded-lg bg-brand-500 py-2.5 text-sm font-semibold text-dark-900 hover:bg-brand-400 transition"
+              >
+                📋 Copiar código
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={() => router.push("/admin/painel")}
+            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition-all"
+          >
+            Já anotei — entrar no painel
+          </button>
         </div>
       </main>
     );

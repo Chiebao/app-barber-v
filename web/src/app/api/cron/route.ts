@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Chamado pelo cron da Vercel a cada 30 minutos
-// Envia lembrete WhatsApp para clientes com agendamento em 1h
+/**
+ * Lembrete automático ao cliente.
+ *
+ * Deve ser chamado de tempos em tempos (a cada 15 min é o ideal). O cron da
+ * Vercel no plano grátis roda 1x/dia, então em produção usamos também um cron
+ * externo gratuito apontando para cá — o `reminderSentAt` garante que ninguém
+ * receba o mesmo aviso duas vezes.
+ *
+ * Regra: avisa quem tem corte nas próximas HORAS_ANTES horas e ainda não foi
+ * avisado. Diferente da versão antiga, que procurava o horário EXATO e por
+ * isso perdia quase todo mundo.
+ */
+
+/** Quantas horas antes do corte o cliente é avisado. */
+const HORAS_ANTES = Number(process.env.REMINDER_HOURS_BEFORE || 2);
+
+/** Env vars às vezes vêm com espaços/quebras coladas — limpar evita erro silencioso. */
+function envClean(name: string): string {
+  return (process.env[name] || "").trim().replace(/\n$/, "").trim();
+}
+
 export async function GET(req: NextRequest) {
   try {
-    // A Vercel envia "Authorization: Bearer <CRON_SECRET>" nas chamadas de cron.
-    // Se CRON_SECRET estiver definido, exigimos ele (fecha o endpoint público).
     const CRON_SECRET = process.env.CRON_SECRET;
     if (CRON_SECRET) {
       const authHeader = req.headers.get("authorization");
@@ -18,16 +36,16 @@ export async function GET(req: NextRequest) {
     }
 
     const now = new Date();
-    const in60 = new Date(now.getTime() + 60 * 60 * 1000);
-    const in75 = new Date(now.getTime() + 75 * 60 * 1000);
+    const limite = new Date(now.getTime() + HORAS_ANTES * 60 * 60 * 1000);
 
-    const today = now.toISOString().split("T")[0];
-    const targetHour = `${String(in60.getHours()).padStart(2, "0")}:${String(Math.round(in60.getMinutes() / 30) * 30).padStart(2, "0")}`;
+    // Busca um intervalo largo de datas e filtra pelo instante real depois,
+    // porque `date` + `startTime` estão no fuso da barbearia, não em UTC.
+    const inicioBusca = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const fimBusca = new Date(now.getTime() + (HORAS_ANTES + 36) * 60 * 60 * 1000);
 
-    const appointments = await prisma.appointment.findMany({
+    const candidatos = await prisma.appointment.findMany({
       where: {
-        date: { gte: new Date(today + "T00:00:00"), lte: new Date(today + "T23:59:59") },
-        startTime: targetHour,
+        date: { gte: inicioBusca, lte: fimBusca },
         status: "confirmed",
         reminderSentAt: null,
       },
@@ -38,16 +56,33 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Só quem começa daqui a no máximo HORAS_ANTES (e ainda não começou)
+    const aVencer = candidatos.filter((apt) => {
+      const inicio = appointmentStartUtc(apt.date, apt.startTime);
+      return inicio > now && inicio <= limite;
+    });
+
+    const WHATSAPP_API_TOKEN = envClean("WHATSAPP_API_TOKEN");
+    const WHATSAPP_PHONE_ID = envClean("WHATSAPP_PHONE_ID");
+    const temCanal = !!(WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID);
+
     let sent = 0, failedSend = 0, noChannel = 0;
-    for (const apt of appointments) {
-      const serviceNames = apt.services.map(s => s.service.name).join(", ");
-      const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
-      const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 
-      if (WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID) {
-        const phone = apt.client.phone.replace(/\D/g, "");
-        const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
+    for (const apt of aVencer) {
+      const serviceNames = apt.services.map((s) => s.service.name).join(", ");
+      const dataFmt = format(apt.date, "dd 'de' MMMM", { locale: ptBR });
 
+      if (!temCanal) {
+        // Sem canal configurado: o lembrete continua sendo manual (botão no painel)
+        console.log(`[CRON] Lembrete pendente (sem canal): ${apt.client.name} - ${apt.startTime} - ${apt.shop.name}`);
+        noChannel++;
+        continue;
+      }
+
+      const phone = apt.client.phone.replace(/\D/g, "");
+      const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
+
+      try {
         const waRes = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
           method: "POST",
           headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}`, "Content-Type": "application/json" },
@@ -56,29 +91,43 @@ export async function GET(req: NextRequest) {
             to: phoneWithCountry,
             type: "text",
             text: {
-              body: `Ola ${apt.client.name}! Seu horario na *${apt.shop.name}* e em 1 hora.\n\n*Servico:* ${serviceNames}\n*Horario:* ${apt.startTime}\n\nAte logo!`,
+              body:
+                `Olá ${apt.client.name.split(" ")[0]}! 🫡\n` +
+                `Passando pra lembrar do seu horário na *${apt.shop.name}*:\n\n` +
+                `📆 ${dataFmt} às ${apt.startTime}\n` +
+                `💇‍♂️ ${serviceNames}\n\n` +
+                `Até lá! Deus abençoe 🙏`,
             },
           }),
         });
 
-        // Só marca como enviado se a API confirmou. Se falhar, deixa reminderSentAt
-        // null para não "consumir" o lembrete silenciosamente.
         if (waRes.ok) {
-          await prisma.appointment.update({ where: { id: apt.id }, data: { reminderSentAt: new Date() } });
+          // Só marca como enviado quando a API confirma — se falhar, tenta na próxima rodada
+          await prisma.appointment.update({
+            where: { id: apt.id },
+            data: { reminderSentAt: new Date() },
+          });
           sent++;
         } else {
           failedSend++;
-          console.error(`[CRON] Falha ao enviar WhatsApp para ${apt.client.name}: ${waRes.status}`);
+          const detalhe = await waRes.text().catch(() => "");
+          console.error(`[CRON] Falha WhatsApp p/ ${apt.client.name}: ${waRes.status} ${detalhe.slice(0, 200)}`);
         }
-      } else {
-        // WhatsApp API não configurada — não há canal automático.
-        // O lembrete é feito manualmente pelo barbeiro (botão "Lembrar" no painel).
-        console.log(`[CRON] Lembrete pendente (sem WhatsApp API): ${apt.client.name} - ${apt.startTime} - ${apt.shop.name}`);
-        noChannel++;
+      } catch (err) {
+        failedSend++;
+        console.error(`[CRON] Erro ao enviar p/ ${apt.client.name}:`, err);
       }
     }
 
-    return NextResponse.json({ sent, failedSend, noChannel, checked: appointments.length });
+    return NextResponse.json({
+      horasAntes: HORAS_ANTES,
+      canalConfigurado: temCanal,
+      candidatos: candidatos.length,
+      naJanela: aVencer.length,
+      sent,
+      failedSend,
+      noChannel,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

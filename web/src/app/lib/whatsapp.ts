@@ -1,5 +1,10 @@
-const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
-const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
+/** Limpa espacos/quebras coladas no valor — ja causou falha silenciosa em producao. */
+function envClean(name: string): string {
+  return (process.env[name] || "").trim().replace(/\n$/, "").trim();
+}
+
+const WHATSAPP_API_TOKEN = envClean("WHATSAPP_API_TOKEN");
+const WHATSAPP_PHONE_ID = envClean("WHATSAPP_PHONE_ID");
 
 interface AppointmentNotification {
   barberPhone: string;

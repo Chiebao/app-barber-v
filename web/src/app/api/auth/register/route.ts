@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword, signToken } from "@/app/lib/auth";
+import { generateRecoveryCode, hashRecoveryCode } from "@/app/lib/recovery-code";
 import slugify from "slugify";
 import { z } from "zod";
 
@@ -38,11 +39,17 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(data.password);
 
+    // Codigo de recuperacao ja no cadastro: se a pessoa errar a senha sem
+    // perceber e sair, ainda consegue voltar sozinha. Sem isso, so o suporte.
+    const recoveryCode = generateRecoveryCode();
+    const recoveryCodeHash = await hashRecoveryCode(recoveryCode);
+
     const owner = await prisma.owner.create({
       data: {
         name: data.ownerName,
         phone: data.phone,
         passwordHash,
+        recoveryCodeHash,
         shops: {
           create: {
             name: data.shopName,
@@ -76,6 +83,8 @@ export async function POST(req: NextRequest) {
       role: "owner",
       user: { id: owner.id, name: owner.name, phone: owner.phone },
       shop: { id: shop.id, name: shop.name, slug: shop.slug, link: `${base}/${shop.slug}` },
+      // Mostrado UMA vez na tela de sucesso — depois so fica o hash
+      recoveryCode,
     });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados invalidos", details: error.errors }, { status: 400 });
