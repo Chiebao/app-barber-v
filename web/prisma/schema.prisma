@@ -110,6 +110,21 @@ model ShopEvent {
   @@map("shop_events")
 }
 
+// Codigo de uso unico enviado por WhatsApp para redefinir a senha.
+// Guardamos so o hash: se o banco vazar, os codigos nao servem para nada.
+model PasswordReset {
+  id        String    @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phone, createdAt])
+  @@map("password_resets")
+}
+
 // Servicos da barbearia
 model Service {
   id       String  @id @default(cuid())

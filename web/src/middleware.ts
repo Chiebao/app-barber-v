@@ -15,6 +15,8 @@ const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   "/api/auth/register":     { max: 5,  windowMs: 60_000 },
   "/api/auth/refresh":      { max: 20, windowMs: 60_000 },
   "/api/auth/recover":      { max: 5,  windowMs: 60_000 },
+  "/api/auth/forgot":       { max: 3,  windowMs: 60_000 },
+  "/api/auth/reset":        { max: 8,  windowMs: 60_000 },
   "/api/admin":             { max: 5,  windowMs: 60_000 },
   "/api/appointments":      { max: 15, windowMs: 60_000 },
   "/api/waitlist":          { max: 10, windowMs: 60_000 },
