@@ -101,6 +101,11 @@ export interface CobrancaPix {
   expiraEm: string | null;
 }
 
+/** Quando falha, carrega o motivo — sem isso o erro fica invisivel em producao. */
+export interface FalhaCobranca {
+  erro: string;
+}
+
 /**
  * Cria uma cobrança Pix na conta da barbearia.
  * `referencia` é o id do agendamento — é por ele que o webhook reencontra tudo.
@@ -113,7 +118,7 @@ export async function criarCobrancaPix(params: {
   emailPagador?: string;
   nomePagador?: string;
   expiraEm: Date;
-}): Promise<CobrancaPix | null> {
+}): Promise<CobrancaPix | FalhaCobranca> {
   try {
     const base = env("NEXT_PUBLIC_BASE_URL") || "https://barberpro-mauve.vercel.app";
     const [primeiro, ...resto] = (params.nomePagador || "Cliente").trim().split(" ");
@@ -142,15 +147,24 @@ export async function criarCobrancaPix(params: {
     });
 
     if (!res.ok) {
-      console.error("[MP] falha ao criar cobrança:", res.status, (await res.text()).slice(0, 400));
-      return null;
+      const cru = await res.text().catch(() => "");
+      console.error("[MP] falha ao criar cobrança:", res.status, cru.slice(0, 500));
+      let motivo = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(cru);
+        motivo = j?.message || j?.error || motivo;
+        if (Array.isArray(j?.cause) && j.cause.length) {
+          motivo += ` — ${j.cause.map((c: { description?: string; code?: string }) => c.description || c.code).join("; ")}`;
+        }
+      } catch { /* resposta nao-JSON */ }
+      return { erro: motivo };
     }
 
     const j = await res.json();
     const dados = j?.point_of_interaction?.transaction_data;
     if (!dados?.qr_code) {
       console.error("[MP] cobrança criada sem QR code:", JSON.stringify(j).slice(0, 300));
-      return null;
+      return { erro: `Pagamento criado sem QR (status ${j?.status ?? "?"})` };
     }
 
     return {
@@ -162,8 +176,13 @@ export async function criarCobrancaPix(params: {
     };
   } catch (err) {
     console.error("[MP] erro ao criar cobrança:", err);
-    return null;
+    return { erro: String(err).slice(0, 200) };
   }
+}
+
+/** Ajuda a distinguir sucesso de falha no retorno de `criarCobrancaPix`. */
+export function cobrancaOk(r: CobrancaPix | FalhaCobranca): r is CobrancaPix {
+  return (r as CobrancaPix).paymentId !== undefined;
 }
 
 /** Consulta uma cobrança — usado pelo webhook para confirmar de fato o status. */

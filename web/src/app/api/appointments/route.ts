@@ -4,7 +4,7 @@ import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { num, sumMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
-import { tokenDaBarbearia, criarCobrancaPix } from "@/app/lib/mercadopago";
+import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercadopago";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
@@ -129,10 +129,10 @@ export async function POST(req: NextRequest) {
 
     // Com o Mercado Pago conectado, gera a cobranca Pix de verdade.
     // O cliente paga pelo QR e o webhook confirma o horario sozinho.
-    let cobranca = null;
+    let cobranca: { copiaECola: string; qrCodeBase64: string | null; valor: number; expiraEm: string | null } | null = null;
     if (needsPix && mpToken && appointment.status === "pending_payment") {
       const sinal = Math.max(1, Math.round((totalPrice / 2) * 100) / 100); // 50% de entrada
-      cobranca = await criarCobrancaPix({
+      const resultado = await criarCobrancaPix({
         accessToken: mpToken,
         valor: sinal,
         descricao: `Sinal - ${shop.name}`,
@@ -141,17 +141,26 @@ export async function POST(req: NextRequest) {
         expiraEm: appointment.pendingExpiresAt || new Date(Date.now() + 6 * 60 * 60 * 1000),
       });
 
-      if (cobranca) {
+      if (cobrancaOk(resultado)) {
         await prisma.appointment.update({
           where: { id: appointment.id },
-          data: { mpPaymentId: cobranca.paymentId, mpQrCode: cobranca.copiaECola },
+          data: { mpPaymentId: resultado.paymentId, mpQrCode: resultado.copiaECola },
         });
+        cobranca = {
+          copiaECola: resultado.copiaECola,
+          qrCodeBase64: resultado.qrCodeBase64,
+          valor: resultado.valor,
+          expiraEm: resultado.expiraEm,
+        };
       } else {
         // Falhou criar a cobranca: nao deixa o cliente preso num limbo —
         // libera o horario e ele tenta de novo
         await prisma.appointment.delete({ where: { id: appointment.id } }).catch(() => {});
         return NextResponse.json(
-          { error: "Nao foi possivel gerar a cobranca Pix agora. Tente novamente em instantes." },
+          {
+            error: "Nao foi possivel gerar a cobranca Pix agora. Tente novamente em instantes.",
+            detalhe: resultado.erro,
+          },
           { status: 503 },
         );
       }
@@ -228,14 +237,7 @@ export async function POST(req: NextRequest) {
         status: appointment.status,
       },
       // Presente so quando o Mercado Pago gerou a cobranca — o front mostra o QR
-      pixPayment: cobranca
-        ? {
-            copiaECola: cobranca.copiaECola,
-            qrCodeBase64: cobranca.qrCodeBase64,
-            valor: cobranca.valor,
-            expiraEm: cobranca.expiraEm,
-          }
-        : null,
+      pixPayment: cobranca,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
