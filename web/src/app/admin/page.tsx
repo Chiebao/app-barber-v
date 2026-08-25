@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/app/lib/toast";
 
@@ -64,7 +64,25 @@ export default function AdminPage() {
   const [forgotOtp, setForgotOtp] = useState("");
   const [enviandoCodigo, setEnviandoCodigo] = useState(false);
   const [usarCodigoRecuperacao, setUsarCodigoRecuperacao] = useState(false);
+  // null = ainda descobrindo. Saber disso ANTES de abrir o modal evita
+  // oferecer um envio por WhatsApp que ja sabemos que vai falhar.
+  const [canalWhatsApp, setCanalWhatsApp] = useState<boolean | null>(null);
   const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "";
+
+  useEffect(() => {
+    fetch("/api/auth/forgot")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setCanalWhatsApp(d?.canal === "whatsapp"))
+      .catch(() => setCanalWhatsApp(false));
+  }, []);
+
+  /** Abre no caminho que realmente funciona hoje. */
+  const openForgot = () => {
+    setForgotPhone(loginPhone);
+    setForgotEtapa("telefone");
+    setUsarCodigoRecuperacao(canalWhatsApp === false);
+    setForgotOpen(true);
+  };
 
   const closeForgot = () => {
     setForgotOpen(false);
@@ -329,7 +347,7 @@ export default function AdminPage() {
               className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
               {loading ? "Entrando..." : "Entrar"}
             </button>
-            <button onClick={() => { setForgotOpen(true); setForgotPhone(loginPhone); }}
+            <button onClick={openForgot}
               className="w-full text-center text-sm text-gray-400 hover:text-brand-400 transition py-1">
               Esqueci minha senha
             </button>
@@ -396,6 +414,13 @@ export default function AdminPage() {
                     className="w-full text-sm text-gray-400 hover:text-white transition py-1">
                     Não recebi — enviar de novo
                   </button>
+                  {/* Saida de emergencia: o codigo do WhatsApp pode simplesmente
+                      nao chegar. Quem anotou o codigo de recuperacao resolve aqui
+                      mesmo, sem depender de mensagem nenhuma. */}
+                  <button onClick={() => { setUsarCodigoRecuperacao(true); setForgotOtp(""); }}
+                    className="w-full rounded-xl border border-brand-400/40 bg-brand-500/10 py-2.5 text-sm font-semibold text-brand-300 hover:bg-brand-500/20 transition">
+                    Não chegou? Use seu código de recuperação
+                  </button>
                 </>
               )}
 
@@ -441,12 +466,12 @@ export default function AdminPage() {
                     className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white transition">
                     Não tenho acesso a esse WhatsApp
                   </button>
-                ) : (
+                ) : canalWhatsApp !== false ? (
                   <button onClick={() => { setUsarCodigoRecuperacao(false); setForgotEtapa("telefone"); }}
                     className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white transition">
                     Voltar para o código por WhatsApp
                   </button>
-                )}
+                ) : null}
                 <button onClick={handleAskSupport}
                   className="w-full rounded-xl border border-green-500/30 py-2.5 text-sm text-green-400 hover:bg-green-500/10 transition">
                   Falar com o suporte

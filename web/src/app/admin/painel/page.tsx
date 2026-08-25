@@ -8,6 +8,7 @@ import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import PushToggle from "./_push-toggle";
 import RecoveryCode from "./_recovery-code";
+import RecoveryNag from "./_recovery-nag";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
@@ -792,6 +793,8 @@ export default function PainelPage() {
             {/* ═══════ HOME TAB ═══════ */}
             {activeTab === "home" && (
               <div className="space-y-5">
+                <RecoveryNag token={token} onIrParaConfig={() => { setActiveTab("config"); setSubView(null); }} />
+
                 {/* Quick Actions Grid */}
                 <div className="grid grid-cols-4 gap-2">
                   {quickActions.map(a => (

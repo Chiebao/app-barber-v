@@ -71,3 +71,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
+
+/**
+ * Diz apenas se a plataforma consegue enviar código por WhatsApp agora.
+ *
+ * É informação sobre a PLATAFORMA, não sobre contas — não revela telefone
+ * nenhum. Serve para a tela de login já abrir direto no caminho que funciona,
+ * em vez de oferecer um envio que vai falhar.
+ */
+export async function GET() {
+  return NextResponse.json({
+    canal: whatsappConfigurado() ? "whatsapp" : "indisponivel",
+  });
+}
