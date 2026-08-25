@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import BarberPageChat from "./_chat-page";
+import PixAutomatico from "./_pix-automatico";
 
 /**
  * Id anonimo da sessao — sobrevive ao recarregar a aba, morre ao fechar.
@@ -98,6 +99,7 @@ type Step =
   | "confirm"
   | "booking"
   | "pix"
+  | "pix_auto"
   | "pix_sent"
   | "done";
 
@@ -150,6 +152,11 @@ export default function BarberPage() {
 
   // Results
   const [pixKey, setPixKey] = useState<string | null>(null);
+  // Cobranca gerada pelo Mercado Pago (quando a barbearia conectou a conta)
+  const [pixAuto, setPixAuto] = useState<{
+    copiaECola: string; qrCodeBase64: string | null; valor: number;
+  } | null>(null);
+  const [pixAptId, setPixAptId] = useState<string | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [pixSending, setPixSending] = useState(false);
   const [bookingResult, setBookingResult] = useState<{
@@ -375,6 +382,15 @@ export default function BarberPage() {
       const data = await res.json();
       setBookingResult(data.appointment);
       if (shop?.id) track(shop.id, "book");
+
+      // Cliente com histórico de falta em barbearia com Mercado Pago:
+      // mostramos o QR e a tela se confirma sozinha quando o Pix cai.
+      if (data.pixPayment) {
+        setPixAuto(data.pixPayment);
+        setPixAptId(data.appointment?.id || null);
+        setStep("pix_auto");
+        return;
+      }
       setStep("done");
     } catch {
       setBookError("Erro ao agendar. Tente novamente.");
@@ -1047,6 +1063,17 @@ export default function BarberPage() {
               Voltar ao início
             </button>
           </div>
+        )}
+
+        {/* Step: Pix automático (Mercado Pago) — confirma sozinho */}
+        {step === "pix_auto" && pixAuto && (
+          <PixAutomatico
+            pix={pixAuto}
+            appointmentId={pixAptId}
+            phone={clientPhone}
+            onConfirmado={() => setStep("done")}
+            onVoltar={resetFlow}
+          />
         )}
 
         {/* Step: Pix enviado — aguardando confirmação do barbeiro */}

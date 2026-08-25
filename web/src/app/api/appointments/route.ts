@@ -4,6 +4,7 @@ import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { num, sumMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
+import { tokenDaBarbearia, criarCobrancaPix } from "@/app/lib/mercadopago";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
@@ -50,9 +51,14 @@ export async function POST(req: NextRequest) {
       client = await prisma.client.create({ data: { name: data.clientName, phone: cleanPhone } });
     }
 
-    // Verifica no-shows (cliente com 2+ faltas)
-    const needsPix = client.noShowCount >= 2 && !!shop.pixKey;
-    if (needsPix && !data.pendingPayment) {
+    // Verifica no-shows (cliente com 2+ faltas). Com o Mercado Pago conectado
+    // basta ter conta ligada; sem ele, ainda depende da chave Pix manual.
+    const mpToken = await tokenDaBarbearia(data.shopId);
+    const needsPix = client.noShowCount >= 2 && (!!mpToken || !!shop.pixKey);
+
+    // Fluxo manual: avisa o cliente que precisa pagar antes de criar qualquer coisa.
+    // Com o Mercado Pago seguimos direto — criamos o agendamento e a cobranca juntos.
+    if (needsPix && !data.pendingPayment && !mpToken) {
       return NextResponse.json({ error: "Pre-pagamento necessario", pixKey: shop.pixKey }, { status: 402 });
     }
 
@@ -77,7 +83,7 @@ export async function POST(req: NextRequest) {
           const hasConflict = conflicts.some((apt) => data.startTime < apt.endTime && endTime > apt.startTime);
           if (hasConflict) throw new Error("SLOT_CONFLICT");
 
-          const isPending = needsPix && data.pendingPayment;
+          const isPending = needsPix && (data.pendingPayment || !!mpToken);
 
           return tx.appointment.create({
             data: {
@@ -119,6 +125,36 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Horario ja ocupado" }, { status: 409 });
       }
       throw txError;
+    }
+
+    // Com o Mercado Pago conectado, gera a cobranca Pix de verdade.
+    // O cliente paga pelo QR e o webhook confirma o horario sozinho.
+    let cobranca = null;
+    if (needsPix && mpToken && appointment.status === "pending_payment") {
+      const sinal = Math.max(1, Math.round((totalPrice / 2) * 100) / 100); // 50% de entrada
+      cobranca = await criarCobrancaPix({
+        accessToken: mpToken,
+        valor: sinal,
+        descricao: `Sinal - ${shop.name}`,
+        referencia: appointment.id,
+        nomePagador: data.clientName,
+        expiraEm: appointment.pendingExpiresAt || new Date(Date.now() + 6 * 60 * 60 * 1000),
+      });
+
+      if (cobranca) {
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: { mpPaymentId: cobranca.paymentId, mpQrCode: cobranca.copiaECola },
+        });
+      } else {
+        // Falhou criar a cobranca: nao deixa o cliente preso num limbo —
+        // libera o horario e ele tenta de novo
+        await prisma.appointment.delete({ where: { id: appointment.id } }).catch(() => {});
+        return NextResponse.json(
+          { error: "Nao foi possivel gerar a cobranca Pix agora. Tente novamente em instantes." },
+          { status: 503 },
+        );
+      }
     }
 
     // Envia notificacao WhatsApp ao barbeiro
@@ -189,7 +225,17 @@ export async function POST(req: NextRequest) {
         totalPrice: num(appointment.totalPrice),
         services: appointment.services.map((as) => as.service.name),
         shopName: shop.name,
+        status: appointment.status,
       },
+      // Presente so quando o Mercado Pago gerou a cobranca — o front mostra o QR
+      pixPayment: cobranca
+        ? {
+            copiaECola: cobranca.copiaECola,
+            qrCodeBase64: cobranca.qrCodeBase64,
+            valor: cobranca.valor,
+            expiraEm: cobranca.expiraEm,
+          }
+        : null,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

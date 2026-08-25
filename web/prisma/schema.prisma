@@ -33,7 +33,13 @@ model Shop {
   closeTime       String   // "20:00"
   workDays        Int[]    // [1,2,3,4,5,6]
   avgServiceTime  Int      @default(30) // minutos, para calcular limite diario
-  pixKey          String?  // chave pix para pagamento antecipado
+  pixKey          String?  // chave pix manual (usada quando o Mercado Pago nao esta conectado)
+  // Mercado Pago: quando conectado, o Pix vira automatico — o dinheiro cai
+  // direto na conta da barbearia e o sistema confirma sozinho via webhook.
+  mpAccessToken   String?
+  mpRefreshToken  String?
+  mpUserId        String?
+  mpConnectedAt   DateTime?
   logoUrl         String?  // logo da barbearia (URL no Supabase Storage) — aparece no link do cliente
   colorTheme      String   @default("midnight_gold") // paleta de cores escolhida
   bookingMode     String   @default("steps") // "steps" (etapas) ou "agent" (agente IA chat)
@@ -195,6 +201,9 @@ model Appointment {
   // Pré-agendamento (Pix declarado, aguardando o barbeiro confirmar):
   // vence após 6h de barbearia aberta, nunca depois da hora do corte.
   pendingExpiresAt DateTime?
+  // Cobranca Pix criada no Mercado Pago (quando a barbearia esta conectada)
+  mpPaymentId     String?   @unique
+  mpQrCode        String?   // codigo copia-e-cola
   cancelledAt     DateTime?
   cancelledBy     String?   // "client" | "barber" | "owner"
   pixRequested    Boolean   @default(false)

@@ -11,6 +11,7 @@ import RecoveryCode from "./_recovery-code";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
+import MercadoPago from "./_mercadopago";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -1035,6 +1036,9 @@ export default function PainelPage() {
 
                 {/* Notificações do navegador (Web Push) */}
                 <PushToggle token={token} />
+
+                {/* Pix automático via Mercado Pago */}
+                <MercadoPago token={token} />
 
                 {/* Código de recuperação de senha */}
                 <RecoveryCode token={token} />
