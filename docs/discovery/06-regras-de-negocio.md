@@ -161,3 +161,22 @@
   sessão não conta duas vezes. Sem cookie, IP ou nome. `[api/track; B9]`
 - **RN-062 — Lembrete dispara a cada 30 minutos.** Cron externo (GitHub Actions) chama o
   endpoint; `reminderSentAt` impede aviso repetido. `[.github/workflows/lembretes.yml]`
+
+## Pix automático via Mercado Pago (25/08/2026)
+
+- **RN-063 — Cada barbearia conecta a própria conta.** O dinheiro vai direto para o Mercado Pago
+  do barbeiro; o BarberPro só cria a cobrança em nome dele e escuta o aviso de pagamento.
+  Nunca há valor em trânsito pela plataforma. `[lib/mercadopago.ts; B4]`
+- **RN-064 — Conectar é opcional.** Sem conexão, o anti-falta continua com a chave Pix manual e
+  confirmação do barbeiro. Nada deixa de funcionar. `[appointments/route.ts]`
+- **RN-065 — Pix conectado confirma sozinho.** Cliente paga o QR → Mercado Pago avisa no webhook
+  → agendamento vira `confirmed` e o histórico de faltas do cliente zera, sem ação do barbeiro.
+  `[webhooks/mercadopago]`
+- **RN-066 — O webhook não confia no próprio aviso.** A notificação só indica qual pagamento
+  olhar; o status é reconsultado na API com o token da barbearia antes de confirmar. `[webhooks/mercadopago]`
+- **RN-067 — Cobrança é idempotente.** `X-Idempotency-Key` com o id do agendamento impede
+  cobrar duas vezes se a requisição for repetida. `[criarCobrancaPix]`
+- **RN-068 — Falha ao gerar a cobrança desfaz o agendamento.** Evita deixar o cliente preso num
+  horário que ele não consegue pagar. `[appointments/route.ts]`
+- **RN-069 — Sinal é 50% do total.** Mesmo percentual do fluxo manual. `[appointments/route.ts]`
+- **RN-070 — O token da barbearia se renova sozinho** perto dos 180 dias de validade. `[tokenDaBarbearia]`
