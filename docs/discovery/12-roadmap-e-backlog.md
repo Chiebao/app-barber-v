@@ -27,11 +27,29 @@
 | B15 — Expiração de 12h do pré-agendamento Pix | 7 | 1 | 80% | 1 | **5,6** | Regra desejada (P6): sem confirmação em 12h, o pré-agendado some e libera a agenda |
 | B16 — Preferência do cliente comum sobre lista negra no mesmo horário | 6 | 2 | 60% | 2 | **3,6** | Regra desejada (P6): inverter a lógica atual (hoje o pré-agendado trava o slot); comum tem prioridade e o da lista negra é avisado ao pagar |
 | B17 — Excluir dados do cliente (LGPD, painel do dono) | 8 | 2 | 80% | 0,5 | **25,6** | Direito ao esquecimento (P9/P4); quick win de baixo esforço e alto valor legal |
+| B18 — **Taxa de ocupação da agenda** | 9 | 2 | 80% | 0,5 | **28,8** | O KPI mais importante de barbearia e o dono não tem: se está em 50% o problema é divulgação, se está em 95% ele pode subir o preço. Sai de dados que já existem |
+| B19 — **Radar de cliente sumido** | 9 | 3 | 70% | 1 | **18,9** | "O Zé vinha a cada 21 dias, faz 48 que não aparece" + botão de chamar. Recuperar cliente antigo é muito mais barato que conquistar novo |
+| B23 — Código de recuperação por WhatsApp (OTP) | 8 | 2 | 80% | 1 | **12,8** | Fluxo padrão de mercado: pede código, recebe no WhatsApp, cria nova senha. Depende do token permanente da Meta |
+| B20 — Horário morto (sugestão de promoção) | 7 | 2 | 60% | 1 | **8,4** | Transforma cadeira vazia em dinheiro. **Decisão adiada ao barbeiro** — ele avalia se quer |
+| B21 — Rendimento por hora de cada serviço | 6 | 1 | 70% | 0,5 | **8,4** | Mostra que R$35 em 30min rende mais que R$80 em 60min. Ninguém faz essa conta. *Guardado para depois* |
+| B22 — Tempo real vs estimado do serviço | 6 | 2 | 60% | 1 | **7,2** | "Seus degradês levam 41min mas a agenda reserva 30 — por isso você atrasa." Ataca o atraso na raiz. *Guardado para depois* |
+| B24 — Previsão de faturamento do mês | 5 | 1 | 70% | 0,5 | **7,0** | Deixa o dono reagir no dia 15, não descobrir no dia 30. *Guardado para depois* |
 
 > Nota: RICE serve para **ordenar conversa**, não para decidir sozinho. B3/B5/B11 são
 > "quick wins" (esforço baixo, confiança alta) e provavelmente vêm antes mesmo com RICE médio.
 
 ---
+
+## Decisões de produto registradas (Elias, 25/08/2026)
+
+- **Inteligência de agenda:** B18 (ocupação) e B19 (cliente sumido) **aprovados** para estudo e
+  implementação. B20 (horário morto) fica **na mão do barbeiro** — ele decide se quer. B21, B22
+  e B24 ficam guardados no backlog, boas ideias mas não agora.
+- **Pix:** seguir **só com Mercado Pago**, modelo OAuth ("conectar conta"). Quem não tiver conta
+  cria (é grátis); quem não quiser continua no Pix manual. Nubank não tem API pública de
+  recebimento para lojista; Inter tem, mas exige certificado — ficam fora por ora.
+- **Reset de senha:** manter o código de recuperação como **plano B** e implementar o fluxo
+  padrão de mercado (código enviado por WhatsApp) como caminho principal — B23.
 
 ## Roadmap em 3 horizontes
 
