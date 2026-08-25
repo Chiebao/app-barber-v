@@ -76,17 +76,39 @@ export async function GET(req: NextRequest) {
           temPhoneId: !!WHATSAPP_PHONE_ID,
         });
       }
-      const probe = await fetch(
+      const h = { Authorization: `Bearer ${WHATSAPP_API_TOKEN}` };
+
+      // 1) O token em si e valido?
+      const meRes = await fetch("https://graph.facebook.com/v21.0/me", { headers: h });
+      const me = await meRes.json().catch(() => ({}));
+
+      // 2) O token enxerga ESTE numero?
+      const numRes = await fetch(
         `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}?fields=verified_name,display_phone_number,quality_rating`,
-        { headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}` } },
+        { headers: h },
       );
-      const corpo = await probe.json().catch(() => ({}));
+      const num = await numRes.json().catch(() => ({}));
+
+      // 3) Quais contas de WhatsApp o token alcanca (ajuda a achar o ID certo)
+      const wabaRes = await fetch(
+        "https://graph.facebook.com/v21.0/me/businesses?fields=id,name",
+        { headers: h },
+      );
+      const waba = await wabaRes.json().catch(() => ({}));
+
       return NextResponse.json({
-        canal: probe.ok ? "OK — token valido" : "FALHA",
-        status: probe.status,
-        detalhe: corpo,
+        tokenValido: meRes.ok,
+        tokenPertenceA: meRes.ok ? me : me?.error?.message,
+        numeroAcessivel: numRes.ok,
+        numeroDetalhe: numRes.ok ? num : num?.error?.message,
+        negociosVisiveis: wabaRes.ok ? waba : waba?.error?.message,
         tokenTamanho: WHATSAPP_API_TOKEN.length,
-        phoneId: WHATSAPP_PHONE_ID,
+        phoneIdConfigurado: WHATSAPP_PHONE_ID,
+        diagnostico: meRes.ok && !numRes.ok
+          ? "Token OK, mas o PHONE_ID esta errado ou o System User nao tem acesso a esse numero"
+          : !meRes.ok
+          ? "Token invalido"
+          : "Tudo certo",
       });
     }
 
