@@ -9,6 +9,8 @@ import { toast } from "@/app/lib/toast";
 import PushToggle from "./_push-toggle";
 import RecoveryCode from "./_recovery-code";
 import Conversao from "./_conversao";
+import Ocupacao from "./_ocupacao";
+import Sumidos from "./_sumidos";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -57,7 +59,7 @@ const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒",
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
-type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos";
+type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos";
 
 /** "faltam 3h20" / "faltam 45min" a partir de um prazo ISO. */
 function timeLeftLabel(iso?: string | null): string {
@@ -587,6 +589,7 @@ export default function PainelPage() {
     { icon: "📅", label: "Agenda", onClick: () => setActiveTab("agenda") },
     { icon: "🔧", label: "Servicos", onClick: () => { setSubView("servicos"); setActiveTab("home"); } },
     { icon: "👥", label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
+    { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
       { icon: "✂️", label: "Barbeiros", onClick: () => { setSubView("barbeiros"); setActiveTab("home"); } },
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
@@ -703,6 +706,13 @@ export default function PainelPage() {
         </div>
       );
     }
+
+    // ─── CLIENTES SUMIDOS ───
+    if (subView === "sumidos") return (
+      <div className="space-y-4">{backBtn}
+        <Sumidos token={token} shopName={user?.shopName} bookingLink={bookingLink} />
+      </div>
+    );
 
     // ─── FIDELIDADE ───
     if (subView === "fidelidade") return (
@@ -962,7 +972,10 @@ export default function PainelPage() {
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}
             {activeTab === "financeiro" && user?.role === "owner" && (
-              <div className="mb-5"><Conversao token={token} /></div>
+              <div className="mb-5 space-y-4">
+                <Ocupacao token={token} />
+                <Conversao token={token} />
+              </div>
             )}
             {activeTab === "financeiro" && (
               <div className="space-y-5">
