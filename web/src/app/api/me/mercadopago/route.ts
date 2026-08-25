@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken, signToken } from "@/app/lib/auth";
-import { mercadoPagoConfigurado, urlDeAutorizacao, tokenDaBarbearia } from "@/app/lib/mercadopago";
+import { mercadoPagoConfigurado, urlDeAutorizacao } from "@/app/lib/mercadopago";
 
 /**
  * Conexão da barbearia com o Mercado Pago.
@@ -77,60 +77,5 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
-  }
-}
-
-/**
- * Teste de cobranca — cria um Pix de R$ 1 e devolve a resposta CRUA do
- * Mercado Pago. Serve para descobrir o motivo exato quando a cobranca falha,
- * em vez de olhar so a mensagem generica que o cliente ve.
- */
-export async function PUT(req: NextRequest) {
-  try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload || payload.role !== "owner") {
-      return NextResponse.json({ error: "Nao autorizado" }, { status: 401 });
-    }
-
-    const token = await tokenDaBarbearia(payload.shopId);
-    if (!token) return NextResponse.json({ error: "Mercado Pago nao conectado" }, { status: 400 });
-
-    // Parametros ajustaveis para isolar qual campo o MP recusa
-    const q = new URL(req.url).searchParams;
-    const valor = Number(q.get("valor") || 1);
-    const minutos = Number(q.get("minutos") || 60);
-    const comNotificacao = q.get("notif") === "1";
-    const base = (process.env.NEXT_PUBLIC_BASE_URL || "https://barberpro-mauve.vercel.app").trim();
-
-    const expira = new Date(Date.now() + minutos * 60 * 1000);
-    const corpo: Record<string, unknown> = {
-      transaction_amount: valor,
-      description: "Teste BarberPro",
-      payment_method_id: "pix",
-      external_reference: `teste-${Date.now()}`,
-      date_of_expiration: expira.toISOString(),
-      payer: { email: `teste-${Date.now()}@barberpro.app`, first_name: "Teste", last_name: "BarberPro" },
-    };
-    if (comNotificacao) corpo.notification_url = `${base}/api/webhooks/mercadopago`;
-
-    const r = await fetch("https://api.mercadopago.com/v1/payments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "X-Idempotency-Key": String(corpo.external_reference),
-      },
-      body: JSON.stringify(corpo),
-    });
-
-    const resposta = await r.json().catch(() => ({}));
-    return NextResponse.json({
-      status: r.status,
-      ok: r.ok,
-      enviado: { ...corpo, payer: "(omitido)" },
-      respostaMP: resposta,
-    });
-  } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
