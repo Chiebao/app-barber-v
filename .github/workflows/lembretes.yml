@@ -1,0 +1,34 @@
+name: Lembretes automáticos
+
+# O cron da Vercel no plano grátis roda só 1x/dia, o que deixaria quase todo
+# cliente sem lembrete. Este workflow chama o mesmo endpoint de meia em meia
+# hora. A janela de aviso é de 2h antes do corte, então essa frequência cobre
+# todo mundo com folga, e o `reminderSentAt` impede aviso repetido.
+#
+# Cadência escolhida pelo orçamento: repo privado gasta minutos do plano grátis
+# (2.000/mês) e o GitHub cobra 1 minuto mínimo por execução.
+#   a cada 30 min → ~1.440 min/mês (cabe)
+#   a cada 15 min → ~2.880 min/mês (estoura)
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}   # permite disparar na mão pelo site do GitHub
+
+jobs:
+  disparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Chamar o endpoint de lembretes
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://barberpro-mauve.vercel.app/api/cron")
+          codigo=$(echo "$resposta" | tail -n1)
+          corpo=$(echo "$resposta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$corpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Endpoint de lembretes respondeu $codigo"
+            exit 1
+          fi
