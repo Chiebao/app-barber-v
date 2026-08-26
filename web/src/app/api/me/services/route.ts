@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     const payload = verifyToken(token);
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { id, name, duration, price, imageUrl, active } = await req.json();
+    const { id, name, duration, price, category, imageUrl, active } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
 
     const existing = await prisma.service.findFirst({ where: { id, shopId: payload.shopId } });
@@ -65,11 +65,55 @@ export async function PATCH(req: NextRequest) {
         ...(name !== undefined && { name }),
         ...(duration !== undefined && { duration: Number(duration) }),
         ...(price !== undefined && { price: Number(price) }),
+        ...(category !== undefined && { category }),
         ...(imageUrl !== undefined && { imageUrl }),
         ...(active !== undefined && { active }),
       },
     });
     return NextResponse.json({ service: { ...service, price: num(service.price) } });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}
+
+// DELETE — remove serviço de vez
+//
+// Um serviço que já apareceu num atendimento NÃO pode ser apagado: a relação
+// appointment_services tem onDelete: Cascade, então apagar o serviço levaria
+// junto as linhas dos agendamentos antigos — o histórico ficaria com um
+// atendimento de R$ 70 e nenhum serviço dentro, e o financeiro não fecharia.
+//
+// Nesse caso devolvemos 409 explicando, e o painel oferece desativar: o
+// serviço some da tela de agendamento do cliente e o histórico continua certo.
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = req.headers.get("authorization")?.replace("Bearer ", "");
+    if (!token) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    const { id } = await req.json();
+    if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
+
+    // Escopo pela loja do token — ninguém apaga serviço de outra barbearia
+    const existing = await prisma.service.findFirst({ where: { id, shopId: payload.shopId } });
+    if (!existing) return NextResponse.json({ error: "Serviço não encontrado" }, { status: 404 });
+
+    const usos = await prisma.appointmentService.count({ where: { serviceId: id } });
+    if (usos > 0) {
+      return NextResponse.json(
+        {
+          error: "Este serviço já foi usado em atendimentos e não pode ser apagado sem quebrar o histórico.",
+          usos,
+          podeDesativar: true,
+        },
+        { status: 409 },
+      );
+    }
+
+    await prisma.service.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

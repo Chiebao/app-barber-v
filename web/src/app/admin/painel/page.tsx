@@ -141,6 +141,10 @@ export default function PainelPage() {
   const [servicesLoading, setServicesLoading] = useState(false);
   const [newService, setNewService] = useState({ name: "", duration: "30", price: "", category: "corte" });
   const [addingService, setAddingService] = useState(false);
+  // Servico em edicao: guarda os campos como texto porque vem de <input>
+  const [editService, setEditService] = useState<{ id: string; name: string; price: string; duration: string; category: string } | null>(null);
+  const [savingService, setSavingService] = useState(false);
+  const [deletingService, setDeletingService] = useState<string | null>(null);
 
   // ── Clients state ──
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -511,6 +515,61 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao adicionar"); } finally { setAddingService(false); }
   };
 
+  const abrirEdicaoServico = (s: ServiceItem) =>
+    setEditService({ id: s.id, name: s.name, price: String(s.price), duration: String(s.duration), category: s.category });
+
+  const salvarEdicaoServico = async () => {
+    if (!editService) return;
+    if (!editService.name.trim() || !editService.price) { toast.error("Preencha nome e preço"); return; }
+    setSavingService(true);
+    try {
+      const res = await fetch("/api/me/services", {
+        method: "PATCH", headers: authHeaders(),
+        body: JSON.stringify({
+          id: editService.id,
+          name: editService.name.trim(),
+          price: parseFloat(editService.price),
+          duration: parseInt(editService.duration) || 30,
+          category: editService.category,
+        }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Serviço atualizado"); setEditService(null); fetchServices(); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao salvar"); }
+    } catch { toast.error("Erro ao salvar"); } finally { setSavingService(false); }
+  };
+
+  const excluirServico = async (s: ServiceItem) => {
+    if (!confirm(`Apagar "${s.name}" de vez? Essa ação não tem volta.`)) return;
+    setDeletingService(s.id);
+    try {
+      const res = await fetch("/api/me/services", {
+        method: "DELETE", headers: authHeaders(), body: JSON.stringify({ id: s.id }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      const d = await res.json().catch(() => ({}));
+
+      // 409 = servico ja usado em atendimento. Apagar quebraria o historico,
+      // entao oferecemos desativar, que resolve o problema real do dono
+      // (sumir da tela do cliente) sem mexer no que ja aconteceu.
+      if (res.status === 409) {
+        const ok = confirm(
+          `"${s.name}" já foi usado em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}.
+
+` +
+          `Apagar apagaria esses atendimentos do histórico e o financeiro deixaria de fechar.
+
+` +
+          `Quer DESATIVAR? Ele some da tela de agendamento do cliente e o histórico fica intacto.`
+        );
+        if (ok) await toggleService(s.id, false);
+        return;
+      }
+      if (res.ok) { toast.success("Serviço apagado"); setEditService(null); fetchServices(); }
+      else toast.error(d.error || "Erro ao apagar");
+    } catch { toast.error("Erro ao apagar"); } finally { setDeletingService(null); }
+  };
+
   const toggleService = async (id: string, active: boolean) => {
     try { await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id, active }) }); fetchServices(); }
     catch { toast.error("Erro ao atualizar serviço"); }
@@ -666,13 +725,75 @@ export default function PainelPage() {
             {services.map(s => (
               <div key={s.id} className={`flex items-center gap-4 rounded-xl border bg-dark-800 p-4 ${s.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
                 <span className="text-2xl">{CATEGORY_ICONS[s.category] || "✂️"}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">{s.name}</p>
+                <button onClick={() => abrirEdicaoServico(s)} className="flex-1 min-w-0 text-left group">
+                  <p className="font-medium text-white group-hover:text-brand-400 transition">{s.name}</p>
                   <p className="text-sm text-gray-400">R$ {s.price.toFixed(2)} · {s.duration}min · {CATEGORY_LABELS[s.category] || s.category}</p>
-                </div>
-                <button onClick={() => toggleService(s.id, !s.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${s.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${s.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                </button>
+                <button onClick={() => abrirEdicaoServico(s)} title="Editar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
+                <button onClick={() => excluirServico(s)} disabled={deletingService === s.id} title="Apagar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">{deletingService === s.id ? "…" : "🗑️"}</button>
+                <button onClick={() => toggleService(s.id, !s.active)} title={s.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${s.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${s.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Modal de edicao — 100vw/100vh inline porque position:fixed sozinho
+            se dimensiona pelo documento, nao pela viewport, e o modal some */}
+        {editService && (
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditService(null)}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">Editar serviço</h3>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
+                <input type="text" value={editService.name} autoFocus
+                  onChange={e => setEditService(p => p && ({ ...p, name: e.target.value }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Preço (R$)</label>
+                  <input type="number" inputMode="decimal" value={editService.price}
+                    onChange={e => setEditService(p => p && ({ ...p, price: e.target.value }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Duração (min)</label>
+                  <input type="number" inputMode="numeric" value={editService.duration}
+                    onChange={e => setEditService(p => p && ({ ...p, duration: e.target.value }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Categoria</label>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                    <button key={key} onClick={() => setEditService(p => p && ({ ...p, category: key }))}
+                      className={`px-3 py-2 rounded-lg text-sm border transition ${editService.category === key ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>
+                      {CATEGORY_ICONS[key]} {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={salvarEdicaoServico} disabled={savingService}
+                className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                {savingService ? "Salvando..." : "Salvar alterações"}
+              </button>
+
+              <div className="pt-3 border-t border-gray-700 space-y-2">
+                <button onClick={() => { const alvo = services.find(x => x.id === editService.id); if (alvo) excluirServico(alvo); }}
+                  disabled={deletingService === editService.id}
+                  className="w-full rounded-xl border border-red-500/30 py-2.5 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition">
+                  {deletingService === editService.id ? "Apagando..." : "🗑️ Apagar este serviço"}
+                </button>
+                <button onClick={() => setEditService(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
+                  Cancelar
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
