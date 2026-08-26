@@ -60,12 +60,20 @@ export async function POST(req: NextRequest) {
             avgServiceTime: data.avgServiceTime,
             pixKey: data.pixKey || null,
             services: { create: data.services },
-            // Cria o proprio dono como primeiro barbeiro automaticamente
+            // Cria o proprio dono como primeiro barbeiro automaticamente.
+            //
+            // isOwnerProfile ja nasce marcado: antes ficava false e so era
+            // corrigido depois, quando alguem chamava /api/me/owner-barber e
+            // ele casava pelo telefone. Ate la a barbearia tinha um perfil de
+            // dono que o sistema nao reconhecia como tal — dava para desativar
+            // o proprio dono e tira-lo da tela de agendamento do cliente.
             barbers: {
               create: {
                 name: data.ownerName,
                 phone: data.phone,
                 passwordHash,
+                role: "owner",
+                isOwnerProfile: true,
               },
             },
           },
