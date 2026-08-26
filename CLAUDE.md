@@ -273,7 +273,7 @@ app_barber/
 | Tabela | Descricao | Campos principais |
 |--------|-----------|-------------------|
 | `Owner` | Dono da barbearia | id, name, phone (unique), passwordHash |
-| `Shop` | Barbearia | id, name, slug (unique), openTime, closeTime, workDays, avgServiceTime, pixKey, colorTheme, bookingMode, ownerId (FK) |
+| `Shop` | Barbearia | id, name, slug (unique), openTime, closeTime, workDays, avgServiceTime, pixKey, logoUrl, colorTheme, bookingMode, **phone, address, neighborhood, city, state, zipCode** (todos opcionais), mpAccessToken/mpRefreshToken/mpUserId/mpConnectedAt, ownerId (FK) |
 | `Barber` | Barbeiros da barbearia | id, name, phone, **email, imageUrl**, passwordHash, role, commission, active, isOwnerProfile, pushToken, shopId (FK) |
 | `Service` | Servicos oferecidos | id, name, duration, price, category, imageUrl, active, shopId (FK) |
 | `Client` | Clientes (por telefone) | id, name, phone (unique), notes, noShowCount |
