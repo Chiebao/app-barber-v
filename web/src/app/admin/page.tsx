@@ -69,6 +69,33 @@ export default function AdminPage() {
   const [canalWhatsApp, setCanalWhatsApp] = useState<boolean | null>(null);
   const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "";
 
+  // Quem ja esta logado nao pode cair no formulario de login.
+  //
+  // No iPhone o gesto de voltar pela borda leva o painel de volta para ca, e
+  // como esta tela nao olhava o token, o barbeiro achava que tinha caido a
+  // sessao e digitava a senha de novo — sendo que o token nunca saiu do
+  // localStorage. Aqui devolvemos ele para o painel antes de pintar a tela.
+  const [checandoSessao, setChecandoSessao] = useState(true);
+  useEffect(() => {
+    const t = localStorage.getItem("admin_token");
+    if (!t) { setChecandoSessao(false); return; }
+    try {
+      // Le o exp sem validar assinatura: e so para evitar o vai-e-volta de
+      // mandar para o painel um token que ja sabemos estar vencido.
+      const payload = JSON.parse(atob(t.split(".")[1] || ""));
+      if (payload?.exp && payload.exp * 1000 > Date.now()) {
+        router.replace("/admin/painel");
+        return;
+      }
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
+      localStorage.removeItem("admin_token_renewed_at");
+    } catch {
+      localStorage.removeItem("admin_token");
+    }
+    setChecandoSessao(false);
+  }, [router]);
+
   useEffect(() => {
     fetch("/api/auth/forgot")
       .then((r) => (r.ok ? r.json() : null))
@@ -247,6 +274,16 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
+
+  // Enquanto decide se manda para o painel, nao pinta o formulario:
+  // o flash do login e justamente o que faz o barbeiro achar que deslogou.
+  if (checandoSessao) {
+    return (
+      <main className="min-h-screen bg-dark-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </main>
+    );
+  }
 
   if (step === "done" && result) {
     return (

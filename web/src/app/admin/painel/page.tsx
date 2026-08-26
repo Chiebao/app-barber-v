@@ -42,7 +42,8 @@ interface DashboardData {
   barberStats: { name: string; count: number; revenue: number; commission: number; commissionValue: number; revenueShare: number }[];
   peakHour: string | null; totalClients: number; barbers: number;
 }
-interface ServiceItem { id: string; name: string; duration: number; price: number; category: string; active: boolean; }
+interface ServiceItem { id: string; name: string; duration: number; price: number; category: string; active: boolean; imageUrl?: string | null; }
+interface ProductItem { id: string; name: string; price: number; description: string | null; imageUrl: string | null; active: boolean; }
 interface ClientItem { id: string; name: string; phone: string; notes: string | null; noShowCount: number; firstDate: string; totalAppointments: number; }
 interface SlotData { allSlots: string[]; blocked: string[]; allDay: boolean; booked: string[]; }
 
@@ -142,9 +143,20 @@ export default function PainelPage() {
   const [newService, setNewService] = useState({ name: "", duration: "30", price: "", category: "corte" });
   const [addingService, setAddingService] = useState(false);
   // Servico em edicao: guarda os campos como texto porque vem de <input>
-  const [editService, setEditService] = useState<{ id: string; name: string; price: string; duration: string; category: string } | null>(null);
+  const [editService, setEditService] = useState<{ id: string; name: string; price: string; duration: string; category: string; imageUrl: string } | null>(null);
   const [savingService, setSavingService] = useState(false);
   const [deletingService, setDeletingService] = useState<string | null>(null);
+  const [uploadingServiceImg, setUploadingServiceImg] = useState(false);
+
+  // ── Products state ──
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: "", price: "", description: "" });
+  const [addingProduct, setAddingProduct] = useState(false);
+  const [editProduct, setEditProduct] = useState<{ id: string; name: string; price: string; description: string; imageUrl: string } | null>(null);
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<string | null>(null);
+  const [uploadingProductImg, setUploadingProductImg] = useState(false);
 
   // ── Clients state ──
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -276,6 +288,13 @@ export default function PainelPage() {
     catch { setServices([]); } finally { setServicesLoading(false); }
   }, [token, authHeaders]);
 
+  // ?todos=1 para enxergar tambem os desativados e poder reativar
+  const fetchProducts = useCallback(async () => {
+    if (!token) return; setProductsLoading(true);
+    try { const res = await fetch("/api/me/products?todos=1", { headers: authHeaders() }); const data = await res.json(); setProducts(data.products || []); }
+    catch { setProducts([]); } finally { setProductsLoading(false); }
+  }, [token, authHeaders]);
+
   const fetchClients = useCallback(async () => {
     if (!token) return; setClientsLoading(true);
     try { const res = await fetch("/api/me/clients", { headers: authHeaders() }); const data = await res.json(); setClients(data.clients || []); }
@@ -299,6 +318,7 @@ export default function PainelPage() {
     if (subView === "espera") fetchWaitlist();
     if (subView === "servicos") fetchServices();
     if (subView === "clientes") fetchClients();
+    if (subView === "produtos") fetchProducts();
   }, [token, subView]);
 
   // ── Cancel state ──
@@ -516,7 +536,31 @@ export default function PainelPage() {
   };
 
   const abrirEdicaoServico = (s: ServiceItem) =>
-    setEditService({ id: s.id, name: s.name, price: String(s.price), duration: String(s.duration), category: s.category });
+    setEditService({ id: s.id, name: s.name, price: String(s.price), duration: String(s.duration), category: s.category, imageUrl: s.imageUrl || "" });
+
+  /** Foto do corte: sobe e ja grava no servico, para o cliente ver no agendamento. */
+  const trocarFotoServico = async (file: File | null) => {
+    if (!file || !editService) return;
+    setUploadingServiceImg(true);
+    try {
+      const url = await enviarImagem(file);
+      if (!url) return;
+      const res = await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editService.id, imageUrl: url }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditService(p => p && ({ ...p, imageUrl: url })); toast.success("Foto atualizada"); fetchServices(); }
+      else toast.error("Erro ao salvar a foto");
+    } finally { setUploadingServiceImg(false); }
+  };
+
+  const removerFotoServico = async () => {
+    if (!editService) return;
+    setUploadingServiceImg(true);
+    try {
+      const res = await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editService.id, imageUrl: null }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditService(p => p && ({ ...p, imageUrl: "" })); toast.success("Foto removida"); fetchServices(); }
+    } finally { setUploadingServiceImg(false); }
+  };
 
   const salvarEdicaoServico = async () => {
     if (!editService) return;
@@ -570,6 +614,87 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao apagar"); } finally { setDeletingService(null); }
   };
 
+  // ── Produtos ──
+  const handleAddProduct = async () => {
+    if (!newProduct.name.trim() || !newProduct.price) { toast.error("Preencha nome e preço"); return; }
+    setAddingProduct(true);
+    try {
+      const res = await fetch("/api/me/products", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newProduct.name.trim(), price: parseFloat(newProduct.price), description: newProduct.description.trim() || null }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setNewProduct({ name: "", price: "", description: "" }); toast.success("Produto adicionado"); fetchProducts(); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao adicionar"); }
+    } catch { toast.error("Erro ao adicionar"); } finally { setAddingProduct(false); }
+  };
+
+  const abrirEdicaoProduto = (p: ProductItem) =>
+    setEditProduct({ id: p.id, name: p.name, price: String(p.price), description: p.description || "", imageUrl: p.imageUrl || "" });
+
+  const salvarEdicaoProduto = async () => {
+    if (!editProduct) return;
+    if (!editProduct.name.trim() || !editProduct.price) { toast.error("Preencha nome e preço"); return; }
+    setSavingProduct(true);
+    try {
+      const res = await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editProduct.id, name: editProduct.name.trim(), price: parseFloat(editProduct.price), description: editProduct.description.trim() || null }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Produto atualizado"); setEditProduct(null); fetchProducts(); }
+      else { const d = await res.json(); toast.error(d.error || "Erro ao salvar"); }
+    } catch { toast.error("Erro ao salvar"); } finally { setSavingProduct(false); }
+  };
+
+  const toggleProduct = async (id: string, active: boolean) => {
+    try { await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id, active }) }); fetchProducts(); }
+    catch { toast.error("Erro ao atualizar produto"); }
+  };
+
+  const excluirProduto = async (p: ProductItem) => {
+    if (!confirm(`Apagar "${p.name}" de vez? Essa ação não tem volta.`)) return;
+    setDeletingProduct(p.id);
+    try {
+      const res = await fetch("/api/me/products", { method: "DELETE", headers: authHeaders(), body: JSON.stringify({ id: p.id }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      const d = await res.json().catch(() => ({}));
+      // 409 = produto ja vendido. Apagar levaria as linhas de comanda junto.
+      if (res.status === 409) {
+        const ok = confirm(
+          `"${p.name}" já foi vendido em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}.
+
+` +
+          `Apagar apagaria essas vendas do histórico e o financeiro deixaria de fechar.
+
+` +
+          `Quer DESATIVAR? Ele some da comanda e o histórico fica intacto.`
+        );
+        if (ok) await toggleProduct(p.id, false);
+        return;
+      }
+      if (res.ok) { toast.success("Produto apagado"); setEditProduct(null); fetchProducts(); }
+      else toast.error(d.error || "Erro ao apagar");
+    } catch { toast.error("Erro ao apagar"); } finally { setDeletingProduct(null); }
+  };
+
+  const trocarFotoProduto = async (file: File | null) => {
+    if (!file || !editProduct) return;
+    setUploadingProductImg(true);
+    try {
+      const url = await enviarImagem(file);
+      if (!url) return;
+      const res = await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editProduct.id, imageUrl: url }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditProduct(p => p && ({ ...p, imageUrl: url })); toast.success("Foto atualizada"); fetchProducts(); }
+      else toast.error("Erro ao salvar a foto");
+    } finally { setUploadingProductImg(false); }
+  };
+
+  const removerFotoProduto = async () => {
+    if (!editProduct) return;
+    setUploadingProductImg(true);
+    try {
+      const res = await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editProduct.id, imageUrl: null }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditProduct(p => p && ({ ...p, imageUrl: "" })); toast.success("Foto removida"); fetchProducts(); }
+    } finally { setUploadingProductImg(false); }
+  };
+
   const toggleService = async (id: string, active: boolean) => {
     try { await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id, active }) }); fetchServices(); }
     catch { toast.error("Erro ao atualizar serviço"); }
@@ -585,6 +710,21 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao salvar"); }
     finally { setSavingSettings(false); }
   };
+
+  /** Sobe uma imagem e devolve a URL publica. null = falhou (ja avisou o usuario). */
+  const enviarImagem = useCallback(async (file: File): Promise<string | null> => {
+    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) { toast.error("Use uma imagem (JPG, PNG ou WEBP)"); return null; }
+    if (file.size > 3 * 1024 * 1024) { toast.error("Imagem muito grande (máx 3MB)"); return null; }
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/me/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (up.status === 401) { handleUnauthorized(); return null; }
+      const d = await up.json();
+      if (!up.ok || !d.url) { toast.error(d.error || "Falha no upload"); return null; }
+      return d.url as string;
+    } catch { toast.error("Erro no upload"); return null; }
+  }, [token, handleUnauthorized]);
 
   const handleLogoUpload = async (file: File | null) => {
     if (!file) return;
@@ -654,6 +794,7 @@ export default function PainelPage() {
     ...(user?.role === "owner" ? [
       { icon: "✂️", label: "Barbeiros", onClick: () => { setSubView("barbeiros"); setActiveTab("home"); } },
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
+      { icon: "🛍️", label: "Produtos", onClick: () => { setSubView("produtos"); setActiveTab("home"); } },
     ] : []),
   ];
 
@@ -778,6 +919,27 @@ export default function PainelPage() {
                 </div>
               </div>
 
+              {/* Foto do corte — e ela que o cliente ve na hora de escolher o servico */}
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Foto do corte</label>
+                <div className="flex items-center gap-3">
+                  {editService.imageUrl ? (
+                    <img src={editService.imageUrl} alt={editService.name} className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-dark-900 border border-gray-700 flex items-center justify-center text-2xl shrink-0">📷</div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingServiceImg ? "opacity-50 pointer-events-none" : ""}`}>
+                      {uploadingServiceImg ? "Enviando..." : editService.imageUrl ? "Trocar foto" : "Enviar foto"}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingServiceImg} onChange={e => trocarFotoServico(e.target.files?.[0] || null)} />
+                    </label>
+                    {editService.imageUrl && (
+                      <button onClick={removerFotoServico} disabled={uploadingServiceImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <button onClick={salvarEdicaoServico} disabled={savingService}
                 className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
                 {savingService ? "Salvando..." : "Salvar alterações"}
@@ -792,6 +954,87 @@ export default function PainelPage() {
                 <button onClick={() => setEditService(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
                   Cancelar
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    // ─── PRODUTOS ───
+    if (subView === "produtos") return (
+      <div className="space-y-6">{backBtn}
+        <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+          <h3 className="font-semibold text-white">Adicionar produto</h3>
+          <input type="text" placeholder="Nome do produto *" value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+          <input type="number" inputMode="decimal" placeholder="Preço *" value={newProduct.price} onChange={e => setNewProduct(p => ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+          <input type="text" placeholder="Descrição (opcional)" value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+          <p className="text-xs text-gray-500">A foto você adiciona depois, tocando no produto.</p>
+          <button onClick={handleAddProduct} disabled={addingProduct} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingProduct ? "Adicionando..." : "Adicionar produto"}</button>
+        </div>
+
+        {productsLoading ? <Spinner /> : products.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum produto cadastrado</p> : (
+          <div className="space-y-3">
+            {products.map(p => (
+              <div key={p.id} className={`flex items-center gap-3 rounded-xl border bg-dark-800 p-4 ${p.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
+                {p.imageUrl
+                  ? <img src={p.imageUrl} alt={p.name} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                  : <div className="w-12 h-12 rounded-lg bg-dark-900 border border-gray-700 flex items-center justify-center text-xl shrink-0">📷</div>}
+                <button onClick={() => abrirEdicaoProduto(p)} className="flex-1 min-w-0 text-left group">
+                  <p className="font-medium text-white group-hover:text-brand-400 transition truncate">{p.name}</p>
+                  <p className="text-sm text-gray-400">R$ {p.price.toFixed(2)}{p.description ? ` · ${p.description}` : ""}</p>
+                </button>
+                <button onClick={() => abrirEdicaoProduto(p)} title="Editar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
+                <button onClick={() => excluirProduto(p)} disabled={deletingProduct === p.id} title="Apagar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">{deletingProduct === p.id ? "…" : "🗑️"}</button>
+                <button onClick={() => toggleProduct(p.id, !p.active)} title={p.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${p.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${p.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Modal de edição — 100vw/100vh inline porque position:fixed sozinho
+            se dimensiona pelo documento, não pela viewport */}
+        {editProduct && (
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditProduct(null)}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">Editar produto</h3>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
+                <input type="text" value={editProduct.name} autoFocus onChange={e => setEditProduct(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Preço (R$)</label>
+                <input type="number" inputMode="decimal" value={editProduct.price} onChange={e => setEditProduct(p => p && ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Descrição</label>
+                <input type="text" value={editProduct.description} onChange={e => setEditProduct(p => p && ({ ...p, description: e.target.value }))} placeholder="Opcional" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Foto do produto</label>
+                <div className="flex items-center gap-3">
+                  {editProduct.imageUrl
+                    ? <img src={editProduct.imageUrl} alt={editProduct.name} className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                    : <div className="w-16 h-16 rounded-xl bg-dark-900 border border-gray-700 flex items-center justify-center text-2xl shrink-0">📷</div>}
+                  <div className="flex-1 space-y-2">
+                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingProductImg ? "opacity-50 pointer-events-none" : ""}`}>
+                      {uploadingProductImg ? "Enviando..." : editProduct.imageUrl ? "Trocar foto" : "Enviar foto"}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingProductImg} onChange={e => trocarFotoProduto(e.target.files?.[0] || null)} />
+                    </label>
+                    {editProduct.imageUrl && (
+                      <button onClick={removerFotoProduto} disabled={uploadingProductImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={salvarEdicaoProduto} disabled={savingProduct} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingProduct ? "Salvando..." : "Salvar alterações"}</button>
+
+              <div className="pt-3 border-t border-gray-700 space-y-2">
+                <button onClick={() => { const alvo = products.find(x => x.id === editProduct.id); if (alvo) excluirProduto(alvo); }} disabled={deletingProduct === editProduct.id} className="w-full rounded-xl border border-red-500/30 py-2.5 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition">{deletingProduct === editProduct.id ? "Apagando..." : "🗑️ Apagar este produto"}</button>
+                <button onClick={() => setEditProduct(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
               </div>
             </div>
           </div>

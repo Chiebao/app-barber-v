@@ -8,8 +8,11 @@ export async function GET(req: NextRequest) {
     const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
     if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // ?todos=1 traz tambem os desativados — a tela de gestao precisa deles
+    // para poder reativar; a comanda continua vendo so os ativos.
+    const todos = req.nextUrl.searchParams.get("todos") === "1";
     const products = await prisma.product.findMany({
-      where: { shopId: payload.shopId, active: true },
+      where: { shopId: payload.shopId, ...(todos ? {} : { active: true }) },
       orderBy: { name: "asc" },
     });
 
@@ -52,8 +55,23 @@ export async function PATCH(req: NextRequest) {
     const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { id, ...data } = await req.json();
-    const product = await prisma.product.update({ where: { id }, data });
+    const { id, name, price, description, imageUrl, imageUrl2, active } = await req.json();
+    if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
+
+    const existing = await prisma.product.findFirst({ where: { id, shopId: payload.shopId } });
+    if (!existing) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(description !== undefined && { description: description || null }),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
+        ...(imageUrl2 !== undefined && { imageUrl2: imageUrl2 || null }),
+        ...(active !== undefined && { active }),
+      },
+    });
     return NextResponse.json({ product: { ...product, price: num(product.price) } });
   } catch (error) {
     console.error(error);
@@ -84,6 +102,43 @@ export async function PUT(req: NextRequest) {
       await prisma.comandaItem.create({ data: { appointmentId, productId, quantity: quantity || 1, price: product.price } });
     }
 
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}
+
+// DELETE — remove produto de vez
+//
+// Mesma armadilha dos serviços: comanda_items tem onDelete: Cascade no
+// productId, então apagar um produto já vendido levaria junto as linhas de
+// comanda dos atendimentos antigos e o financeiro pararia de fechar.
+// Produto já vendido só pode ser desativado.
+export async function DELETE(req: NextRequest) {
+  try {
+    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
+    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    const { id } = await req.json();
+    if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
+
+    const existing = await prisma.product.findFirst({ where: { id, shopId: payload.shopId } });
+    if (!existing) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+
+    const vendas = await prisma.comandaItem.count({ where: { productId: id } });
+    if (vendas > 0) {
+      return NextResponse.json(
+        {
+          error: "Este produto já foi vendido em atendimentos e não pode ser apagado sem quebrar o histórico.",
+          usos: vendas,
+          podeDesativar: true,
+        },
+        { status: 409 },
+      );
+    }
+
+    await prisma.product.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error(error);
