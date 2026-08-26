@@ -60,6 +60,7 @@ interface Service {
 interface Barber {
   id: string;
   name: string;
+  imageUrl: string | null;
 }
 
 interface Shop {
@@ -886,9 +887,13 @@ export default function BarberPage() {
                   onClick={() => handleSelectBarber(b)}
                   className="flex flex-col items-center gap-3 p-5 bg-dark-900 border border-gray-700 rounded-2xl hover:border-brand-400 hover:bg-brand-500/5 transition"
                 >
-                  <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-2xl font-bold">
-                    {b.name.charAt(0).toUpperCase()}
-                  </div>
+                  {b.imageUrl ? (
+                    <img src={b.imageUrl} alt={b.name} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-2xl font-bold">
+                      {b.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <span className="font-semibold text-white">{b.name}</span>
                 </button>
               ))}

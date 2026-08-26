@@ -73,6 +73,12 @@ model Barber {
   shopId       String
   name         String
   phone        String
+  // E-mail do profissional. Opcional e sem uso automatico ainda: e a base
+  // para recuperar a senha sem depender do WhatsApp, quando houver envio.
+  email        String?
+  // Foto do profissional — aparece para o cliente na hora de escolher com
+  // quem cortar. E a razao de o dono tambem ter um perfil de barbeiro.
+  imageUrl     String?
   passwordHash String
   // Codigo de recuperacao (hash) para redefinir a senha sem depender do dono
   recoveryCodeHash String?

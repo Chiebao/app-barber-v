@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
         phone: true, address: true, neighborhood: true, city: true, state: true, zipCode: true,
         barbers: {
           where: { active: true },
-          select: { id: true, name: true },
+          select: { id: true, name: true, imageUrl: true },
         },
         services: {
           where: { active: true },

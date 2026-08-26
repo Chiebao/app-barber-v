@@ -34,7 +34,7 @@ interface Appointment {
   client: { id: string; name: string; phone: string; noShowCount: number; notes: string | null };
   services: AppointmentService[];
 }
-interface Barber { id: string; name: string; phone: string; active: boolean; commission?: number; role?: string; }
+interface Barber { id: string; name: string; phone: string; active: boolean; role: string; commission?: number; email?: string | null; imageUrl?: string | null; isOwnerProfile?: boolean; }
 interface DashboardData {
   today: { appointments: number; received: number; expected: number };
   month: { appointments: number; revenue: number; toReceive: number; avgTicket: number; cancelRate: number; revenueGrowth: number | null; aptGrowth: number | null; prevRevenue: number; prevApts: number; };
@@ -119,6 +119,10 @@ export default function PainelPage() {
   const [newBarberPhone, setNewBarberPhone] = useState("");
   const [newBarberPassword, setNewBarberPassword] = useState("");
   const [newBarberCommission, setNewBarberCommission] = useState("");
+  const [newBarberEmail, setNewBarberEmail] = useState("");
+  const [editBarber, setEditBarber] = useState<{ id: string; name: string; email: string; commission: string; imageUrl: string; isOwnerProfile: boolean } | null>(null);
+  const [savingBarber, setSavingBarber] = useState(false);
+  const [uploadingBarberImg, setUploadingBarberImg] = useState(false);
   const [addingBarber, setAddingBarber] = useState(false);
   const [resetBarberId, setResetBarberId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState("");
@@ -465,9 +469,9 @@ export default function PainelPage() {
     if (!newBarberName.trim() || !newBarberPhone.trim() || newBarberPassword.length < 6) { toast.error("Preencha todos os campos (senha min 6)"); return; }
     setAddingBarber(true);
     try {
-      const res = await fetch("/api/auth/add-barber", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newBarberName, phone: newBarberPhone.replace(/\D/g, ""), password: newBarberPassword, commission: newBarberCommission ? parseFloat(newBarberCommission) : 0 }) });
+      const res = await fetch("/api/auth/add-barber", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newBarberName, phone: newBarberPhone.replace(/\D/g, ""), password: newBarberPassword, commission: newBarberCommission ? parseFloat(newBarberCommission) : 0, email: newBarberEmail.trim() }) });
       if (res.status === 401) { handleUnauthorized(); return; }
-      if (res.ok) { setNewBarberName(""); setNewBarberPhone(""); setNewBarberPassword(""); setNewBarberCommission(""); toast.success("Barbeiro adicionado"); fetchBarbers(); }
+      if (res.ok) { setNewBarberName(""); setNewBarberPhone(""); setNewBarberPassword(""); setNewBarberCommission(""); setNewBarberEmail(""); toast.success("Barbeiro adicionado"); fetchBarbers(); }
       else { const d = await res.json(); toast.error(d.error || "Erro ao adicionar"); }
     } catch { toast.error("Erro ao adicionar"); } finally { setAddingBarber(false); }
   };
@@ -619,6 +623,49 @@ export default function PainelPage() {
       if (res.ok) { toast.success("Serviço apagado"); setEditService(null); fetchServices(); }
       else toast.error(d.error || "Erro ao apagar");
     } catch { toast.error("Erro ao apagar"); } finally { setDeletingService(null); }
+  };
+
+  // ── Barbeiro: editar perfil, foto e e-mail ──
+  const abrirEdicaoBarbeiro = (b: Barber) =>
+    setEditBarber({ id: b.id, name: b.name, email: b.email || "", commission: String(b.commission ?? 0), imageUrl: b.imageUrl || "", isOwnerProfile: !!b.isOwnerProfile });
+
+  const salvarBarbeiro = async () => {
+    if (!editBarber) return;
+    if (!editBarber.name.trim()) { toast.error("Informe o nome"); return; }
+    setSavingBarber(true);
+    try {
+      const res = await fetch("/api/auth/add-barber", {
+        method: "PATCH", headers: authHeaders(),
+        body: JSON.stringify({ barberId: editBarber.id, name: editBarber.name.trim(), email: editBarber.email.trim(), commission: Number(editBarber.commission) || 0 }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Perfil atualizado"); setEditBarber(null); fetchBarbers(); }
+      else { const d = await res.json().catch(() => ({})); toast.error(d.error || "Erro ao salvar"); }
+    } catch { toast.error("Erro ao salvar"); } finally { setSavingBarber(false); }
+  };
+
+  /** A foto e o motivo de o dono ter perfil de barbeiro: e ela que o cliente ve. */
+  const trocarFotoBarbeiro = async (file: File | null) => {
+    if (!file || !editBarber) return;
+    setUploadingBarberImg(true);
+    try {
+      const url = await enviarImagem(file);
+      if (!url) return;
+      const res = await fetch("/api/auth/add-barber", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ barberId: editBarber.id, imageUrl: url }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditBarber(p => p && ({ ...p, imageUrl: url })); toast.success("Foto atualizada"); fetchBarbers(); }
+      else toast.error("Erro ao salvar a foto");
+    } finally { setUploadingBarberImg(false); }
+  };
+
+  const removerFotoBarbeiro = async () => {
+    if (!editBarber) return;
+    setUploadingBarberImg(true);
+    try {
+      const res = await fetch("/api/auth/add-barber", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ barberId: editBarber.id, imageUrl: null }) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { setEditBarber(p => p && ({ ...p, imageUrl: "" })); toast.success("Foto removida"); fetchBarbers(); }
+    } finally { setUploadingBarberImg(false); }
   };
 
   // ── Produtos ──
@@ -833,6 +880,7 @@ export default function PainelPage() {
           <h3 className="font-semibold text-white">Adicionar Barbeiro</h3>
           <input type="text" placeholder="Nome *" value={newBarberName} onChange={e => setNewBarberName(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <input type="tel" placeholder="Telefone (com DDD) *" value={newBarberPhone} onChange={e => setNewBarberPhone(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+          <input type="email" placeholder="E-mail (opcional)" value={newBarberEmail} onChange={e => setNewBarberEmail(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <input type="password" placeholder="Senha (min 6) *" value={newBarberPassword} onChange={e => setNewBarberPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <div className="relative">
             <input type="number" min="0" max="100" placeholder="Comissao (%)" value={newBarberCommission} onChange={e => setNewBarberCommission(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 pr-10 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
@@ -845,10 +893,22 @@ export default function PainelPage() {
             {barbers.map(b => (
               <div key={b.id} className={`rounded-xl border bg-dark-800 p-4 ${b.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>
-                  <div className="flex-1 min-w-0"><p className="font-medium text-white">{b.name}</p><p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p></div>
+                  {b.imageUrl
+                    ? <img src={b.imageUrl} alt={b.name} className="w-10 h-10 rounded-full object-cover border border-brand-500/30 shrink-0" />
+                    : <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>}
+                  <button onClick={() => abrirEdicaoBarbeiro(b)} className="flex-1 min-w-0 text-left group">
+                    <p className="font-medium text-white group-hover:text-brand-400 transition">
+                      {b.name}
+                      {b.isOwnerProfile && <span className="ml-2 text-xs font-normal text-brand-400 border border-brand-400/40 rounded px-1.5 py-0.5">você</span>}
+                      {!b.imageUrl && <span className="ml-2 text-xs font-normal text-yellow-400">sem foto</span>}
+                    </p>
+                    <p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p>
+                  </button>
+                  <button onClick={() => abrirEdicaoBarbeiro(b)} title="Editar perfil" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
                   <button onClick={() => { setResetBarberId(resetBarberId === b.id ? null : b.id); setResetPassword(""); }} title="Redefinir senha" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">🔑</button>
-                  <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                  {!b.isOwnerProfile && (
+                    <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                  )}
                 </div>
                 {resetBarberId === b.id && (
                   <div className="mt-3 pt-3 border-t border-gray-700 space-y-2">
@@ -862,6 +922,51 @@ export default function PainelPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {editBarber && (
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditBarber(null)}>
+            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Foto</label>
+                <div className="flex items-center gap-3">
+                  {editBarber.imageUrl
+                    ? <img src={editBarber.imageUrl} alt={editBarber.name} className="w-16 h-16 rounded-full object-cover border border-brand-500/30 shrink-0" />
+                    : <div className="w-16 h-16 rounded-full bg-brand-500/20 border border-gray-700 flex items-center justify-center text-2xl text-brand-400 font-bold shrink-0">{editBarber.name.charAt(0).toUpperCase()}</div>}
+                  <div className="flex-1 space-y-2">
+                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingBarberImg ? "opacity-50 pointer-events-none" : ""}`}>
+                      {uploadingBarberImg ? "Enviando..." : editBarber.imageUrl ? "Trocar foto" : "Enviar foto"}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingBarberImg} onChange={e => trocarFotoBarbeiro(e.target.files?.[0] || null)} />
+                    </label>
+                    {editBarber.imageUrl && (
+                      <button onClick={removerFotoBarbeiro} disabled={uploadingBarberImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">O cliente vê essa foto na hora de escolher o profissional.</p>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
+                <input type="text" value={editBarber.name} onChange={e => setEditBarber(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">E-mail</label>
+                <input type="email" value={editBarber.email} onChange={e => setEditBarber(p => p && ({ ...p, email: e.target.value }))} placeholder="opcional" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Comissão (%)</label>
+                <input type="number" min="0" max="100" value={editBarber.commission} onChange={e => setEditBarber(p => p && ({ ...p, commission: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+
+              <button onClick={salvarBarbeiro} disabled={savingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingBarber ? "Salvando..." : "Salvar"}</button>
+              <button onClick={() => setEditBarber(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
+            </div>
           </div>
         )}
       </div>
