@@ -274,7 +274,7 @@ app_barber/
 |--------|-----------|-------------------|
 | `Owner` | Dono da barbearia | id, name, phone (unique), passwordHash |
 | `Shop` | Barbearia | id, name, slug (unique), openTime, closeTime, workDays, avgServiceTime, pixKey, colorTheme, bookingMode, ownerId (FK) |
-| `Barber` | Barbeiros da barbearia | id, name, phone, passwordHash, role, commission, active, isOwnerProfile, pushToken, shopId (FK) |
+| `Barber` | Barbeiros da barbearia | id, name, phone, **email, imageUrl**, passwordHash, role, commission, active, isOwnerProfile, pushToken, shopId (FK) |
 | `Service` | Servicos oferecidos | id, name, duration, price, category, imageUrl, active, shopId (FK) |
 | `Client` | Clientes (por telefone) | id, name, phone (unique), notes, noShowCount |
 | `Appointment` | Agendamentos | id, date, startTime, endTime, totalDuration, totalPrice, status, paymentMethod, paidAt, cancelledAt, cancelledBy, deferredPaymentDate, reminderSentAt, shopId, barberId, clientId (FKs) |
@@ -374,8 +374,8 @@ app_barber/
 | `/api/me/appointments` | Agenda do barbeiro/dono |
 | `/api/me/dashboard` | KPIs e metricas (owner only) |
 | `/api/me/finance` | Pagamentos + relatorio financeiro |
-| `/api/me/services` | CRUD servicos (owner only para create/update) |
-| `/api/me/products` | CRUD produtos + comanda |
+| `/api/me/services` | CRUD servicos + DELETE (owner only para create/update/delete) |
+| `/api/me/products` | CRUD produtos + DELETE + comanda |
 | `/api/me/clients` | Lista de clientes (owner only) |
 | `/api/me/clients/[id]` | Notas do cliente |
 | `/api/me/shop` | Config da barbearia |
@@ -438,6 +438,12 @@ app_barber/
 | 38 | Smoke test de producao (`scripts/smoke.mjs`) | — | — | ✅ |
 | 39 | Booking atomico (transacao Serializable anti double-booking) | — | — | ✅ |
 | 40 | Service worker network-first (deploy aparece na hora) | ✅ | — | — |
+| 41 | Editar e apagar servico no painel web (guarda de historico) | ✅ | ✅ | ✅ |
+| 42 | Tela de produtos no painel web (CRUD + foto) | ✅ | ✅ | ✅ |
+| 43 | Foto no servico e no produto (upload) | ✅ | ✅ | ✅ |
+| 44 | Endereco e contato da barbearia (+ trocar o nome) | ✅ | — | ✅ |
+| 45 | Foto e e-mail do barbeiro (dono gerencia o proprio perfil) | ✅ | — | ✅ |
+| 46 | Sessao sobrevive ao gesto de voltar do iPhone | ✅ | — | — |
 
 ### Pendentes / Melhorias
 

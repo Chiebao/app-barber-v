@@ -854,19 +854,25 @@ export default function PainelPage() {
   if (!token) return (<div className="flex min-h-screen items-center justify-center bg-dark-900"><div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-400 border-t-transparent" /></div>);
 
   // ── Quick Actions (like mobile) ──
+  // Atalhos da home: so o que o barbeiro abre no dia a dia.
   const quickActions = [
-    { icon: "💰", label: "Financeiro", onClick: () => setActiveTab("financeiro") },
-    { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
     { icon: "📅", label: "Agenda", onClick: () => setActiveTab("agenda") },
-    { icon: "🔧", label: "Servicos", onClick: () => { setSubView("servicos"); setActiveTab("home"); } },
+    { icon: "💰", label: "Financeiro", onClick: () => setActiveTab("financeiro") },
     { icon: "👥", label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
+    { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
     { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
-      { icon: "✂️", label: "Barbeiros", onClick: () => { setSubView("barbeiros"); setActiveTab("home"); } },
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
-      { icon: "🛍️", label: "Produtos", onClick: () => { setSubView("produtos"); setActiveTab("home"); } },
     ] : []),
   ];
+
+  // Cadastros: mexe-se uma vez e quase nunca mais. Vivem dentro da engrenagem
+  // para nao competir por atencao com a agenda do dia.
+  const cadastros = user?.role === "owner" ? [
+    { icon: "🔧", label: "Serviços", hint: "Cortes, preços e duração", onClick: () => { setSubView("servicos"); setActiveTab("home"); } },
+    { icon: "🛍️", label: "Produtos", hint: "O que você vende na comanda", onClick: () => { setSubView("produtos"); setActiveTab("home"); } },
+    { icon: "✂️", label: "Barbeiros", hint: "Equipe, fotos e comissão", onClick: () => { setSubView("barbeiros"); setActiveTab("home"); } },
+  ] : [];
 
   // ── Render SubViews ──
   const renderSubView = () => {
@@ -1265,7 +1271,15 @@ export default function PainelPage() {
       {/* ── QR/Link Panel ── */}
       {showQR && user?.shopSlug && (
         <div className="mx-4 mt-3 rounded-2xl border border-brand-500/25 bg-dark-800 p-4 space-y-3">
-          <div className="flex items-center justify-between"><h3 className="font-bold text-white text-sm">Link de Agendamento</h3><button onClick={() => setShowQR(false)} className="text-gray-500 hover:text-white text-lg">✕</button></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-white text-sm">Link de Agendamento</h3>
+              <span className="flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/40 px-2 py-0.5 text-[10px] font-bold text-green-400 tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> ONLINE
+              </span>
+            </div>
+            <button onClick={() => setShowQR(false)} className="text-gray-500 hover:text-white text-lg">✕</button>
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-brand-400 truncate">{bookingLink}</div>
             <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg bg-brand-500 text-dark-900 font-bold px-4 py-2 text-sm hover:bg-brand-400 transition whitespace-nowrap">{linkCopied ? "✓ Copiado!" : "Copiar"}</button>
@@ -1529,6 +1543,27 @@ export default function PainelPage() {
                   <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
                 </div>
 
+                {/* Cadastros — o que antes disputava espaço na home */}
+                {cadastros.length > 0 && (
+                  <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
+                    <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Cadastros</p>
+                    {cadastros.map((c, i) => (
+                      <button
+                        key={c.label}
+                        onClick={c.onClick}
+                        className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}
+                      >
+                        <span className="text-xl shrink-0">{c.icon}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-white font-medium">{c.label}</span>
+                          <span className="block text-xs text-gray-500">{c.hint}</span>
+                        </span>
+                        <span className="text-gray-600 shrink-0">›</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Notificações do navegador (Web Push) */}
                 <PushToggle token={token} />
 
@@ -1658,7 +1693,15 @@ export default function PainelPage() {
                 </div>
 
                 {/* Logout */}
-                <button onClick={handleLogout} className="w-full rounded-xl border border-red-500/30 py-3 text-sm text-red-400 hover:bg-red-500/10 transition">Sair da Conta</button>
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <div className="min-w-0">
+                    <p className="text-sm text-white truncate">{user?.name || "—"}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.shopName}{user?.role === "owner" ? " · dono" : " · barbeiro"}</p>
+                  </div>
+                  <button onClick={handleLogout} className="shrink-0 flex items-center gap-2 rounded-xl border border-red-500/30 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition">
+                    Sair <span>→</span>
+                  </button>
+                </div>
 
                 {/* Version */}
                 <p className="text-center text-xs text-gray-600 pb-4">BarberPro v2.0</p>
