@@ -41,6 +41,15 @@ model Shop {
   mpUserId        String?
   mpConnectedAt   DateTime?
   logoUrl         String?  // logo da barbearia (URL no Supabase Storage) — aparece no link do cliente
+  // Onde a barbearia fica e como falar com ela. Tudo opcional: as barbearias
+  // que ja existem foram criadas sem esses campos e precisam continuar
+  // funcionando. Aparecem no link publico para o cliente saber o endereco.
+  phone           String?  // telefone/WhatsApp publico da barbearia
+  address         String?  // rua e numero
+  neighborhood    String?  // bairro
+  city            String?
+  state           String?  // UF
+  zipCode         String?  // CEP
   colorTheme      String   @default("midnight_gold") // paleta de cores escolhida
   bookingMode     String   @default("steps") // "steps" (etapas) ou "agent" (agente IA chat)
   createdAt       DateTime @default(now())

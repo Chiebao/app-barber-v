@@ -71,6 +71,12 @@ interface Shop {
   avgServiceTime: number;
   pixKey: string | null;
   logoUrl: string | null;
+  phone: string | null;
+  address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
   colorTheme: string;
   bookingMode: string;
   avgRating: number | null;
@@ -494,6 +500,42 @@ export default function BarberPage() {
           Meus agendamentos
         </button>
       </header>
+
+      {/* Onde fica e como falar. So aparece se a barbearia preencheu —
+          quem cadastrou antes desses campos existirem nao ve faixa vazia. */}
+      {shop && (shop.address || shop.city || shop.phone) && (
+        <div className="px-4 py-2.5 bg-dark-800/60 border-b border-gray-800 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+          {(shop.address || shop.city) && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                [shop.name, shop.address, shop.neighborhood, shop.city, shop.state].filter(Boolean).join(", ")
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-brand-400 transition"
+            >
+              <span>📍</span>
+              <span>
+                {[shop.address, shop.neighborhood].filter(Boolean).join(" - ")}
+                {(shop.address || shop.neighborhood) && (shop.city || shop.state) ? " · " : ""}
+                {[shop.city, shop.state].filter(Boolean).join("/")}
+              </span>
+            </a>
+          )}
+          {shop.phone && (
+            <a href={`https://wa.me/55${shop.phone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-400 transition">
+              <span>💬</span>
+              <span>
+                {shop.phone.length === 11
+                  ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 7)}-${shop.phone.slice(7)}`
+                  : shop.phone.length === 10
+                    ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 6)}-${shop.phone.slice(6)}`
+                    : shop.phone}
+              </span>
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 py-8">
 

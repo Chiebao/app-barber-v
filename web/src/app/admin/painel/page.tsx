@@ -165,7 +165,7 @@ export default function PainelPage() {
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
   // ── Config state ──
-  const [shopSettings, setShopSettings] = useState<{ openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string } | null>(null);
+  const [shopSettings, setShopSettings] = useState<{ name: string; openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string; phone: string; address: string; neighborhood: string; city: string; state: string; zipCode: string } | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -204,6 +204,13 @@ export default function PainelPage() {
       .then(data => {
         if (data.shop?.colorTheme) applyAdminTheme(data.shop.colorTheme);
         if (data.shop) setShopSettings({
+          name: data.shop.name || "",
+          phone: data.shop.phone || "",
+          address: data.shop.address || "",
+          neighborhood: data.shop.neighborhood || "",
+          city: data.shop.city || "",
+          state: data.shop.state || "",
+          zipCode: data.shop.zipCode || "",
           openTime: data.shop.openTime || "08:00",
           closeTime: data.shop.closeTime || "20:00",
           workDays: data.shop.workDays || [1,2,3,4,5,6],
@@ -705,6 +712,22 @@ export default function PainelPage() {
     setSavingSettings(true);
     try {
       const res = await fetch("/api/me/shop", { method: "PATCH", headers: authHeaders(), body: JSON.stringify(shopSettings) });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); toast.error(d.error || "Erro ao salvar"); return; }
+      // O nome vive tambem no admin_user (cabecalho do painel). Sem atualizar
+      // aqui, o dono troca o nome e continua vendo o antigo ate deslogar.
+      const d = await res.json().catch(() => ({}));
+      if (d.shop?.name) {
+        setUser(u => (u ? { ...u, shopName: d.shop.name } : u));
+        try {
+          const bruto = localStorage.getItem("admin_user");
+          if (bruto) {
+            const obj = JSON.parse(bruto);
+            obj.shopName = d.shop.name;
+            localStorage.setItem("admin_user", JSON.stringify(obj));
+          }
+        } catch { /* localStorage indisponivel: o cabecalho corrige no proximo login */ }
+      }
       if (res.status === 401) { handleUnauthorized(); return; }
       toast.success("Configurações salvas!");
     } catch { toast.error("Erro ao salvar"); }
@@ -1409,6 +1432,58 @@ export default function PainelPage() {
 
                 {/* Código de recuperação de senha */}
                 <RecoveryCode token={token} />
+
+                {/* Identidade e endereco — o cliente precisa saber onde fica */}
+                {shopSettings && (
+                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-white">🏠 Dados da Barbearia</h3>
+                      <p className="text-xs text-gray-500 mt-1">Aparecem no link que o cliente abre para agendar.</p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Nome da barbearia</label>
+                      <input type="text" value={shopSettings.name} onChange={e => setShopSettings(p => p ? { ...p, name: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                      <p className="text-xs text-gray-500 mt-1">O link continua o mesmo ({bookingLink.replace(/^https?:\/\//, "")}) — trocar o nome nao quebra o que voce ja mandou pros clientes.</p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Telefone / WhatsApp</label>
+                      <input type="tel" inputMode="numeric" placeholder="(00) 00000-0000" value={shopSettings.phone} onChange={e => setShopSettings(p => p ? { ...p, phone: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Endereço (rua e número)</label>
+                      <input type="text" placeholder="Rua das Flores, 123" value={shopSettings.address} onChange={e => setShopSettings(p => p ? { ...p, address: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Bairro</label>
+                        <input type="text" value={shopSettings.neighborhood} onChange={e => setShopSettings(p => p ? { ...p, neighborhood: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">CEP</label>
+                        <input type="text" inputMode="numeric" placeholder="00000-000" value={shopSettings.zipCode} onChange={e => setShopSettings(p => p ? { ...p, zipCode: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-400 mb-1 block">Cidade</label>
+                        <input type="text" value={shopSettings.city} onChange={e => setShopSettings(p => p ? { ...p, city: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">UF</label>
+                        <input type="text" maxLength={2} placeholder="SP" value={shopSettings.state} onChange={e => setShopSettings(p => p ? { ...p, state: e.target.value.toUpperCase() } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 uppercase focus:border-brand-400 focus:outline-none" />
+                      </div>
+                    </div>
+
+                    <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                      {savingSettings ? "Salvando..." : "Salvar dados"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Logo da barbearia */}
                 {shopSettings && (
