@@ -12,6 +12,19 @@ export async function POST(req: NextRequest) {
 
     const phone = clientPhone.replace(/\D/g, "");
 
+    // Mesma barreira do agendamento: sem isso o cliente barrado entrava pela
+    // lista de espera e ainda era avisado quando abrisse vaga.
+    const barrado = await prisma.bannedClient.findUnique({
+      where: { shopId_phone: { shopId, phone } },
+      select: { id: true },
+    });
+    if (barrado) {
+      return NextResponse.json(
+        { error: "Não foi possível concluir. Entre em contato com a barbearia." },
+        { status: 403 },
+      );
+    }
+
     // Evita duplicata na mesma data
     const existing = await prisma.waitlist.findFirst({
       where: { shopId, clientPhone: phone, preferredDate: preferredDate ?? null },

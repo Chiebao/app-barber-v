@@ -62,6 +62,18 @@ const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒",
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
+type ConfigView = null | "dados" | "horario" | "pagamento" | "aparencia" | "notificacoes" | "senha" | "banidos";
+const CONFIG_TITULOS: Record<string, string> = {
+  dados: "🏠 Dados da barbearia",
+  horario: "🕐 Horário e dias",
+  pagamento: "💳 Pagamento",
+  aparencia: "🖼️ Aparência",
+  notificacoes: "🔔 Notificações",
+  senha: "🔒 Senha e recuperação",
+  banidos: "🚫 Clientes banidos",
+};
+interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
+
 type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos";
 
 /** "faltam 3h20" / "faltam 45min" a partir de um prazo ISO. */
@@ -89,6 +101,11 @@ export default function PainelPage() {
   const [user, setUser] = useState<{ name?: string; shopName?: string; shopSlug?: string; role?: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [subView, setSubView] = useState<SubView>(null);
+  const [configView, setConfigView] = useState<ConfigView>(null);
+  const [banned, setBanned] = useState<BannedItem[]>([]);
+  const [bannedLoading, setBannedLoading] = useState(false);
+  const [baningClient, setBaningClient] = useState(false);
+  const [novoBanido, setNovoBanido] = useState({ phone: "", reason: "" });
   const [showQR, setShowQR] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
@@ -306,6 +323,12 @@ export default function PainelPage() {
     catch { setProducts([]); } finally { setProductsLoading(false); }
   }, [token, authHeaders]);
 
+  const fetchBanned = useCallback(async () => {
+    if (!token) return; setBannedLoading(true);
+    try { const res = await fetch("/api/me/banned-clients", { headers: authHeaders() }); const d = await res.json(); setBanned(d.banned || []); }
+    catch { setBanned([]); } finally { setBannedLoading(false); }
+  }, [token, authHeaders]);
+
   const fetchClients = useCallback(async () => {
     if (!token) return; setClientsLoading(true);
     try { const res = await fetch("/api/me/clients", { headers: authHeaders() }); const data = await res.json(); setClients(data.clients || []); }
@@ -320,6 +343,10 @@ export default function PainelPage() {
     if (activeTab === "financeiro") fetchDashboard();
   }, [token, activeTab, fetchAppointments, fetchSlots, fetchDashboard]);
 
+  useEffect(() => { if (token && configView === "banidos") fetchBanned(); }, [token, configView, fetchBanned]);
+  // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
+  useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
+
   useEffect(() => { if (token && activeTab === "home") fetchAppointments(); }, [selectedDate]);
   useEffect(() => { if (token && activeTab === "agenda") fetchSlots(); }, [availDate]);
   useEffect(() => {
@@ -328,7 +355,7 @@ export default function PainelPage() {
     if (subView === "fidelidade") fetchLoyalty();
     if (subView === "espera") fetchWaitlist();
     if (subView === "servicos") fetchServices();
-    if (subView === "clientes") fetchClients();
+    if (subView === "clientes") { fetchClients(); fetchBanned(); }
     if (subView === "produtos") fetchProducts();
   }, [token, subView]);
 
@@ -625,6 +652,50 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao apagar"); } finally { setDeletingService(null); }
   };
 
+  // ── Banir cliente ──
+  const banirCliente = async (telefone: string, nome?: string, motivo?: string) => {
+    const tel = (telefone || "").replace(/\D/g, "");
+    if (tel.length < 10) { toast.error("Telefone inválido"); return; }
+    if (!confirm(
+      `Banir ${nome || tel}?\n\n` +
+      `Ele não vai mais conseguir agendar nem entrar na lista de espera desta barbearia, e os agendamentos futuros dele serão cancelados.\n\n` +
+      `O histórico e o financeiro não mudam. Dá para liberar depois.`
+    )) return;
+
+    setBaningClient(true);
+    try {
+      const res = await fetch("/api/me/banned-clients", {
+        method: "POST", headers: authHeaders(),
+        body: JSON.stringify({ phone: tel, name: nome, reason: motivo || undefined }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "Erro ao banir"); return; }
+      toast.success(
+        d.agendamentosCancelados > 0
+          ? `Cliente banido · ${d.agendamentosCancelados} agendamento(s) cancelado(s)`
+          : "Cliente banido"
+      );
+      setNovoBanido({ phone: "", reason: "" });
+      fetchBanned();
+      if (subView === "clientes") fetchClients();
+      fetchAppointments();
+    } catch { toast.error("Erro ao banir"); } finally { setBaningClient(false); }
+  };
+
+  const desbanirCliente = async (telefone: string) => {
+    try {
+      const res = await fetch("/api/me/banned-clients", {
+        method: "DELETE", headers: authHeaders(), body: JSON.stringify({ phone: telefone }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (res.ok) { toast.success("Cliente liberado"); fetchBanned(); }
+      else toast.error("Erro ao liberar");
+    } catch { toast.error("Erro ao liberar"); }
+  };
+
+  const estaBanido = (telefone: string) => banned.some(b => b.phone === (telefone || "").replace(/\D/g, ""));
+
   // ── Barbeiro: editar perfil, foto e e-mail ──
   const abrirEdicaoBarbeiro = (b: Barber) =>
     setEditBarber({ id: b.id, name: b.name, email: b.email || "", commission: String(b.commission ?? 0), imageUrl: b.imageUrl || "", isOwnerProfile: !!b.isOwnerProfile });
@@ -863,6 +934,21 @@ export default function PainelPage() {
     { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
+    ] : []),
+  ];
+
+  const menuBarbearia: { view: Exclude<ConfigView, null>; icon: string; label: string; hint: string }[] = user?.role === "owner" ? [
+    { view: "dados", icon: "\u{1F3E0}", label: "Dados da barbearia", hint: "Nome, endereço e telefone" },
+    { view: "horario", icon: "\u{1F550}", label: "Horário e dias", hint: "Quando a barbearia abre" },
+    { view: "pagamento", icon: "\u{1F4B3}", label: "Pagamento", hint: "Pix e Mercado Pago" },
+    { view: "aparencia", icon: "\u{1F5BC}\u{FE0F}", label: "Aparência", hint: "Logo do seu link" },
+  ] : [];
+
+  const menuConta: { view: Exclude<ConfigView, null>; icon: string; label: string; hint: string }[] = [
+    { view: "notificacoes", icon: "\u{1F514}", label: "Notificações", hint: "Avisos de novo agendamento" },
+    { view: "senha", icon: "\u{1F512}", label: "Senha e recuperação", hint: "Trocar senha e gerar código" },
+    ...(user?.role === "owner" ? [
+      { view: "banidos" as const, icon: "\u{1F6AB}", label: "Clientes banidos", hint: "Quem não pode agendar aqui" },
     ] : []),
   ];
 
@@ -1196,7 +1282,15 @@ export default function PainelPage() {
                   </div>
                   {c.noShowCount > 0 && <p className="text-xs text-red-400 mt-2">⚠️ {c.noShowCount} falta(s)</p>}
                   {c.notes && <p className="text-xs text-gray-500 mt-2 italic">📝 {c.notes}</p>}
-                  <div className="mt-3 pt-3 border-t border-gray-800 flex justify-end">
+                  {estaBanido(c.phone) && <p className="text-xs text-red-400 mt-2">🚫 Banido — não consegue agendar aqui</p>}
+                  <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between gap-3">
+                    {user?.role === "owner" ? (
+                      estaBanido(c.phone) ? (
+                        <button onClick={() => desbanirCliente(c.phone)} className="text-xs text-gray-500 hover:text-green-400 transition">✓ Liberar cliente</button>
+                      ) : (
+                        <button onClick={() => banirCliente(c.phone, c.name)} disabled={baningClient} className="text-xs text-gray-500 hover:text-red-400 transition disabled:opacity-50">🚫 Banir cliente</button>
+                      )
+                    ) : <span />}
                     <button onClick={() => deleteClient(c.id, c.name)} disabled={deletingClientId === c.id} className="text-xs text-gray-500 hover:text-red-400 transition disabled:opacity-50">{deletingClientId === c.id ? "Excluindo..." : "🗑️ Excluir dados (LGPD)"}</button>
                   </div>
                 </div>
@@ -1534,16 +1628,29 @@ export default function PainelPage() {
             )}
 
             {/* ═══════ CONFIG TAB ═══════ */}
+            {/* Antes era uma pilha de oito blocos numa rolagem só. O problema
+                prático não era feiúra: o botão "Salvar" do horário ficava
+                telas abaixo do campo de horário, então dava para trocar o
+                horário, sair e achar que tinha salvo. Agora cada assunto é uma
+                tela curta com o próprio botão à vista. */}
             {activeTab === "config" && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setActiveTab("home")} className="flex items-center gap-1 text-brand-400 text-sm hover:text-brand-300 shrink-0">
+                  <button
+                    onClick={() => (configView ? setConfigView(null) : setActiveTab("home"))}
+                    className="flex items-center gap-1 text-brand-400 text-sm hover:text-brand-300 shrink-0"
+                  >
                     <span className="text-lg">←</span> Voltar
                   </button>
-                  <h2 className="text-lg font-bold text-white">⚙️ Configuracoes</h2>
+                  <h2 className="text-lg font-bold text-white">
+                    {configView ? CONFIG_TITULOS[configView] : "⚙️ Configurações"}
+                  </h2>
                 </div>
 
-                {/* Cadastros — o que antes disputava espaço na home */}
+                {/* ─── Menu ─── */}
+                {!configView && (
+                  <>
+                    {/* Cadastros — o que antes disputava espaço na home */}
                 {cadastros.length > 0 && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
                     <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Cadastros</p>
@@ -1564,16 +1671,53 @@ export default function PainelPage() {
                   </div>
                 )}
 
-                {/* Notificações do navegador (Web Push) */}
-                <PushToggle token={token} />
+                    <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
+                      <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Barbearia</p>
+                      {menuBarbearia.map((m, i) => (
+                        <button key={m.view} onClick={() => setConfigView(m.view)} className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}>
+                          <span className="text-xl shrink-0">{m.icon}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-white font-medium">{m.label}</span>
+                            <span className="block text-xs text-gray-500">{m.hint}</span>
+                          </span>
+                          <span className="text-gray-600 shrink-0">›</span>
+                        </button>
+                      ))}
+                    </div>
 
-                {/* Pix automático via Mercado Pago */}
-                <MercadoPago token={token} />
+                    <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
+                      <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Conta e segurança</p>
+                      {menuConta.map((m, i) => (
+                        <button key={m.view} onClick={() => setConfigView(m.view)} className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}>
+                          <span className="text-xl shrink-0">{m.icon}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-white font-medium">{m.label}</span>
+                            <span className="block text-xs text-gray-500">{m.hint}</span>
+                          </span>
+                          <span className="text-gray-600 shrink-0">›</span>
+                        </button>
+                      ))}
+                    </div>
 
-                {/* Código de recuperação de senha */}
-                <RecoveryCode token={token} />
+                    {/* Logout */}
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <div className="min-w-0">
+                    <p className="text-sm text-white truncate">{user?.name || "—"}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.shopName}{user?.role === "owner" ? " · dono" : " · barbeiro"}</p>
+                  </div>
+                  <button onClick={handleLogout} className="shrink-0 flex items-center gap-2 rounded-xl border border-red-500/30 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition">
+                    Sair <span>→</span>
+                  </button>
+                </div>
 
-                {/* Identidade e endereco — o cliente precisa saber onde fica */}
+                    <p className="text-center text-xs text-gray-600 pb-4">BarberPro v2.0</p>
+                  </>
+                )}
+
+                {/* ─── Dados da barbearia ─── */}
+                {configView === "dados" && (
+                  <>
+                    {/* Identidade e endereco — o cliente precisa saber onde fica */}
                 {shopSettings && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
                     <div>
@@ -1624,35 +1768,13 @@ export default function PainelPage() {
                     </button>
                   </div>
                 )}
-
-                {/* Logo da barbearia */}
-                {shopSettings && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-white">🖼️ Logo da Barbearia</h3>
-                      <p className="text-xs text-gray-500 mt-1">Aparece no topo do link que você envia para os clientes.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {shopSettings.logoUrl ? (
-                        <img src={shopSettings.logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
-                      ) : (
-                        <div className="w-16 h-16 rounded-xl bg-brand-500/10 border border-gray-700 flex items-center justify-center text-2xl shrink-0">✂️</div>
-                      )}
-                      <div className="flex-1 space-y-2">
-                        <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
-                          {uploadingLogo ? "Enviando..." : shopSettings.logoUrl ? "Trocar logo" : "Enviar logo"}
-                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingLogo} onChange={e => handleLogoUpload(e.target.files?.[0] || null)} />
-                        </label>
-                        {shopSettings.logoUrl && (
-                          <button onClick={handleRemoveLogo} disabled={uploadingLogo} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover logo</button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500">JPG, PNG ou WEBP · máx 3MB · de preferência quadrado.</p>
-                  </div>
+                  </>
                 )}
 
-                {/* Shop settings */}
+                {/* ─── Horário e dias ─── */}
+                {configView === "horario" && (
+                  <>
+                    {/* Shop settings */}
                 {shopSettings && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-5">
                     <h3 className="font-semibold text-white">🕐 Horario de Funcionamento</h3>
@@ -1683,28 +1805,98 @@ export default function PainelPage() {
                     <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingSettings ? "Salvando..." : "Salvar Configuracoes"}</button>
                   </div>
                 )}
+                  </>
+                )}
 
-                {/* Change password */}
+                {/* ─── Pagamento ─── */}
+                {configView === "pagamento" && <MercadoPago token={token} />}
+
+                {/* ─── Aparência ─── */}
+                {configView === "aparencia" && (
+                  <>
+                    {/* Logo da barbearia */}
+                {shopSettings && (
+                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-white">🖼️ Logo da Barbearia</h3>
+                      <p className="text-xs text-gray-500 mt-1">Aparece no topo do link que você envia para os clientes.</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {shopSettings.logoUrl ? (
+                        <img src={shopSettings.logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-brand-500/10 border border-gray-700 flex items-center justify-center text-2xl shrink-0">✂️</div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                          {uploadingLogo ? "Enviando..." : shopSettings.logoUrl ? "Trocar logo" : "Enviar logo"}
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingLogo} onChange={e => handleLogoUpload(e.target.files?.[0] || null)} />
+                        </label>
+                        {shopSettings.logoUrl && (
+                          <button onClick={handleRemoveLogo} disabled={uploadingLogo} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover logo</button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">JPG, PNG ou WEBP · máx 3MB · de preferência quadrado.</p>
+                  </div>
+                )}
+                  </>
+                )}
+
+                {/* ─── Notificações ─── */}
+                {configView === "notificacoes" && <PushToggle token={token} />}
+
+                {/* ─── Senha e recuperação ─── */}
+                {configView === "senha" && (
+                  <>
+                    <RecoveryCode token={token} />
+                    {/* Change password */}
                 <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
                   <h3 className="font-semibold text-white">🔒 Alterar Senha</h3>
                   <input type="password" placeholder="Senha atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
                   <input type="password" placeholder="Nova senha (min 6)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
                   <button onClick={handleChangePassword} disabled={changingPassword} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar Senha"}</button>
                 </div>
+                  </>
+                )}
 
-                {/* Logout */}
-                <div className="flex items-center justify-between gap-3 pt-2">
-                  <div className="min-w-0">
-                    <p className="text-sm text-white truncate">{user?.name || "—"}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.shopName}{user?.role === "owner" ? " · dono" : " · barbeiro"}</p>
+                {/* ─── Clientes banidos ─── */}
+                {configView === "banidos" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+                      <p className="text-xs text-gray-500">
+                        Cliente banido não consegue agendar nem entrar na lista de espera desta
+                        barbearia. O histórico e o financeiro dele continuam intactos, e ele pode
+                        agendar normalmente em outras barbearias do BarberPro.
+                      </p>
+                      <input type="tel" inputMode="numeric" placeholder="Telefone (com DDD)" value={novoBanido.phone} onChange={e => setNovoBanido(p => ({ ...p, phone: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      <input type="text" placeholder="Motivo (opcional, só você vê)" value={novoBanido.reason} onChange={e => setNovoBanido(p => ({ ...p, reason: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      <button onClick={() => banirCliente(novoBanido.phone, undefined, novoBanido.reason)} disabled={baningClient} className="w-full rounded-xl border border-red-500/40 bg-red-500/10 py-3 font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition">
+                        {baningClient ? "Banindo..." : "Banir este telefone"}
+                      </button>
+                    </div>
+
+                    {bannedLoading ? <Spinner /> : banned.length === 0 ? (
+                      <p className="text-center text-gray-500 py-6">Nenhum cliente banido</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {banned.map(b => (
+                          <div key={b.id} className="flex items-center gap-3 rounded-xl bg-dark-800 border border-gray-700 p-4">
+                            <span className="text-xl shrink-0">🚫</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-white truncate">{b.name || "Sem nome"}</p>
+                              <p className="text-sm text-gray-400">{b.phone}</p>
+                              {b.reason && <p className="text-xs text-gray-500 mt-0.5 truncate">{b.reason}</p>}
+                            </div>
+                            <button onClick={() => desbanirCliente(b.phone)} className="shrink-0 rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-400 hover:text-green-400 hover:border-green-500/50 transition">
+                              Liberar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <button onClick={handleLogout} className="shrink-0 flex items-center gap-2 rounded-xl border border-red-500/30 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition">
-                    Sair <span>→</span>
-                  </button>
-                </div>
-
-                {/* Version */}
-                <p className="text-center text-xs text-gray-600 pb-4">BarberPro v2.0</p>
+                )}
               </div>
             )}
           </>

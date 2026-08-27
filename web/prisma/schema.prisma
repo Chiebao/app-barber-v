@@ -63,6 +63,7 @@ model Shop {
   loyalties    LoyaltyCount[]
   blockedSlots BlockedSlot[]
   waitlist     Waitlist[]
+  banned       BannedClient[]
 
   @@map("shops")
 }
@@ -274,6 +275,28 @@ model ComandaItem {
   product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("comanda_items")
+}
+
+// Cliente barrado por UMA barbearia.
+//
+// A chave e o TELEFONE, nao o clientId: o barbeiro pode querer barrar um
+// numero que ainda nem agendou, e Client e uma tabela global (o mesmo
+// telefone atende varias barbearias). Guardar por telefone + shopId mantem
+// o banimento restrito a quem baniu — quem apronta na Dubarber continua
+// podendo agendar na HenrBarber.
+model BannedClient {
+  id        String   @id @default(cuid())
+  shopId    String
+  phone     String   // so digitos
+  name      String?  // como estava salvo na hora do banimento, para a lista
+  reason    String?
+  createdAt DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, phone])
+  @@index([shopId])
+  @@map("banned_clients")
 }
 
 // Horarios bloqueados pelo barbeiro

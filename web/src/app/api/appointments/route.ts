@@ -27,6 +27,20 @@ export async function POST(req: NextRequest) {
 
     const cleanPhone = data.clientPhone.replace(/\D/g, "");
 
+    // Cliente barrado por esta barbearia nao agenda. A mensagem e neutra de
+    // proposito: quem foi banido costuma ter saido de uma treta, e confirmar
+    // o banimento na tela so joga a discussao de volta pro barbeiro.
+    const barrado = await prisma.bannedClient.findUnique({
+      where: { shopId_phone: { shopId: data.shopId, phone: cleanPhone } },
+      select: { id: true },
+    });
+    if (barrado) {
+      return NextResponse.json(
+        { error: "Nao foi possivel concluir o agendamento. Entre em contato com a barbearia." },
+        { status: 403 },
+      );
+    }
+
     const [shop, barber, services] = await Promise.all([
       prisma.shop.findUnique({ where: { id: data.shopId } }),
       prisma.barber.findUnique({ where: { id: data.barberId } }),
