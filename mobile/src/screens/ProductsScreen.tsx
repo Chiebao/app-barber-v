@@ -12,6 +12,7 @@ import {
   FlatList,
   Image,
   ImageStyle,
+  Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useColors } from "../utils/useColors";

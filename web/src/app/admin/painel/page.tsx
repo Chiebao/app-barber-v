@@ -1029,16 +1029,16 @@ export default function PainelPage() {
     if (subView === "barbeiros") return (
       <div className="space-y-6">{backBtn}
         <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-          <h3 className="font-semibold text-white">Adicionar Barbeiro</h3>
+          <h3 className="font-semibold text-white">Adicionar barbeiro</h3>
           <input type="text" placeholder="Nome *" value={newBarberName} onChange={e => setNewBarberName(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <input type="tel" placeholder="Telefone (com DDD) *" value={newBarberPhone} onChange={e => setNewBarberPhone(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <input type="email" placeholder="E-mail (opcional)" value={newBarberEmail} onChange={e => setNewBarberEmail(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <input type="password" placeholder="Senha (min 6) *" value={newBarberPassword} onChange={e => setNewBarberPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <div className="relative">
-            <input type="number" min="0" max="100" placeholder="Comissao (%)" value={newBarberCommission} onChange={e => setNewBarberCommission(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 pr-10 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+            <input type="number" min="0" max="100" placeholder="Comissão (%)" value={newBarberCommission} onChange={e => setNewBarberCommission(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 pr-10 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
           </div>
-          <button onClick={handleAddBarber} disabled={addingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingBarber ? "Adicionando..." : "Adicionar Barbeiro"}</button>
+          <button onClick={handleAddBarber} disabled={addingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingBarber ? "Adicionando..." : "Adicionar barbeiro"}</button>
         </div>
         {barbersLoading ? <Spinner /> : barbers.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum barbeiro cadastrado</p> : (
           <div className="space-y-3">
@@ -1128,11 +1128,11 @@ export default function PainelPage() {
     if (subView === "servicos") return (
       <div className="space-y-6">{backBtn}
         <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-          <h3 className="font-semibold text-white">Adicionar Servico</h3>
-          <input type="text" placeholder="Nome do servico *" value={newService.name} onChange={e => setNewService(p => ({...p, name: e.target.value}))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+          <h3 className="font-semibold text-white">Adicionar serviço</h3>
+          <input type="text" placeholder="Nome do serviço *" value={newService.name} onChange={e => setNewService(p => ({...p, name: e.target.value}))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <div className="grid grid-cols-2 gap-3">
-            <input type="number" placeholder="Preco *" value={newService.price} onChange={e => setNewService(p => ({...p, price: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-            <input type="number" placeholder="Duracao (min)" value={newService.duration} onChange={e => setNewService(p => ({...p, duration: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            <input type="number" placeholder="Preço *" value={newService.price} onChange={e => setNewService(p => ({...p, price: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            <input type="number" placeholder="Duração (min)" value={newService.duration} onChange={e => setNewService(p => ({...p, duration: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
           </div>
           <div className="flex gap-2 flex-wrap">
             {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
@@ -1141,7 +1141,7 @@ export default function PainelPage() {
           </div>
           <button onClick={handleAddService} disabled={addingService} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingService ? "Adicionando..." : "Adicionar Servico"}</button>
         </div>
-        {servicesLoading ? <Spinner /> : services.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum servico cadastrado</p> : (
+        {servicesLoading ? <Spinner /> : services.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum serviço cadastrado</p> : (
           <div className="space-y-3">
             {services.map(s => (
               <div key={s.id} className={`flex items-center gap-4 rounded-xl border bg-dark-800 p-4 ${s.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
@@ -1427,7 +1427,7 @@ export default function PainelPage() {
         <div className="mx-4 mt-3 rounded-2xl border border-brand-500/25 bg-dark-800 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-white text-sm">Link de Agendamento</h3>
+              <h3 className="font-semibold text-white text-sm">Link de agendamento</h3>
               <span className="flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/40 px-2 py-0.5 text-[10px] font-semibold text-green-400 tracking-wide">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> ONLINE
               </span>
@@ -1539,7 +1539,7 @@ export default function PainelPage() {
                             <div className="flex gap-2">
                               <button onClick={() => openCancelModal(appt.id)} className="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-400 font-medium hover:bg-red-500/20 transition">Cancelar</button>
                               {isAppointmentPast(appt.date, appt.startTime) ? (
-                                <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-sm text-yellow-400 font-medium hover:bg-yellow-500/20 transition">Nao veio</button>
+                                <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-sm text-yellow-400 font-medium hover:bg-yellow-500/20 transition">Não veio</button>
                               ) : (
                                 <button onClick={() => remindClient(appt)} className="flex-1 py-2 rounded-lg border border-green-500/30 bg-green-500/10 text-sm text-green-400 font-medium hover:bg-green-500/20 transition">🔔 Lembrar</button>
                               )}
@@ -1555,7 +1555,7 @@ export default function PainelPage() {
                                 <div className="space-y-3 pt-1">
                                   {appt.services.length > 0 && (
                                     <div className="space-y-1.5">
-                                      <p className="text-xs text-gray-400 font-medium">Servicos realizados:</p>
+                                      <p className="text-xs text-gray-400 font-medium">Serviços realizados:</p>
                                       {appt.services.map(svc => {
                                         const removed = removedServiceIds.includes(svc.serviceId);
                                         return (<label key={svc.serviceId} className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={!removed} onChange={() => { setRemovedServiceIds(prev => removed ? prev.filter(id => id !== svc.serviceId) : [...prev, svc.serviceId]); setCustomPrice(""); }} className="w-4 h-4 accent-yellow-400" /><span className={`flex-1 text-sm ${removed ? "line-through text-gray-600" : "text-white"}`}>{svc.name}</span><span className={`text-sm font-medium ${removed ? "text-gray-600" : "text-brand-400"}`}>R$ {svc.price.toFixed(2)}</span></label>);
@@ -1580,7 +1580,7 @@ export default function PainelPage() {
                           {!isCancelled && !isNoShow && (
                             <div className="pt-1 border-t border-gray-800">
                               <p className="text-xs text-gray-500 mb-1">📝 Notas</p>
-                              <textarea rows={2} placeholder="Observacoes sobre o cliente..." value={clientNotes[appt.client.id] ?? (appt.client.notes || "")} onChange={e => setClientNotes(prev => ({...prev, [appt.client.id]: e.target.value}))} onBlur={() => saveClientNote(appt.client.id, clientNotes[appt.client.id] ?? (appt.client.notes || ""))} className="w-full rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none resize-none transition-colors" />
+                              <textarea rows={2} placeholder="Observações sobre o cliente..." value={clientNotes[appt.client.id] ?? (appt.client.notes || "")} onChange={e => setClientNotes(prev => ({...prev, [appt.client.id]: e.target.value}))} onBlur={() => saveClientNote(appt.client.id, clientNotes[appt.client.id] ?? (appt.client.notes || ""))} className="w-full rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none resize-none transition-colors" />
                               {savingNote === appt.client.id && <p className="text-xs text-gray-500 mt-1">Salvando...</p>}
                             </div>
                           )}
@@ -1611,7 +1611,7 @@ export default function PainelPage() {
                 )}
 
                 {/* Slots grid */}
-                {slotsLoading ? <Spinner /> : !slotData ? null : slotData.allSlots.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum horario neste dia</p> : (
+                {slotsLoading ? <Spinner /> : !slotData ? null : slotData.allSlots.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum horário neste dia</p> : (
                   <>
                     <div className="grid grid-cols-4 gap-2">
                       {slotData.allSlots.map(time => {
@@ -1643,7 +1643,7 @@ export default function PainelPage() {
             )}
             {activeTab === "financeiro" && (
               <div className="space-y-5">
-                {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-gray-500 py-10">Nao foi possivel carregar</p> : (
+                {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-gray-500 py-10">Não foi possível carregar</p> : (
                   <>
                     <div className="rounded-2xl bg-brand-500/10 border border-brand-400/30 p-5">
                       <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p>
@@ -1662,12 +1662,12 @@ export default function PainelPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <StatBox value={`${dashboard.month.appointments}`} label="Atendimentos" extra={dashboard.month.aptGrowth !== null ? `${dashboard.month.aptGrowth >= 0 ? "+" : ""}${dashboard.month.aptGrowth}%` : undefined} extraColor={dashboard.month.aptGrowth && dashboard.month.aptGrowth >= 0 ? "text-green-400" : "text-red-400"} />
-                      <StatBox value={`R$ ${dashboard.month.avgTicket.toFixed(2)}`} label="Ticket medio" />
+                      <StatBox value={`R$ ${dashboard.month.avgTicket.toFixed(2)}`} label="Ticket médio" />
                       <StatBox value={`${dashboard.month.cancelRate}%`} label="Cancelamentos" color={dashboard.month.cancelRate > 20 ? "text-red-400" : dashboard.month.cancelRate > 10 ? "text-yellow-400" : "text-green-400"} />
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <StatBox value={`${dashboard.totalClients}`} label="Clientes" />
-                      <StatBox value={dashboard.avgRating ? `${dashboard.avgRating} ★` : "—"} label="Avaliacao" color="text-yellow-400" />
+                      <StatBox value={dashboard.avgRating ? `${dashboard.avgRating} ★` : "—"} label="Avaliação" color="text-yellow-400" />
                       {dashboard.peakHour && <StatBox value={`⚡ ${dashboard.peakHour}`} label="Pico" color="text-brand-400" />}
                     </div>
                     {dashboard.barberStats?.length > 0 && (
@@ -1827,7 +1827,7 @@ export default function PainelPage() {
                     {/* Shop settings */}
                 {shopSettings && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-5">
-                    <h3 className="font-semibold text-white">🕐 Horario de Funcionamento</h3>
+                    <h3 className="font-semibold text-white">🕐 Horário de funcionamento</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-gray-400 mb-2">Abertura</p>
@@ -1852,7 +1852,7 @@ export default function PainelPage() {
                       </div>
                     </div>
 
-                    <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingSettings ? "Salvando..." : "Salvar Configuracoes"}</button>
+                    <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingSettings ? "Salvando..." : "Salvar configurações"}</button>
                   </div>
                 )}
                   </>
@@ -1868,7 +1868,7 @@ export default function PainelPage() {
                 {shopSettings && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
                     <div>
-                      <h3 className="font-semibold text-white">🖼️ Logo da Barbearia</h3>
+                      <h3 className="font-semibold text-white">🖼️ Logo da barbearia</h3>
                       <p className="text-xs text-gray-500 mt-1">Aparece no topo do link que você envia para os clientes.</p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -1902,10 +1902,10 @@ export default function PainelPage() {
                     <RecoveryCode token={token} />
                     {/* Change password */}
                 <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-                  <h3 className="font-semibold text-white">🔒 Alterar Senha</h3>
+                  <h3 className="font-semibold text-white">🔒 Alterar senha</h3>
                   <input type="password" placeholder="Senha atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
                   <input type="password" placeholder="Nova senha (min 6)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                  <button onClick={handleChangePassword} disabled={changingPassword} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar Senha"}</button>
+                  <button onClick={handleChangePassword} disabled={changingPassword} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar senha"}</button>
                 </div>
                   </>
                 )}
