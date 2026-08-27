@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { generateTimeSlots } from "@/app/lib/time-slots";
+import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 
 // Resolve o barberId efetivo a partir do token + params
 // - Barbeiro: usa payload.userId (deve existir em barbers)
@@ -78,8 +79,9 @@ export async function GET(req: NextRequest) {
 // Body: { date, times: ["09:00"] } ou { date, allDay: true } [, barberId para donos]
 export async function POST(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req);
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const body = await req.json();
     const { date, times, allDay } = body;
@@ -120,8 +122,9 @@ export async function POST(req: NextRequest) {
 // Body: { date, times: ["09:00"] } ou { date, allDay: true } [, barberId para donos]
 export async function DELETE(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req);
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const body = await req.json();
     const { date, times, allDay } = body;

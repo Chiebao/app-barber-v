@@ -64,6 +64,7 @@ model Shop {
   blockedSlots BlockedSlot[]
   waitlist     Waitlist[]
   banned       BannedClient[]
+  subscription Subscription?
 
   @@map("shops")
 }
@@ -346,4 +347,75 @@ model LoyaltyCount {
 
   @@unique([shopId, clientId])
   @@map("loyalty_counts")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Assinatura da barbearia no BarberPro.
+//
+// Uma por loja. O status é derivado de datas, não escrito na mão:
+//   trial      — 14 dias desde o cadastro, sem pedir pagamento
+//   ativa      — pagou, dentro do período
+//   carencia   — venceu, mas ainda tem acesso total (7 dias de aviso)
+//   bloqueada  — acabou a carência: painel só leitura, link fechado
+//   cortesia   — não vence (piloto, parceiro, uso interno)
+//   cancelada  — desistiu
+//
+// `metodo` existe desde o começo para o cartão entrar depois sem migração:
+// Pix gera uma cobrança por ciclo, cartão usa assinatura recorrente do MP.
+// ─────────────────────────────────────────────────────────────────────
+model Subscription {
+  id     String @id @default(cuid())
+  shopId String @unique
+
+  plano  String  @default("mensal") // "mensal" | "semestral" | "anual"
+  status String  @default("trial")
+  metodo String? // "pix" | "cartao"
+
+  /// Valor do ciclo inteiro (semestral cobra 6x o mensal com desconto).
+  valorCiclo   Decimal  @db.Decimal(10, 2) @default(79.90)
+  /// Fim do teste grátis. Null quando nunca houve trial.
+  trialEndsAt  DateTime?
+  /// Até quando o acesso está pago. É desta data que tudo é calculado.
+  periodoFim   DateTime
+  /// Cancelamento pedido pelo dono — o acesso segue até periodoFim.
+  canceladaEm  DateTime?
+
+  /// Assinatura recorrente no Mercado Pago (quando metodo = "cartao").
+  mpPreapprovalId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop     Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  cobrancas SubscriptionInvoice[]
+
+  @@index([status])
+  @@index([periodoFim])
+  @@map("subscriptions")
+}
+
+// Cada cobrança gerada. Guardar o histórico é o que permite o dono ver o
+// que já pagou e você conferir uma contestação meses depois.
+model SubscriptionInvoice {
+  id             String @id @default(cuid())
+  subscriptionId String
+
+  valor      Decimal  @db.Decimal(10, 2)
+  status     String   @default("pendente") // "pendente" | "paga" | "vencida" | "cancelada"
+  vencimento DateTime
+  pagaEm     DateTime?
+  metodo     String?
+
+  /// Cobrança Pix no Mercado Pago — o webhook reencontra por aqui.
+  mpPaymentId  String? @unique
+  copiaECola   String?
+  qrCodeBase64 String?
+
+  createdAt DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status, vencimento])
+  @@map("subscription_invoices")
 }

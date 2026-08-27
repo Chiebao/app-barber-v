@@ -8,6 +8,7 @@ import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercad
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { z } from "zod";
+import { situacaoDaLoja } from "@/app/lib/assinatura";
 
 const appointmentSchema = z.object({
   shopId: z.string(),
@@ -26,6 +27,17 @@ export async function POST(req: NextRequest) {
     const data = appointmentSchema.parse(body);
 
     const cleanPhone = data.clientPhone.replace(/\D/g, "");
+
+    // Barbearia com assinatura bloqueada nao recebe agendamento novo.
+    // A mensagem nao expoe que o dono deixou de pagar — isso e problema
+    // dele com a plataforma, nao com o cliente que so queria cortar o cabelo.
+    const assinatura = await situacaoDaLoja(data.shopId);
+    if (!assinatura.aceitaAgendamento) {
+      return NextResponse.json(
+        { error: "Esta barbearia nao esta aceitando agendamentos online no momento." },
+        { status: 503 },
+      );
+    }
 
     // Cliente barrado por esta barbearia nao agenda. A mensagem e neutra de
     // proposito: quem foi banido costuma ter saido de uma treta, e confirmar

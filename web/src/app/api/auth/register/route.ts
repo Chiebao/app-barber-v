@@ -4,6 +4,7 @@ import { hashPassword, signToken } from "@/app/lib/auth";
 import { generateRecoveryCode, hashRecoveryCode } from "@/app/lib/recovery-code";
 import slugify from "slugify";
 import { z } from "zod";
+import { iniciarTrial } from "@/app/lib/assinatura";
 
 const schema = z.object({
   ownerName: z.string().min(2),
@@ -81,6 +82,16 @@ export async function POST(req: NextRequest) {
       },
       include: { shops: { include: { services: true, barbers: true } } },
     });
+
+    // Teste grátis de 14 dias, sem pedir pagamento na entrada. Se falhar,
+    // o cadastro continua valendo: situacaoDe() trata loja sem assinatura
+    // como cortesia, então ninguém fica trancado por um erro nosso.
+    const lojaCriada = owner.shops[0];
+    if (lojaCriada) {
+      await iniciarTrial(lojaCriada.id).catch((e) =>
+        console.error("[assinatura] falha ao iniciar trial:", e),
+      );
+    }
 
     const shop = owner.shops[0];
     const token = signToken({ userId: owner.id, role: "owner", shopId: shop.id });

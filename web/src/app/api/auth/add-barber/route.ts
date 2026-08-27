@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken, hashPassword } from "@/app/lib/auth";
 import { z } from "zod";
+import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -14,9 +15,9 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = req.headers.get("authorization");
-    const payload = auth ? verifyToken(auth.slice(7)) : null;
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const data = schema.parse(await req.json());
     const exists = await prisma.barber.findFirst({ where: { shopId: payload.shopId, phone: data.phone } });
@@ -66,9 +67,9 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const auth = req.headers.get("authorization");
-    const payload = auth ? verifyToken(auth.slice(7)) : null;
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { barberId, name, active, role, commission, newPassword, email, imageUrl } = await req.json();
 

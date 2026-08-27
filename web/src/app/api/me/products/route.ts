@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num } from "@/app/lib/money";
+import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,8 +27,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { name, price, description, imageUrl, imageUrl2 } = await req.json();
     if (!name || !price) return NextResponse.json({ error: "Nome e preco obrigatorios" }, { status: 400 });
@@ -52,8 +54,9 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { id, name, price, description, imageUrl, imageUrl2, active } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
@@ -117,8 +120,9 @@ export async function PUT(req: NextRequest) {
 // Produto já vendido só pode ser desativado.
 export async function DELETE(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num } from "@/app/lib/money";
+import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 
 // GET — lista serviços da barbearia
 export async function GET(req: NextRequest) {
@@ -26,10 +27,9 @@ export async function GET(req: NextRequest) {
 // POST — cria serviço
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { name, duration, price, category, imageUrl } = await req.json();
     if (!name || !duration || !price || !category) {
@@ -48,10 +48,9 @@ export async function POST(req: NextRequest) {
 // PATCH — atualiza serviço (nome, preço, duração, foto, ativo)
 export async function PATCH(req: NextRequest) {
   try {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { id, name, duration, price, category, imageUrl, active } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
@@ -88,10 +87,9 @@ export async function PATCH(req: NextRequest) {
 // serviço some da tela de agendamento do cliente e o histórico continua certo.
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });

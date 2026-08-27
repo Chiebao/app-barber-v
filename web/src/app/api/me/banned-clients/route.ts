@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { z } from "zod";
+import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 
 /**
  * Clientes barrados por UMA barbearia.
@@ -40,10 +41,9 @@ export async function GET(req: NextRequest) {
 // POST — bane um telefone
 export async function POST(req: NextRequest) {
   try {
-    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-    if (!payload || payload.role !== "owner") {
-      return NextResponse.json({ error: "Só o dono pode banir" }, { status: 401 });
-    }
+    const guarda = await exigirEscrita(req, { apenasDono: true });
+    if (!guarda.ok) return guarda.resposta;
+    const payload = guarda.payload;
 
     const data = schema.parse(await req.json());
     const phone = data.phone.replace(/\D/g, "");

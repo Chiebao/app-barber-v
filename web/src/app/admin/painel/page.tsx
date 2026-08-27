@@ -10,6 +10,7 @@ import PushToggle from "./_push-toggle";
 import RecoveryCode from "./_recovery-code";
 import RecoveryNag from "./_recovery-nag";
 import Relatorio from "./_relatorio";
+import Assinatura from "./_assinatura";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
@@ -63,7 +64,7 @@ const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒",
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
-type ConfigView = null | "dados" | "horario" | "pagamento" | "aparencia" | "notificacoes" | "senha" | "banidos";
+type ConfigView = null | "dados" | "horario" | "pagamento" | "aparencia" | "notificacoes" | "senha" | "banidos" | "assinatura";
 const CONFIG_TITULOS: Record<string, string> = {
   dados: "🏠 Dados da barbearia",
   horario: "🕐 Horário e dias",
@@ -72,6 +73,7 @@ const CONFIG_TITULOS: Record<string, string> = {
   notificacoes: "🔔 Notificações",
   senha: "🔒 Senha e recuperação",
   banidos: "🚫 Clientes banidos",
+  assinatura: "⭐ Minha assinatura",
 };
 interface ResumoShop {
   horario: { openTime: string; closeTime: string; workDays: number[] };
@@ -80,6 +82,10 @@ interface ResumoShop {
   pagamento: { mercadoPago: boolean; pixManual: boolean };
   tema: string; notificacoes: number;
 }
+const ROTULO_ASSINATURA: Record<string, string> = {
+  trial: "Teste grátis", ativa: "Ativa", carencia: "Em atraso",
+  bloqueada: "Bloqueada", cortesia: "Cortesia", cancelada: "Cancelada",
+};
 interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
 
 type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos";
@@ -112,6 +118,7 @@ export default function PainelPage() {
   const [configView, setConfigView] = useState<ConfigView>(null);
   const [resumo, setResumo] = useState<ResumoShop | null>(null);
   const [verRelatorio, setVerRelatorio] = useState(false);
+  const [resumoAssinatura, setResumoAssinatura] = useState<{ estado: string; diasRestantes: number; aviso: string | null } | null>(null);
   const [banned, setBanned] = useState<BannedItem[]>([]);
   const [bannedLoading, setBannedLoading] = useState(false);
   const [baningClient, setBaningClient] = useState(false);
@@ -333,6 +340,19 @@ export default function PainelPage() {
     catch { setProducts([]); } finally { setProductsLoading(false); }
   }, [token, authHeaders]);
 
+  // A situação da assinatura acompanha o painel inteiro, não só a
+  // engrenagem: é ela que pinta o aviso no topo da home.
+  const fetchAssinatura = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/me/assinatura", { headers: authHeaders() });
+      if (res.ok) {
+        const d = await res.json();
+        setResumoAssinatura({ estado: d.situacao.estado, diasRestantes: d.situacao.diasRestantes, aviso: d.situacao.aviso });
+      }
+    } catch { /* sem aviso e melhor que painel quebrado */ }
+  }, [token, authHeaders]);
+
   const fetchResumo = useCallback(async () => {
     if (!token) return;
     try { const res = await fetch("/api/me/resumo", { headers: authHeaders() }); if (res.ok) setResumo(await res.json()); }
@@ -366,6 +386,7 @@ export default function PainelPage() {
     if (token && activeTab === "config" && !configView) fetchResumo();
   }, [token, activeTab, configView, fetchResumo]);
   // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
+  useEffect(() => { if (token) fetchAssinatura(); }, [token, fetchAssinatura]);
   useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
   useEffect(() => { if (activeTab !== "financeiro") setVerRelatorio(false); }, [activeTab]);
   // O filtro por barbeiro do relatorio precisa da lista carregada
@@ -1458,6 +1479,27 @@ export default function PainelPage() {
             {/* ═══════ HOME TAB ═══════ */}
             {activeTab === "home" && (
               <div className="space-y-5">
+                {resumoAssinatura?.aviso && (resumoAssinatura.estado === "carencia" || resumoAssinatura.estado === "bloqueada" || resumoAssinatura.estado === "trial") && (
+                  <button
+                    onClick={() => { setActiveTab("config"); setConfigView("assinatura"); }}
+                    className={`w-full rounded-2xl border p-4 text-left transition ${
+                      resumoAssinatura.estado === "bloqueada"
+                        ? "border-red-500/50 bg-red-500/10 hover:border-red-400"
+                        : resumoAssinatura.estado === "carencia"
+                          ? "border-yellow-500/50 bg-yellow-500/10 hover:border-yellow-400"
+                          : "border-blue-500/40 bg-blue-500/10 hover:border-blue-400"
+                    }`}
+                  >
+                    <p className={`text-sm font-semibold ${
+                      resumoAssinatura.estado === "bloqueada" ? "text-red-400"
+                      : resumoAssinatura.estado === "carencia" ? "text-yellow-400" : "text-blue-400"
+                    }`}>
+                      {resumoAssinatura.aviso}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Toque para ver os planos ›</p>
+                  </button>
+                )}
+
                 <RecoveryNag token={token} onIrParaConfig={() => { setActiveTab("config"); setSubView(null); }} />
 
                 {/* Quick Actions Grid */}
@@ -1774,6 +1816,35 @@ export default function PainelPage() {
                       </>
                     )}
 
+                    {resumoAssinatura && (
+                      <>
+                        <p className="text-xs text-gray-500 uppercase tracking-widest">Plano</p>
+                        <button
+                          onClick={() => setConfigView("assinatura")}
+                          className={`w-full rounded-2xl border p-4 text-left transition-all press-scale ${
+                            resumoAssinatura.estado === "bloqueada" || resumoAssinatura.estado === "carencia"
+                              ? "border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-400"
+                              : "border-gray-700 bg-dark-800 hover:border-brand-400"
+                          }`}
+                        >
+                          <p className="text-xs text-gray-500">⭐ Minha assinatura</p>
+                          <p className={`mt-1 text-lg font-semibold ${
+                            resumoAssinatura.estado === "bloqueada" ? "text-red-400"
+                            : resumoAssinatura.estado === "carencia" ? "text-yellow-400"
+                            : resumoAssinatura.estado === "trial" ? "text-blue-400"
+                            : "text-white"
+                          }`}>
+                            {ROTULO_ASSINATURA[resumoAssinatura.estado] || resumoAssinatura.estado}
+                            {resumoAssinatura.estado !== "cortesia" && (
+                              <span className="text-sm font-normal text-gray-500 ml-2 tabular-nums">
+                                {resumoAssinatura.diasRestantes}d
+                              </span>
+                            )}
+                          </p>
+                        </button>
+                      </>
+                    )}
+
                     <p className="text-xs text-gray-500 uppercase tracking-widest">Conta</p>
                     <div className="grid grid-cols-2 gap-2.5">
                       {cartoesConta.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
@@ -1938,6 +2009,11 @@ export default function PainelPage() {
                   <button onClick={handleChangePassword} disabled={changingPassword} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar senha"}</button>
                 </div>
                   </>
+                )}
+
+                {/* ─── Assinatura ─── */}
+                {configView === "assinatura" && (
+                  <Assinatura token={token} onUnauthorized={handleUnauthorized} />
                 )}
 
                 {/* ─── Clientes banidos ─── */}
