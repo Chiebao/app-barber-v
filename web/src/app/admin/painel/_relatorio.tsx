@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "@/app/lib/toast";
+import { gerarRelatorioPdf } from "./_relatorio-pdf";
 
 /**
  * Relatório financeiro por período.
@@ -98,12 +99,14 @@ const PERIODOS = [
 export default function Relatorio({
   token,
   ehDono,
+  nomeBarbearia,
   barbeiros,
   onVoltar,
   onUnauthorized,
 }: {
   token: string | null;
   ehDono: boolean;
+  nomeBarbearia: string;
   barbeiros: Barbeiro[];
   onVoltar: () => void;
   onUnauthorized: () => void;
@@ -115,6 +118,7 @@ export default function Relatorio({
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [verDevedores, setVerDevedores] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
   const [verLista, setVerLista] = useState(false);
 
   const faixa = useMemo(() => custom ?? periodoDe(periodo), [custom, periodo]);
@@ -143,6 +147,26 @@ export default function Relatorio({
 
   const devedores = atendimentos.filter(a => !a.paidAt);
 
+  const exportar = async () => {
+    if (!resumo) return;
+    setGerandoPdf(true);
+    try {
+      await gerarRelatorioPdf({
+        nomeBarbearia,
+        inicio: faixa.start,
+        fim: faixa.end,
+        barbeiroFiltrado: barbeiroId ? (barbeiros.find(b => b.id === barbeiroId)?.name ?? null) : null,
+        resumo,
+        atendimentos,
+      });
+    } catch (e) {
+      console.error("PDF:", e);
+      toast.error("Não foi possível gerar o PDF");
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
   /** Abre o WhatsApp do cliente com a cobrança pronta. */
   const cobrar = (a: Atendimento) => {
     const tel = a.client.phone.replace(/\D/g, "");
@@ -168,7 +192,16 @@ export default function Relatorio({
         <button onClick={onVoltar} className="flex items-center gap-1 text-brand-400 text-sm hover:text-brand-300 shrink-0">
           <span className="text-lg">←</span> Voltar
         </button>
-        <h2 className="text-lg font-semibold text-white">📄 Relatório</h2>
+        <h2 className="flex-1 text-lg font-semibold text-white">📄 Relatório</h2>
+        {resumo && resumo.totalAppointments > 0 && (
+          <button
+            onClick={exportar}
+            disabled={gerandoPdf}
+            className="shrink-0 rounded-lg border border-brand-400/50 px-3 py-2 text-xs text-brand-400 hover:bg-brand-500/10 disabled:opacity-50 transition"
+          >
+            {gerandoPdf ? "Gerando..." : "⬇ PDF"}
+          </button>
+        )}
       </div>
 
       {/* Período */}

@@ -1706,6 +1706,7 @@ export default function PainelPage() {
               <Relatorio
                 token={token}
                 ehDono={user?.role === "owner"}
+                nomeBarbearia={user?.shopName || "Barbearia"}
                 barbeiros={barbers.map(b => ({ id: b.id, name: b.name }))}
                 onVoltar={() => setVerRelatorio(false)}
                 onUnauthorized={handleUnauthorized}
