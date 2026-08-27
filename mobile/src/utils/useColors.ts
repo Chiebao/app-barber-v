@@ -16,10 +16,13 @@ export function useColors() {
       600: palette.brandDark,
     },
     dark: {
+      // Superfície um passo acima do fundo — usada como cartão elevado
+      700: palette.border,
       800: palette.bgSecondary,
       900: palette.bgPrimary,
     },
     gray: {
+      300: palette.textSecondary,
       400: palette.textSecondary,
       500: palette.textMuted,
       600: palette.textMuted,
@@ -29,5 +32,7 @@ export function useColors() {
     green: "#22c55e",
     red: "#ef4444",
     blue: "#3b82f6",
+    /** Alias semântico de red — ações destrutivas. */
+    error: "#ef4444",
   }), [palette]);
 }

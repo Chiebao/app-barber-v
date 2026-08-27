@@ -11,6 +11,7 @@ import RecoveryCode from "./_recovery-code";
 import RecoveryNag from "./_recovery-nag";
 import Relatorio from "./_relatorio";
 import Assinatura from "./_assinatura";
+import AReceber from "./_a-receber";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
@@ -118,6 +119,8 @@ export default function PainelPage() {
   const [configView, setConfigView] = useState<ConfigView>(null);
   const [resumo, setResumo] = useState<ResumoShop | null>(null);
   const [verRelatorio, setVerRelatorio] = useState(false);
+  const [verAReceber, setVerAReceber] = useState(false);
+  const [totalAReceber, setTotalAReceber] = useState<{ total: number; promessasVencidas: number } | null>(null);
   const [resumoAssinatura, setResumoAssinatura] = useState<{ estado: string; diasRestantes: number; aviso: string | null } | null>(null);
   const [banned, setBanned] = useState<BannedItem[]>([]);
   const [bannedLoading, setBannedLoading] = useState(false);
@@ -388,7 +391,15 @@ export default function PainelPage() {
   // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
   useEffect(() => { if (token) fetchAssinatura(); }, [token, fetchAssinatura]);
   useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
-  useEffect(() => { if (activeTab !== "financeiro") setVerRelatorio(false); }, [activeTab]);
+  useEffect(() => { if (activeTab !== "financeiro") { setVerRelatorio(false); setVerAReceber(false); } }, [activeTab]);
+  // O total em aberto vive no botao, para o dono ver sem entrar
+  useEffect(() => {
+    if (!token || activeTab !== "financeiro") return;
+    fetch("/api/me/a-receber", { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) setTotalAReceber({ total: d.total, promessasVencidas: d.promessasVencidas }); })
+      .catch(() => { /* o botao aparece sem valor; nao vale travar a aba */ });
+  }, [token, activeTab, verAReceber, authHeaders]);
   // O filtro por barbeiro do relatorio precisa da lista carregada
   useEffect(() => { if (token && verRelatorio && barbers.length === 0) fetchBarbers(); }, [token, verRelatorio, barbers.length, fetchBarbers]);
 
@@ -1682,7 +1693,16 @@ export default function PainelPage() {
             )}
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}
-            {activeTab === "financeiro" && verRelatorio && (
+            {activeTab === "financeiro" && verAReceber && (
+              <AReceber
+                token={token}
+                onVoltar={() => setVerAReceber(false)}
+                onUnauthorized={handleUnauthorized}
+                onPagou={() => { fetchDashboard(); fetchAppointments(); }}
+              />
+            )}
+
+            {activeTab === "financeiro" && !verAReceber && verRelatorio && (
               <Relatorio
                 token={token}
                 ehDono={user?.role === "owner"}
@@ -1692,17 +1712,41 @@ export default function PainelPage() {
               />
             )}
 
-            {activeTab === "financeiro" && !verRelatorio && user?.role === "owner" && (
+            {activeTab === "financeiro" && !verRelatorio && !verAReceber && user?.role === "owner" && (
               <div className="mb-5 space-y-4">
                 <Ocupacao token={token} />
                 <Conversao token={token} />
               </div>
             )}
-            {activeTab === "financeiro" && !verRelatorio && (
+            {activeTab === "financeiro" && !verRelatorio && !verAReceber && (
               <div className="space-y-5">
                 {/* O resumo responde "como estou indo". O relatorio responde
                     "quem me deve, como entrou, quanto pago de comissao" —
                     perguntas diferentes, telas diferentes. */}
+                {totalAReceber && totalAReceber.total > 0 && (
+                  <button
+                    onClick={() => setVerAReceber(true)}
+                    className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition press-scale ${
+                      totalAReceber.promessasVencidas > 0
+                        ? "border-red-500/40 bg-red-500/5 hover:bg-red-500/10"
+                        : "border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10"
+                    }`}
+                  >
+                    <span className="text-xl shrink-0">💰</span>
+                    <span className="flex-1 min-w-0">
+                      <span className={`block text-sm font-semibold ${totalAReceber.promessasVencidas > 0 ? "text-red-400" : "text-yellow-400"}`}>
+                        {totalAReceber.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} a receber
+                      </span>
+                      <span className="block text-xs text-gray-500">
+                        {totalAReceber.promessasVencidas > 0
+                          ? `${totalAReceber.promessasVencidas} prometeu e não pagou`
+                          : "Ver quem está devendo"}
+                      </span>
+                    </span>
+                    <span className="text-gray-600 shrink-0">›</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => setVerRelatorio(true)}
                   className="w-full flex items-center gap-3 rounded-xl border border-brand-400/40 bg-brand-500/5 px-4 py-3.5 text-left hover:bg-brand-500/10 transition press-scale"

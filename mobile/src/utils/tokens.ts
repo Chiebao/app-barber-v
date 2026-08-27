@@ -51,6 +51,8 @@ export const lineHeight = {
 
 // ── Spacing (escala de 4px) ──────────────────────────────────────────────────
 export const spacing = {
+  /** 14px — respiro lateral padrao das telas */
+  body: 14,
   /** 4px */
   xs: 4,
   /** 8px */

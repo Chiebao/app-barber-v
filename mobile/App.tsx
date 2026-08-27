@@ -28,6 +28,9 @@ import ClientsScreen from "./src/screens/ClientsScreen";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    // SDK 54 separou o alerta em banner + lista de notificacoes
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
