@@ -72,6 +72,13 @@ const CONFIG_TITULOS: Record<string, string> = {
   senha: "🔒 Senha e recuperação",
   banidos: "🚫 Clientes banidos",
 };
+interface ResumoShop {
+  horario: { openTime: string; closeTime: string; workDays: number[] };
+  servicos: number; produtos: number; barbeiros: number; barbeirosSemFoto: number; banidos: number;
+  temEndereco: boolean; temTelefone: boolean; temLogo: boolean;
+  pagamento: { mercadoPago: boolean; pixManual: boolean };
+  tema: string; notificacoes: number;
+}
 interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
 
 type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos";
@@ -102,6 +109,7 @@ export default function PainelPage() {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [subView, setSubView] = useState<SubView>(null);
   const [configView, setConfigView] = useState<ConfigView>(null);
+  const [resumo, setResumo] = useState<ResumoShop | null>(null);
   const [banned, setBanned] = useState<BannedItem[]>([]);
   const [bannedLoading, setBannedLoading] = useState(false);
   const [baningClient, setBaningClient] = useState(false);
@@ -323,6 +331,12 @@ export default function PainelPage() {
     catch { setProducts([]); } finally { setProductsLoading(false); }
   }, [token, authHeaders]);
 
+  const fetchResumo = useCallback(async () => {
+    if (!token) return;
+    try { const res = await fetch("/api/me/resumo", { headers: authHeaders() }); if (res.ok) setResumo(await res.json()); }
+    catch { /* cartao cai para o rotulo sem valor; nao vale travar a tela */ }
+  }, [token, authHeaders]);
+
   const fetchBanned = useCallback(async () => {
     if (!token) return; setBannedLoading(true);
     try { const res = await fetch("/api/me/banned-clients", { headers: authHeaders() }); const d = await res.json(); setBanned(d.banned || []); }
@@ -344,6 +358,11 @@ export default function PainelPage() {
   }, [token, activeTab, fetchAppointments, fetchSlots, fetchDashboard]);
 
   useEffect(() => { if (token && configView === "banidos") fetchBanned(); }, [token, configView, fetchBanned]);
+  // Recarrega ao abrir a engrenagem e toda vez que volta ao menu: e
+  // exatamente quando o dono acabou de mexer em alguma coisa.
+  useEffect(() => {
+    if (token && activeTab === "config" && !configView) fetchResumo();
+  }, [token, activeTab, configView, fetchResumo]);
   // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
   useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
 
@@ -937,28 +956,69 @@ export default function PainelPage() {
     ] : []),
   ];
 
-  const menuBarbearia: { view: Exclude<ConfigView, null>; icon: string; label: string; hint: string }[] = user?.role === "owner" ? [
-    { view: "dados", icon: "\u{1F3E0}", label: "Dados da barbearia", hint: "Nome, endereço e telefone" },
-    { view: "horario", icon: "\u{1F550}", label: "Horário e dias", hint: "Quando a barbearia abre" },
-    { view: "pagamento", icon: "\u{1F4B3}", label: "Pagamento", hint: "Pix e Mercado Pago" },
-    { view: "aparencia", icon: "\u{1F5BC}\u{FE0F}", label: "Aparência", hint: "Logo do seu link" },
+  // Cada cartao carrega o VALOR atual, nao so o nome. E o que transforma a
+  // engrenagem em painel — e o que teria denunciado, sem abrir nada, que a
+  // troca de horario do Eduardo nunca chegou ao banco.
+  type Cartao = {
+    view: Exclude<ConfigView, null> | null;
+    sub?: SubView;
+    icon: string;
+    label: string;
+    valor: string;
+    pendente?: boolean;
+  };
+
+  const DIAS_CURTOS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+
+  /** "seg a sab" quando os dias sao seguidos, "seg, qua, sex" quando nao sao. */
+  const resumirDias = (dias: number[]): string => {
+    if (!dias || dias.length === 0) return "nenhum dia";
+    if (dias.length === 7) return "todo dia";
+    const ord = [...dias].sort((a, b) => a - b);
+    const seguidos = ord.every((d, i) => i === 0 || d === ord[i - 1] + 1);
+    return seguidos && ord.length > 2
+      ? `${DIAS_CURTOS[ord[0]]} a ${DIAS_CURTOS[ord[ord.length - 1]]}`
+      : ord.map(d => DIAS_CURTOS[d]).join(", ");
+  };
+
+  const cartoesCadastro: Cartao[] = user?.role === "owner" ? [
+    { view: null, sub: "servicos", icon: "\u{1F527}", label: "Serviços",
+      valor: resumo ? (resumo.servicos === 0 ? "nenhum" : `${resumo.servicos} ativo${resumo.servicos > 1 ? "s" : ""}`) : "—",
+      pendente: !!resumo && resumo.servicos === 0 },
+    { view: null, sub: "produtos", icon: "\u{1F6CD}\u{FE0F}", label: "Produtos",
+      valor: resumo ? (resumo.produtos === 0 ? "nenhum" : `${resumo.produtos} ativo${resumo.produtos > 1 ? "s" : ""}`) : "—",
+      pendente: !!resumo && resumo.produtos === 0 },
+    { view: null, sub: "barbeiros", icon: "\u{2702}\u{FE0F}", label: "Barbeiros",
+      valor: resumo ? (resumo.barbeirosSemFoto > 0 ? `${resumo.barbeirosSemFoto} sem foto` : `${resumo.barbeiros} com foto`) : "—",
+      pendente: !!resumo && resumo.barbeirosSemFoto > 0 },
+    { view: "banidos", icon: "\u{1F6AB}", label: "Banidos",
+      valor: resumo ? (resumo.banidos === 0 ? "nenhum" : String(resumo.banidos)) : "—" },
   ] : [];
 
-  const menuConta: { view: Exclude<ConfigView, null>; icon: string; label: string; hint: string }[] = [
-    { view: "notificacoes", icon: "\u{1F514}", label: "Notificações", hint: "Avisos de novo agendamento" },
-    { view: "senha", icon: "\u{1F512}", label: "Senha e recuperação", hint: "Trocar senha e gerar código" },
-    ...(user?.role === "owner" ? [
-      { view: "banidos" as const, icon: "\u{1F6AB}", label: "Clientes banidos", hint: "Quem não pode agendar aqui" },
-    ] : []),
+  const cartoesBarbearia: Cartao[] = user?.role === "owner" ? [
+    { view: "dados", icon: "\u{1F3E0}", label: "Dados da barbearia",
+      valor: resumo ? (resumo.temEndereco ? "endereço ok" : "sem endereço") : "—",
+      pendente: !!resumo && !resumo.temEndereco },
+    { view: "pagamento", icon: "\u{1F4B3}", label: "Pagamento",
+      valor: resumo ? (resumo.pagamento.mercadoPago ? "Pix automático" : resumo.pagamento.pixManual ? "Pix manual" : "sem Pix") : "—",
+      pendente: !!resumo && !resumo.pagamento.mercadoPago && !resumo.pagamento.pixManual },
+    { view: "aparencia", icon: "\u{1F5BC}\u{FE0F}", label: "Aparência",
+      valor: resumo ? (resumo.temLogo ? "logo enviada" : "sem logo") : "—",
+      pendente: !!resumo && !resumo.temLogo },
+  ] : [];
+
+  const cartoesConta: Cartao[] = [
+    { view: "notificacoes", icon: "\u{1F514}", label: "Notificações",
+      valor: resumo ? (resumo.notificacoes > 0 ? `${resumo.notificacoes} aparelho${resumo.notificacoes > 1 ? "s" : ""}` : "desligadas") : "—",
+      pendente: !!resumo && resumo.notificacoes === 0 },
+    { view: "senha", icon: "\u{1F512}", label: "Senha", valor: "trocar e recuperar" },
   ];
 
-  // Cadastros: mexe-se uma vez e quase nunca mais. Vivem dentro da engrenagem
-  // para nao competir por atencao com a agenda do dia.
-  const cadastros = user?.role === "owner" ? [
-    { icon: "🔧", label: "Serviços", hint: "Cortes, preços e duração", onClick: () => { setSubView("servicos"); setActiveTab("home"); } },
-    { icon: "🛍️", label: "Produtos", hint: "O que você vende na comanda", onClick: () => { setSubView("produtos"); setActiveTab("home"); } },
-    { icon: "✂️", label: "Barbeiros", hint: "Equipe, fotos e comissão", onClick: () => { setSubView("barbeiros"); setActiveTab("home"); } },
-  ] : [];
+  const abrirCartao = (c: Cartao) => {
+    if (c.sub) { setSubView(c.sub); setActiveTab("home"); return; }
+    if (c.view) setConfigView(c.view);
+  };
+
 
   // ── Render SubViews ──
   const renderSubView = () => {
@@ -1650,53 +1710,43 @@ export default function PainelPage() {
                 {/* ─── Menu ─── */}
                 {!configView && (
                   <>
-                    {/* Cadastros — o que antes disputava espaço na home */}
-                {cadastros.length > 0 && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
-                    <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Cadastros</p>
-                    {cadastros.map((c, i) => (
-                      <button
-                        key={c.label}
-                        onClick={c.onClick}
-                        className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}
-                      >
-                        <span className="text-xl shrink-0">{c.icon}</span>
-                        <span className="flex-1 min-w-0">
-                          <span className="block text-white font-medium">{c.label}</span>
-                          <span className="block text-xs text-gray-500">{c.hint}</span>
-                        </span>
-                        <span className="text-gray-600 shrink-0">›</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                    {/* Cartões com o valor atual de cada coisa. Ler o estado da
+                        barbearia sem abrir nada é o ponto — e um cartão que segue
+                        mostrando o valor antigo denuncia na hora que a alteração
+                        não salvou. */}
+                    <button
+                      onClick={() => setConfigView("horario")}
+                      className="w-full rounded-2xl border border-gray-700 bg-dark-800 p-4 text-left hover:border-brand-400 transition-all press-scale"
+                    >
+                      <p className="text-xs text-gray-500">🕐 Horário e dias</p>
+                      <p className="mt-1 text-lg font-semibold text-white tabular-nums">
+                        {resumo
+                          ? `${resumo.horario.openTime} – ${resumo.horario.closeTime} · ${resumirDias(resumo.horario.workDays)}`
+                          : "—"}
+                      </p>
+                    </button>
 
-                    <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
-                      <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Barbearia</p>
-                      {menuBarbearia.map((m, i) => (
-                        <button key={m.view} onClick={() => setConfigView(m.view)} className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}>
-                          <span className="text-xl shrink-0">{m.icon}</span>
-                          <span className="flex-1 min-w-0">
-                            <span className="block text-white font-medium">{m.label}</span>
-                            <span className="block text-xs text-gray-500">{m.hint}</span>
-                          </span>
-                          <span className="text-gray-600 shrink-0">›</span>
-                        </button>
-                      ))}
-                    </div>
+                    {cartoesCadastro.length > 0 && (
+                      <>
+                        <p className="text-xs text-gray-500 uppercase tracking-widest">Cadastros</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {cartoesCadastro.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
+                        </div>
+                      </>
+                    )}
 
-                    <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
-                      <p className="px-5 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Conta e segurança</p>
-                      {menuConta.map((m, i) => (
-                        <button key={m.view} onClick={() => setConfigView(m.view)} className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-brand-500/5 transition ${i > 0 ? "border-t border-gray-700/60" : ""}`}>
-                          <span className="text-xl shrink-0">{m.icon}</span>
-                          <span className="flex-1 min-w-0">
-                            <span className="block text-white font-medium">{m.label}</span>
-                            <span className="block text-xs text-gray-500">{m.hint}</span>
-                          </span>
-                          <span className="text-gray-600 shrink-0">›</span>
-                        </button>
-                      ))}
+                    {cartoesBarbearia.length > 0 && (
+                      <>
+                        <p className="text-xs text-gray-500 uppercase tracking-widest">Barbearia</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {cartoesBarbearia.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
+                        </div>
+                      </>
+                    )}
+
+                    <p className="text-xs text-gray-500 uppercase tracking-widest">Conta</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {cartoesConta.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
                     </div>
 
                     {/* Logout */}
@@ -1934,6 +1984,38 @@ export default function PainelPage() {
 }
 
 /* ── Shared Components ── */
+/**
+ * Cartão da engrenagem: ícone, rótulo e o VALOR atual.
+ *
+ * O valor é o ponto todo. Pendência vira cor no próprio cartão em vez de
+ * barra de progresso — cobra do mesmo jeito e não fica sobrando na tela
+ * depois que tudo estiver configurado.
+ */
+function TileConfig({
+  c,
+  onClick,
+}: {
+  c: { icon: string; label: string; valor: string; pendente?: boolean };
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col gap-1 rounded-2xl border bg-dark-800 p-3.5 text-left transition-all press-scale ${
+        c.pendente
+          ? "border-yellow-500/40 hover:border-yellow-400"
+          : "border-gray-700 hover:border-brand-400"
+      }`}
+    >
+      <span className="text-lg leading-none">{c.icon}</span>
+      <span className={`text-sm font-semibold leading-tight ${c.pendente ? "text-yellow-400" : "text-white"}`}>
+        {c.valor}
+      </span>
+      <span className="text-xs text-gray-500 leading-tight">{c.label}</span>
+    </button>
+  );
+}
+
 function Spinner() {
   return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-400 border-t-transparent" /></div>;
 }
