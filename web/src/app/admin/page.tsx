@@ -292,7 +292,7 @@ export default function AdminPage() {
           <div className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
             <span className="text-4xl text-green-400">✓</span>
           </div>
-          <h1 className="text-3xl font-bold text-brand-400">{result.shopName}</h1>
+          <h1 className="text-3xl font-semibold text-brand-400">{result.shopName}</h1>
           <p className="text-gray-400">Sua barbearia esta pronta!</p>
           <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-3">
             <p className="text-sm text-gray-400">Seu link de agendamento:</p>
@@ -320,14 +320,14 @@ export default function AdminPage() {
           {result.recoveryCode && (
             <div className="rounded-xl bg-brand-500/10 border-2 border-brand-400/50 p-5 space-y-3 text-left">
               <div className="text-center">
-                <p className="text-xs text-brand-300 font-bold uppercase tracking-widest">
+                <p className="text-xs text-brand-300 font-semibold uppercase tracking-widest">
                   🔑 Anote seu código de recuperação
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
                   É com ele que você cria uma nova senha se esquecer a sua. Não mostraremos de novo.
                 </p>
               </div>
-              <p className="text-2xl font-mono font-bold text-white text-center tracking-wider select-all">
+              <p className="text-2xl font-mono font-semibold text-white text-center tracking-wider select-all">
                 {result.recoveryCode}
               </p>
               <button
@@ -400,7 +400,7 @@ export default function AdminPage() {
               {!usarCodigoRecuperacao && forgotEtapa === "telefone" && (
                 <>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Esqueci minha senha</h3>
+                    <h3 className="text-lg font-semibold text-white">Esqueci minha senha</h3>
                     <p className="text-sm text-gray-400 mt-1">
                       Vamos enviar um código para o seu WhatsApp.
                     </p>
@@ -422,7 +422,7 @@ export default function AdminPage() {
               {!usarCodigoRecuperacao && forgotEtapa === "codigo" && (
                 <>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Digite o código</h3>
+                    <h3 className="text-lg font-semibold text-white">Digite o código</h3>
                     <p className="text-sm text-gray-400 mt-1">
                       Enviamos um código de 6 dígitos no WhatsApp do número informado. Ele vale por 10 minutos.
                     </p>
@@ -465,7 +465,7 @@ export default function AdminPage() {
               {usarCodigoRecuperacao && (
                 <>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Usar código de recuperação</h3>
+                    <h3 className="text-lg font-semibold text-white">Usar código de recuperação</h3>
                     <p className="text-sm text-gray-400 mt-1">
                       Aquele código que você anotou quando criou a conta (formato BARB-XXXX-XXXX).
                     </p>
@@ -636,7 +636,7 @@ export default function AdminPage() {
             </div>
 
             <button onClick={handleRegister} disabled={loading}
-              className="w-full rounded-xl bg-brand-500 py-3.5 font-bold text-dark-900 text-lg hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
+              className="w-full rounded-xl bg-brand-500 py-3.5 font-semibold text-dark-900 text-lg hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
               {loading ? "Cadastrando..." : "Cadastrar Barbearia"}
             </button>
           </div>

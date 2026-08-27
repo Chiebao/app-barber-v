@@ -26,11 +26,11 @@ body {
   background-position: top center;
   background-attachment: fixed;
   color: var(--text-primary);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui), system-ui, -apple-system, sans-serif;
 }
 
 h1, h2 {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
 }
 
 /* Camada 1: escurecimento gradiente */

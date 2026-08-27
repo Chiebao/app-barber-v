@@ -34,11 +34,13 @@ export const fontWeight = {
 };
 
 export const fontFamily = {
-  /** Playfair Display — usar em títulos (h1, h2, display) */
-  serif: "PlayfairDisplay_500Medium",
-  serifBold: "PlayfairDisplay_700Bold",
-  /** Sistema — usar em corpo, labels, botões */
-  sans: undefined,
+  /** Marcellus — titulos. Letra romana inscricional, de placa gravada.
+   *  Tem um peso so, entao serif e serifBold apontam para a mesma fonte. */
+  serif: "Marcellus_400Regular",
+  serifBold: "Marcellus_400Regular",
+  /** Manrope — corpo, labels e botoes */
+  sans: "Manrope_500Medium",
+  sansBold: "Manrope_600SemiBold",
 } as const;
 
 export const lineHeight = {

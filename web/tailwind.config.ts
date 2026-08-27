@@ -5,7 +5,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["var(--font-ui)", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
       },
       colors: {
         brand: {

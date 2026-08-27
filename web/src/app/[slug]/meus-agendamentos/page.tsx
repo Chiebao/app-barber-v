@@ -656,7 +656,7 @@ export default function MeusAgendamentos() {
     <main className="min-h-screen bg-dark-900 pb-8">
       <header className="bg-dark-800 border-b border-gray-800 p-6 flex flex-col items-center gap-2">
         {shopLogo && <img src={shopLogo} alt={shopName} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />}
-        <h1 className="text-2xl font-bold text-brand-400">{shopName || "..."}</h1>
+        <h1 className="text-2xl font-semibold text-brand-400">{shopName || "..."}</h1>
       </header>
 
       <nav className="flex border-b border-gray-800 bg-dark-800">
@@ -733,7 +733,7 @@ export default function MeusAgendamentos() {
               <>
                 <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 flex justify-between items-center">
                   <span className="text-gray-400">Total gasto</span>
-                  <span className="text-xl font-bold text-brand-400">R$ {totalGasto.toFixed(2)}</span>
+                  <span className="text-xl font-semibold text-brand-400">R$ {totalGasto.toFixed(2)}</span>
                 </div>
 
                 <div className="space-y-3">
@@ -753,7 +753,7 @@ export default function MeusAgendamentos() {
                       </div>
                       <div className="flex justify-between items-end">
                         <p className="text-sm text-gray-400">{apt.services.map((s) => s.name).join(", ")}</p>
-                        <p className="font-bold text-brand-400">R$ {apt.totalPrice.toFixed(2)}</p>
+                        <p className="font-semibold text-brand-400">R$ {apt.totalPrice.toFixed(2)}</p>
                       </div>
 
                       {/* Edição inline */}

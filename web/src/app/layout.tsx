@@ -1,19 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Manrope, Marcellus } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "./lib/toast";
 
-const inter = Inter({
+// Manrope na interface: a clareza da Inter com contorno mais fino e
+// numeros melhores — num app que e quase todo preco e horario, isso pesa.
+const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-ui",
+  weight: ["400", "500", "600", "700"],
 });
 
-const playfair = Playfair_Display({
+// Marcellus nos titulos: letra romana inscricional, a mesma das placas
+// gravadas de barbearia. Tem um peso so — serve para titulo, nunca para
+// texto corrido. E, ao contrario da Playfair, o traco nao some no escuro.
+const marcellus = Marcellus({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  weight: ["400"],
 });
 
 export const viewport: Viewport = {
@@ -43,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="pt-BR" className={`${manrope.variable} ${marcellus.variable}`}>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <script

@@ -275,7 +275,7 @@ export default function BarberPageChat({
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
           <div>
-            <p className="font-bold text-brand-400 text-sm">{shop.name}</p>
+            <p className="font-semibold text-brand-400 text-sm">{shop.name}</p>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-500">{shop.openTime} – {shop.closeTime}</p>
               {shop.avgRating && shop.ratingCount && shop.ratingCount > 0 && (
@@ -370,10 +370,10 @@ export default function BarberPageChat({
                       : <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center text-4xl">✂️</div>}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selected ? "bg-yellow-400 border-yellow-400" : "bg-white/20 border-white/60"}`}>
-                      {selected && <span className="text-black text-xs font-bold">✓</span>}
+                      {selected && <span className="text-black text-xs font-semibold">✓</span>}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                      <p className="text-white font-bold text-sm leading-tight">{service.name}</p>
+                      <p className="text-white font-semibold text-sm leading-tight">{service.name}</p>
                       <div className="flex justify-between text-xs text-gray-300 mt-0.5">
                         <span>R$ {service.price.toFixed(2)}</span>
                         <span>{service.duration}min</span>
@@ -402,7 +402,7 @@ export default function BarberPageChat({
               {shop.barbers.map((b) => (
                 <button key={b.id} onClick={() => handleSelectBarber(b)}
                   className="flex-shrink-0 flex flex-col items-center gap-2 p-4 bg-gray-800 rounded-2xl border border-gray-700 hover:border-brand-400 transition min-w-[100px]">
-                  <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl font-bold">
+                  <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl font-semibold">
                     {b.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-white">{b.name}</span>
@@ -421,7 +421,7 @@ export default function BarberPageChat({
                   <span className="text-gray-400 text-xs">
                     {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short" })}
                   </span>
-                  <span className="font-bold text-white">{new Date(date + "T12:00:00").getDate()}</span>
+                  <span className="font-semibold text-white">{new Date(date + "T12:00:00").getDate()}</span>
                   <span className="text-gray-400 text-xs">
                     {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { month: "short" })}
                   </span>
@@ -479,7 +479,7 @@ export default function BarberPageChat({
               </div>
               <div className="border-t border-gray-700 pt-2.5 flex justify-between">
                 <span className="text-gray-400 text-sm">Total</span>
-                <span className="font-bold text-brand-400">R$ {totalPrice.toFixed(2)}</span>
+                <span className="font-semibold text-brand-400">R$ {totalPrice.toFixed(2)}</span>
               </div>
             </div>
             <button onClick={handleBook}
@@ -499,13 +499,13 @@ export default function BarberPageChat({
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-yellow-400 font-semibold">Entrada via Pix (50%)</span>
-                <span className="text-yellow-400 font-bold">R$ {(totalPrice / 2).toFixed(2)}</span>
+                <span className="text-yellow-400 font-semibold">R$ {(totalPrice / 2).toFixed(2)}</span>
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Chave Pix</p>
                 <button onClick={() => { navigator.clipboard.writeText(pixKey); setPixCopied(true); setTimeout(() => setPixCopied(false), 2000); }}
                   className="w-full flex items-center justify-between bg-gray-900 rounded-lg p-2 text-sm hover:bg-gray-800 transition">
-                  <span className="text-white font-bold break-all text-left">{pixKey}</span>
+                  <span className="text-white font-semibold break-all text-left">{pixKey}</span>
                   <span className="ml-2 shrink-0 text-xs font-semibold text-yellow-400">
                     {pixCopied ? "✓ Copiado!" : "📋 Copiar"}
                   </span>

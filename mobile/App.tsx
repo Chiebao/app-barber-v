@@ -3,7 +3,9 @@ import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "expo-secure-store";
 import * as SplashScreen from "expo-splash-screen";
-import { useFonts, PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold } from "@expo-google-fonts/playfair-display";
+import { useFonts } from "expo-font";
+import { Marcellus_400Regular } from "@expo-google-fonts/marcellus";
+import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from "@expo-google-fonts/manrope";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import * as Notifications from "expo-notifications";
 import { api, setOnUnauthorized } from "./src/services/api";
@@ -35,10 +37,12 @@ type Screen = "login" | "register" | "home" | "finance" | "loyalty" | "barbers" 
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_500Medium,
-    PlayfairDisplay_600SemiBold,
-    PlayfairDisplay_700Bold,
+    // Marcellus tem um peso so: e letra de titulo, nao de texto corrido
+    Marcellus_400Regular,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
   });
   const [screen, setScreen] = useState<Screen>("login");
   const [token, setToken] = useState("");

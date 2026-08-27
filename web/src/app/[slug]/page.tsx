@@ -482,7 +482,7 @@ export default function BarberPage() {
             <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
           )}
           <div>
-            <p className="font-bold text-brand-400 text-sm">{shop?.name || "..."}</p>
+            <p className="font-semibold text-brand-400 text-sm">{shop?.name || "..."}</p>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-500">{shop ? `${shop.openTime} – ${shop.closeTime}` : ""}</p>
               {shop?.avgRating && shop.ratingCount > 0 && (
@@ -551,7 +551,7 @@ export default function BarberPage() {
         {step === "name" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold">Bem-vindo! 👋</h2>
+              <h2 className="text-2xl font-semibold">Bem-vindo! 👋</h2>
               <p className="text-gray-400 mt-1">Vamos agendar seu horário em <span className="text-brand-400">{shop?.name}</span></p>
             </div>
             <div className="space-y-3">
@@ -567,7 +567,7 @@ export default function BarberPage() {
               <button
                 onClick={handleSubmitName}
                 disabled={!nameInput.trim()}
-                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 transition disabled:opacity-40 press-scale"
+                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
               >
                 Continuar
               </button>
@@ -581,7 +581,7 @@ export default function BarberPage() {
                   <div key={r.id} className="bg-dark-900 border border-gray-800 rounded-2xl p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-sm font-bold">
+                        <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-sm font-semibold">
                           {r.clientName.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -605,7 +605,7 @@ export default function BarberPage() {
           <div className="space-y-6">
             <div>
               <button onClick={() => setStep("name")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-bold">Olá, {clientName.split(" ")[0]}!</h2>
+              <h2 className="text-2xl font-semibold">Olá, {clientName.split(" ")[0]}!</h2>
               <p className="text-gray-400 mt-1">Informe seu telefone para continuar</p>
             </div>
             <div className="space-y-3">
@@ -622,7 +622,7 @@ export default function BarberPage() {
               <button
                 onClick={handleSubmitPhone}
                 disabled={phoneInput.replace(/\D/g, "").length < 10}
-                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 transition disabled:opacity-40 press-scale"
+                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
               >
                 Continuar
               </button>
@@ -634,7 +634,7 @@ export default function BarberPage() {
         {step === "rating" && pendingRating && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold">Como foi sua visita?</h2>
+              <h2 className="text-2xl font-semibold">Como foi sua visita?</h2>
               <p className="text-gray-400 mt-1">
                 {pendingRating.services.join(", ")} com {pendingRating.barberName} — {formatDate(pendingRating.date)}
               </p>
@@ -669,7 +669,7 @@ export default function BarberPage() {
               <button
                 onClick={handleSubmitRating}
                 disabled={ratingScore === 0}
-                className="flex-1 bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 text-sm transition disabled:opacity-40"
+                className="flex-1 bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 text-sm transition disabled:opacity-40"
               >
                 Avaliar e continuar
               </button>
@@ -681,7 +681,7 @@ export default function BarberPage() {
         {step === "mode_select" && shop && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold">Como prefere agendar?</h2>
+              <h2 className="text-2xl font-semibold">Como prefere agendar?</h2>
               <p className="text-gray-400 mt-1">Escolha a forma que preferir — você pode mudar sempre que quiser.</p>
             </div>
             <div className="grid grid-cols-1 gap-4">
@@ -692,7 +692,7 @@ export default function BarberPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-4xl">📋</span>
                   <div>
-                    <p className="font-bold text-white text-lg group-hover:text-brand-400 transition">Etapas clássico</p>
+                    <p className="font-semibold text-white text-lg group-hover:text-brand-400 transition">Etapas clássico</p>
                     <p className="text-gray-500 text-sm mt-0.5">Escolha serviço, barbeiro, data e hora passo a passo</p>
                   </div>
                 </div>
@@ -704,7 +704,7 @@ export default function BarberPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-4xl">🤖</span>
                   <div>
-                    <p className="font-bold text-white text-lg group-hover:text-brand-400 transition">Chatbot IA</p>
+                    <p className="font-semibold text-white text-lg group-hover:text-brand-400 transition">Chatbot IA</p>
                     <p className="text-gray-500 text-sm mt-0.5">Converse naturalmente e deixe a IA montar seu agendamento</p>
                   </div>
                 </div>
@@ -763,7 +763,7 @@ export default function BarberPage() {
                       setStep("barber");
                     }
                   }}
-                  className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-2.5 text-sm transition press-scale"
+                  className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-2.5 text-sm transition press-scale"
                 >
                   Repetir agendamento
                 </button>
@@ -771,7 +771,7 @@ export default function BarberPage() {
             )}
 
             <div>
-              <h2 className="text-2xl font-bold">Escolha os serviços</h2>
+              <h2 className="text-2xl font-semibold">Escolha os serviços</h2>
               <p className="text-gray-400 mt-1">Selecione um ou mais serviços</p>
             </div>
 
@@ -805,10 +805,10 @@ export default function BarberPage() {
                                 selected ? "bg-brand-400 border-brand-400" : "bg-white/20 border-white/60"
                               }`}
                             >
-                              {selected && <span className="text-black text-xs font-bold">✓</span>}
+                              {selected && <span className="text-black text-xs font-semibold">✓</span>}
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-2.5 text-left">
-                              <p className="text-white font-bold text-sm leading-tight">{service.name}</p>
+                              <p className="text-white font-semibold text-sm leading-tight">{service.name}</p>
                               <div className="flex justify-between text-xs text-gray-300 mt-0.5">
                                 <span>R$ {service.price.toFixed(2)}</span>
                                 <span>{service.duration}min</span>
@@ -842,7 +842,7 @@ export default function BarberPage() {
                               <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                                 selected ? "bg-brand-400 border-brand-400" : "border-gray-600"
                               }`}>
-                                {selected && <span className="text-black text-xs font-bold">✓</span>}
+                                {selected && <span className="text-black text-xs font-semibold">✓</span>}
                               </div>
                               <span className={`text-sm font-medium ${selected ? "text-white" : "text-gray-300"}`}>
                                 {service.name}
@@ -863,7 +863,7 @@ export default function BarberPage() {
             <button
               onClick={handleSubmitServices}
               disabled={selectedServices.length === 0}
-              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 transition disabled:opacity-40 press-scale"
+              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
             >
               {selectedServices.length > 0
                 ? `Continuar · R$ ${totalPrice.toFixed(2)} · ${totalDuration}min`
@@ -877,7 +877,7 @@ export default function BarberPage() {
           <div className="space-y-5">
             <div>
               <button onClick={() => setStep("services")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-bold">Escolha o profissional</h2>
+              <h2 className="text-2xl font-semibold">Escolha o profissional</h2>
               <p className="text-gray-400 mt-1">Com quem você prefere ser atendido?</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -890,7 +890,7 @@ export default function BarberPage() {
                   {b.imageUrl ? (
                     <img src={b.imageUrl} alt={b.name} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-2xl font-bold">
+                    <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-2xl font-semibold">
                       {b.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -906,7 +906,7 @@ export default function BarberPage() {
           <div className="space-y-5">
             <div>
               <button onClick={() => setStep(shop!.barbers.length > 1 ? "barber" : "services")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-bold">Escolha a data</h2>
+              <h2 className="text-2xl font-semibold">Escolha a data</h2>
               <p className="text-gray-400 mt-1">Quando você prefere vir?</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -919,7 +919,7 @@ export default function BarberPage() {
                   <span className="text-gray-400 text-xs">
                     {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short" })}
                   </span>
-                  <span className="font-bold text-white text-lg">
+                  <span className="font-semibold text-white text-lg">
                     {new Date(date + "T12:00:00").getDate()}
                   </span>
                   <span className="text-gray-400 text-xs">
@@ -936,7 +936,7 @@ export default function BarberPage() {
           <div className="space-y-5">
             <div>
               <button onClick={() => setStep("date")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-bold">Escolha o horário</h2>
+              <h2 className="text-2xl font-semibold">Escolha o horário</h2>
               <p className="text-gray-400 mt-1">{formatDate(selectedDate)}</p>
             </div>
             {slotsLoading ? (
@@ -984,7 +984,7 @@ export default function BarberPage() {
                           setWaitlistLoading(false);
                         }}
                         disabled={waitlistLoading}
-                        className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 transition disabled:opacity-50 press-scale"
+                        className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-50 press-scale"
                       >
                         {waitlistLoading ? "Aguarde..." : "🔔 Quero ser avisado"}
                       </button>
@@ -1013,7 +1013,7 @@ export default function BarberPage() {
           <div className="space-y-5">
             <div>
               <button onClick={() => setStep("time")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-bold">Confirmar agendamento</h2>
+              <h2 className="text-2xl font-semibold">Confirmar agendamento</h2>
               <p className="text-gray-400 mt-1">Revise os detalhes abaixo</p>
             </div>
             <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 space-y-3">
@@ -1043,7 +1043,7 @@ export default function BarberPage() {
               </div>
               <div className="border-t border-gray-800 pt-3 flex justify-between">
                 <span className="text-gray-400 text-sm">Total</span>
-                <span className="font-bold text-brand-400 text-lg">R$ {totalPrice.toFixed(2)}</span>
+                <span className="font-semibold text-brand-400 text-lg">R$ {totalPrice.toFixed(2)}</span>
               </div>
             </div>
             {bookError && (
@@ -1051,7 +1051,7 @@ export default function BarberPage() {
             )}
             <button
               onClick={handleBook}
-              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-bold rounded-xl py-3 transition press-scale"
+              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition press-scale"
             >
               Confirmar agendamento
             </button>
@@ -1070,13 +1070,13 @@ export default function BarberPage() {
         {step === "pix" && pixKey && shop && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-2xl font-bold text-yellow-400">Pagamento antecipado</h2>
+              <h2 className="text-2xl font-semibold text-yellow-400">Pagamento antecipado</h2>
               <p className="text-gray-400 mt-1">Para confirmar seu horário, é necessário pagar 50% via Pix antecipado.</p>
             </div>
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-5 space-y-4">
               <div className="flex justify-between">
                 <span className="text-yellow-400 font-semibold">Entrada via Pix (50%)</span>
-                <span className="text-yellow-400 font-bold text-lg">R$ {(totalPrice / 2).toFixed(2)}</span>
+                <span className="text-yellow-400 font-semibold text-lg">R$ {(totalPrice / 2).toFixed(2)}</span>
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-2">Chave Pix</p>
@@ -1088,7 +1088,7 @@ export default function BarberPage() {
                   }}
                   className="w-full flex items-center justify-between bg-black/40 rounded-xl p-3 hover:bg-black/60 transition"
                 >
-                  <span className="text-white font-bold break-all text-left">{pixKey}</span>
+                  <span className="text-white font-semibold break-all text-left">{pixKey}</span>
                   <span className="ml-3 shrink-0 text-sm font-semibold text-yellow-400">
                     {pixCopied ? "✓ Copiado!" : "📋 Copiar"}
                   </span>
@@ -1099,7 +1099,7 @@ export default function BarberPage() {
             <button
               onClick={handlePixConfirm}
               disabled={pixSending}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl py-3 transition disabled:opacity-50"
+              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-xl py-3 transition disabled:opacity-50"
             >
               {pixSending ? "Aguarde..." : "✓ Já enviei o comprovante"}
             </button>
@@ -1128,7 +1128,7 @@ export default function BarberPage() {
           <div className="space-y-5 text-center">
             <div className="py-6">
               <div className="text-6xl mb-4">⏳</div>
-              <h2 className="text-2xl font-bold text-yellow-400">Aguardando confirmação</h2>
+              <h2 className="text-2xl font-semibold text-yellow-400">Aguardando confirmação</h2>
               <p className="text-gray-400 mt-2">
                 Seu agendamento foi registrado e o barbeiro foi avisado. Assim que ele confirmar o Pix, seu horário está garantido.
               </p>
@@ -1168,7 +1168,7 @@ export default function BarberPage() {
           <div className="space-y-5 text-center">
             <div className="py-6">
               <div className="text-6xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold text-white">Agendado!</h2>
+              <h2 className="text-2xl font-semibold text-white">Agendado!</h2>
               <p className="text-gray-400 mt-2">
                 Até {formatDate(bookingResult.date)} às {bookingResult.startTime}. Nos vemos lá! 💈
               </p>
@@ -1215,7 +1215,7 @@ export default function BarberPage() {
               </button>
               <button
                 onClick={() => router.push(`/${slug}/meus-agendamentos`)}
-                className="flex-1 bg-brand-500 text-dark-900 font-bold rounded-xl py-3 text-sm hover:bg-brand-400 transition"
+                className="flex-1 bg-brand-500 text-dark-900 font-semibold rounded-xl py-3 text-sm hover:bg-brand-400 transition"
               >
                 Meus agendamentos
               </button>

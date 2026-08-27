@@ -1047,7 +1047,7 @@ export default function PainelPage() {
                 <div className="flex items-center gap-4">
                   {b.imageUrl
                     ? <img src={b.imageUrl} alt={b.name} className="w-10 h-10 rounded-full object-cover border border-brand-500/30 shrink-0" />
-                    : <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>}
+                    : <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-semibold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>}
                   <button onClick={() => abrirEdicaoBarbeiro(b)} className="flex-1 min-w-0 text-left group">
                     <p className="font-medium text-white group-hover:text-brand-400 transition">
                       {b.name}
@@ -1080,14 +1080,14 @@ export default function PainelPage() {
         {editBarber && (
           <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditBarber(null)}>
             <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
+              <h3 className="text-lg font-semibold text-white">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
 
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Foto</label>
                 <div className="flex items-center gap-3">
                   {editBarber.imageUrl
                     ? <img src={editBarber.imageUrl} alt={editBarber.name} className="w-16 h-16 rounded-full object-cover border border-brand-500/30 shrink-0" />
-                    : <div className="w-16 h-16 rounded-full bg-brand-500/20 border border-gray-700 flex items-center justify-center text-2xl text-brand-400 font-bold shrink-0">{editBarber.name.charAt(0).toUpperCase()}</div>}
+                    : <div className="w-16 h-16 rounded-full bg-brand-500/20 border border-gray-700 flex items-center justify-center text-2xl text-brand-400 font-semibold shrink-0">{editBarber.name.charAt(0).toUpperCase()}</div>}
                   <div className="flex-1 space-y-2">
                     <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingBarberImg ? "opacity-50 pointer-events-none" : ""}`}>
                       {uploadingBarberImg ? "Enviando..." : editBarber.imageUrl ? "Trocar foto" : "Enviar foto"}
@@ -1163,7 +1163,7 @@ export default function PainelPage() {
         {editService && (
           <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditService(null)}>
             <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">Editar serviço</h3>
+              <h3 className="text-lg font-semibold text-white">Editar serviço</h3>
 
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Nome</label>
@@ -1277,7 +1277,7 @@ export default function PainelPage() {
         {editProduct && (
           <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditProduct(null)}>
             <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">Editar produto</h3>
+              <h3 className="text-lg font-semibold text-white">Editar produto</h3>
 
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Nome</label>
@@ -1329,8 +1329,8 @@ export default function PainelPage() {
         <div className="space-y-4">{backBtn}
           <input type="text" placeholder="Buscar cliente..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
           <div className="flex gap-2">
-            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-bold text-white">{clients.length}</p><p className="text-xs text-gray-500">Total</p></div>
-            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-bold text-red-400">{clients.filter(c => c.noShowCount > 0).length}</p><p className="text-xs text-gray-500">Com faltas</p></div>
+            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-semibold text-white">{clients.length}</p><p className="text-xs text-gray-500">Total</p></div>
+            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-semibold text-red-400">{clients.filter(c => c.noShowCount > 0).length}</p><p className="text-xs text-gray-500">Com faltas</p></div>
           </div>
           {clientsLoading ? <Spinner /> : filtered.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum cliente encontrado</p> : (
             <div className="space-y-3">
@@ -1338,7 +1338,7 @@ export default function PainelPage() {
                 <div key={c.id} className="rounded-xl border border-gray-700 bg-dark-800 p-4">
                   <div className="flex items-center justify-between">
                     <div><p className="font-semibold text-white">{c.name}</p><p className="text-sm text-gray-400">{c.phone}</p></div>
-                    <div className="text-center"><p className="text-lg font-bold text-brand-400">{c.totalAppointments}</p><p className="text-xs text-gray-500">visitas</p></div>
+                    <div className="text-center"><p className="text-lg font-semibold text-brand-400">{c.totalAppointments}</p><p className="text-xs text-gray-500">visitas</p></div>
                   </div>
                   {c.noShowCount > 0 && <p className="text-xs text-red-400 mt-2">⚠️ {c.noShowCount} falta(s)</p>}
                   {c.notes && <p className="text-xs text-gray-500 mt-2 italic">📝 {c.notes}</p>}
@@ -1378,7 +1378,7 @@ export default function PainelPage() {
         {loyaltyLoading ? <Spinner /> : loyalties.length === 0 ? <div className="text-center py-12"><p className="text-4xl mb-3">🏆</p><p className="text-gray-400">Nenhum cliente com pontos ainda.</p></div> : (
           <div className="space-y-3">{loyalties.map(item => (
             <div key={item.clientPhone} className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-3">
-              <div className="flex items-center justify-between"><div><p className="font-semibold text-white">{item.clientName}</p><p className="text-xs text-gray-500">{item.clientPhone}</p></div><div className="text-center bg-brand-500/20 rounded-xl px-4 py-2"><p className="text-xl font-bold text-brand-400">{item.count}</p><p className="text-xs text-gray-400">cortes</p></div></div>
+              <div className="flex items-center justify-between"><div><p className="font-semibold text-white">{item.clientName}</p><p className="text-xs text-gray-500">{item.clientPhone}</p></div><div className="text-center bg-brand-500/20 rounded-xl px-4 py-2"><p className="text-xl font-semibold text-brand-400">{item.count}</p><p className="text-xs text-gray-400">cortes</p></div></div>
               <div className="flex gap-1.5">{Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`flex-1 h-2 rounded-full ${i < item.progress ? "bg-brand-500" : "bg-gray-700"}`} />))}</div>
               <div className="flex items-center justify-between"><p className="text-xs text-gray-400">{item.progress}/10</p>{item.rewardsEarned > 0 && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">🏆 {item.rewardsEarned}</span>}</div>
             </div>
@@ -1412,7 +1412,7 @@ export default function PainelPage() {
         <div className="flex items-center gap-3">
           <img src={shopSettings?.logoUrl || "/logo.png"} alt={user?.shopName || "BarberPro"} className="w-9 h-9 rounded-lg object-cover" />
           <div>
-            <h1 className="text-lg font-bold text-brand-400 leading-tight">{user?.shopName || "Painel"}</h1>
+            <h1 className="text-lg font-semibold text-brand-400 leading-tight">{user?.shopName || "Painel"}</h1>
             <p className="text-xs text-gray-400">{getGreeting()}, {user?.name || "proprietario"}</p>
           </div>
         </div>
@@ -1427,8 +1427,8 @@ export default function PainelPage() {
         <div className="mx-4 mt-3 rounded-2xl border border-brand-500/25 bg-dark-800 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-white text-sm">Link de Agendamento</h3>
-              <span className="flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/40 px-2 py-0.5 text-[10px] font-bold text-green-400 tracking-wide">
+              <h3 className="font-semibold text-white text-sm">Link de Agendamento</h3>
+              <span className="flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/40 px-2 py-0.5 text-[10px] font-semibold text-green-400 tracking-wide">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> ONLINE
               </span>
             </div>
@@ -1436,7 +1436,7 @@ export default function PainelPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-brand-400 truncate">{bookingLink}</div>
-            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg bg-brand-500 text-dark-900 font-bold px-4 py-2 text-sm hover:bg-brand-400 transition whitespace-nowrap">{linkCopied ? "✓ Copiado!" : "Copiar"}</button>
+            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg bg-brand-500 text-dark-900 font-semibold px-4 py-2 text-sm hover:bg-brand-400 transition whitespace-nowrap">{linkCopied ? "✓ Copiado!" : "Copiar"}</button>
           </div>
           <div className="flex flex-col items-center gap-3">
             <div ref={qrRef} className="bg-white rounded-xl p-4"><QRCodeCanvas value={bookingLink} size={180} level="H" includeMargin={false} /></div>
@@ -1474,7 +1474,7 @@ export default function PainelPage() {
                     return (
                       <button key={date} onClick={() => setSelectedDate(date)} className={`flex-shrink-0 flex flex-col items-center rounded-xl border px-3 py-2 text-center min-w-[52px] transition-all ${isSelected ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 bg-dark-800 text-gray-400 hover:border-gray-600"}`}>
                         <span className="text-xs capitalize">{weekday}</span>
-                        <span className="text-lg font-bold leading-none">{day}</span>
+                        <span className="text-lg font-semibold leading-none">{day}</span>
                         {isToday && <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? "bg-brand-400" : "bg-gray-500"}`} />}
                       </button>
                     );
@@ -1499,8 +1499,8 @@ export default function PainelPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-brand-400 font-bold">{appt.startTime} - {appt.endTime}</span>
-                                <span className="text-brand-400 font-bold">R$ {appt.totalPrice?.toFixed(2)}</span>
+                                <span className="text-brand-400 font-semibold">{appt.startTime} - {appt.endTime}</span>
+                                <span className="text-brand-400 font-semibold">R$ {appt.totalPrice?.toFixed(2)}</span>
                               </div>
                               <p className="font-semibold text-white mt-1">{appt.client?.name}</p>
                               <p className="text-sm text-gray-400">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
@@ -1595,7 +1595,7 @@ export default function PainelPage() {
             {/* ═══════ AGENDA (Availability) TAB ═══════ */}
             {activeTab === "agenda" && (
               <div className="space-y-5">
-                <h2 className="text-lg font-bold text-white">📅 Minha Agenda</h2>
+                <h2 className="text-lg font-semibold text-white">📅 Minha Agenda</h2>
                 {/* Date picker */}
                 <input type="date" value={availDate} onChange={e => setAvailDate(e.target.value)} className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none transition-colors" />
 
@@ -1647,7 +1647,7 @@ export default function PainelPage() {
                   <>
                     <div className="rounded-2xl bg-brand-500/10 border border-brand-400/30 p-5">
                       <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p>
-                      <p className="text-4xl font-bold text-brand-400">R$ {dashboard.month.revenue.toFixed(2)}</p>
+                      <p className="text-4xl font-semibold text-brand-400">R$ {dashboard.month.revenue.toFixed(2)}</p>
                       <div className="flex items-center gap-3 mt-2 flex-wrap">
                         {dashboard.month.revenueGrowth !== null && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dashboard.month.revenueGrowth >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>{dashboard.month.revenueGrowth >= 0 ? "▲" : "▼"} {Math.abs(dashboard.month.revenueGrowth)}%</span>}
                         {dashboard.month.toReceive > 0 && <span className="text-xs text-brand-400/80">+ R$ {dashboard.month.toReceive.toFixed(2)} a receber</span>}
@@ -1675,9 +1675,9 @@ export default function PainelPage() {
                         <p className="text-xs text-gray-500 uppercase tracking-widest">Ranking</p>
                         {dashboard.barberStats.map((b, i) => (
                           <div key={i} className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-2">
-                            <div className="flex items-center gap-3"><span className="text-brand-400 font-bold w-6">#{i+1}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-white truncate">{b.name}</p><p className="text-xs text-gray-400">{b.count} atend.</p></div><p className="text-sm font-bold text-brand-400">R$ {b.revenue.toFixed(2)}</p></div>
+                            <div className="flex items-center gap-3"><span className="text-brand-400 font-semibold w-6">#{i+1}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-white truncate">{b.name}</p><p className="text-xs text-gray-400">{b.count} atend.</p></div><p className="text-sm font-semibold text-brand-400">R$ {b.revenue.toFixed(2)}</p></div>
                             <div className="h-1.5 rounded-full bg-gray-700"><div className="h-1.5 rounded-full bg-brand-500 transition-all" style={{ width: `${Math.round(b.revenueShare * 100)}%` }} /></div>
-                            {b.commission > 0 && <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-1.5"><span className="text-xs text-green-400">Comissao ({b.commission}%)</span><span className="text-xs font-bold text-green-400">R$ {b.commissionValue.toFixed(2)}</span></div>}
+                            {b.commission > 0 && <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-1.5"><span className="text-xs text-green-400">Comissao ({b.commission}%)</span><span className="text-xs font-semibold text-green-400">R$ {b.commissionValue.toFixed(2)}</span></div>}
                           </div>
                         ))}
                       </div>
@@ -1702,7 +1702,7 @@ export default function PainelPage() {
                   >
                     <span className="text-lg">←</span> Voltar
                   </button>
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className="text-lg font-semibold text-white">
                     {configView ? CONFIG_TITULOS[configView] : "⚙️ Configurações"}
                   </h2>
                 </div>
@@ -2023,7 +2023,7 @@ function Spinner() {
 function StatBox({ value, label, color, extra, extraColor }: { value: string; label: string; color?: string; extra?: string; extraColor?: string }) {
   return (
     <div className="rounded-xl bg-dark-800 border border-gray-700 p-3 text-center">
-      <p className={`text-lg font-bold ${color || "text-white"}`}>{value}</p>
+      <p className={`text-lg font-semibold ${color || "text-white"}`}>{value}</p>
       {extra && <p className={`text-xs font-semibold ${extraColor || ""}`}>{extra}</p>}
       <p className="text-xs text-gray-500 mt-1">{label}</p>
     </div>
@@ -2046,7 +2046,7 @@ function CancelModal({ open, appt, waitlistCount, notifyWaitlist, onToggleNotify
   return createPortal(
     <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)" }} onClick={onClose}>
       <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-bold text-white">Cancelar agendamento?</h3>
+        <h3 className="text-lg font-semibold text-white">Cancelar agendamento?</h3>
         {appt && (
           <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">
             <p className="font-medium text-white">{appt.client?.name}</p>
