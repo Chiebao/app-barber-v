@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         client: { select: { name: true, phone: true } },
-        barber: { select: { name: true } },
+        barber: { select: { id: true, name: true, commission: true } },
         services: { include: { service: true } },
         rating: { select: { score: true } },
         comandaItems: { include: { product: true } },
@@ -131,6 +131,21 @@ export async function GET(req: NextRequest) {
       paymentCounts[m].total = money(paymentCounts[m].total + num(apt.totalPrice));
     }
 
+    // Por barbeiro: faturado no periodo e quanto disso e comissao.
+    // So conta o que foi PAGO — comissao sobre atendimento nao recebido
+    // seria prometer dinheiro que ainda nao entrou.
+    const porBarbeiro = new Map<string, { id: string; name: string; count: number; revenue: number; commission: number }>();
+    for (const apt of paid) {
+      const b = apt.barber;
+      const atual = porBarbeiro.get(b.id) || { id: b.id, name: b.name, count: 0, revenue: 0, commission: b.commission };
+      atual.count++;
+      atual.revenue = money(atual.revenue + num(apt.totalPrice));
+      porBarbeiro.set(b.id, atual);
+    }
+    const barberBreakdown = [...porBarbeiro.values()]
+      .map(b => ({ ...b, commissionValue: money((b.revenue * b.commission) / 100) }))
+      .sort((a, b) => b.revenue - a.revenue);
+
     const avgRating = paid.filter(a => a.rating).reduce((s, a) => s + (a.rating?.score || 0), 0) / (paid.filter(a => a.rating).length || 1);
 
     return NextResponse.json({
@@ -138,7 +153,8 @@ export async function GET(req: NextRequest) {
         totalAppointments: appointments.length,
         totalPaid, totalUnpaid, paidCount: paid.length, unpaidCount: unpaid.length,
         comandaTotal, totalRevenue: money(totalPaid + comandaTotal),
-        serviceCounts, paymentCounts, avgRating: isNaN(avgRating) ? null : parseFloat(avgRating.toFixed(1)),
+        serviceCounts, paymentCounts, barberBreakdown,
+        avgRating: isNaN(avgRating) ? null : parseFloat(avgRating.toFixed(1)),
       },
       appointments: appointments.map(a => ({
         id: a.id,
@@ -150,6 +166,7 @@ export async function GET(req: NextRequest) {
         paidAt: a.paidAt,
         deferredPaymentDate: a.deferredPaymentDate,
         barberName: a.barber.name,
+        barberId: a.barber.id,
         client: a.client,
         services: a.services.map(as => ({ name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,

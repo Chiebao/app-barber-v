@@ -9,6 +9,7 @@ import { toast } from "@/app/lib/toast";
 import PushToggle from "./_push-toggle";
 import RecoveryCode from "./_recovery-code";
 import RecoveryNag from "./_recovery-nag";
+import Relatorio from "./_relatorio";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
@@ -110,6 +111,7 @@ export default function PainelPage() {
   const [subView, setSubView] = useState<SubView>(null);
   const [configView, setConfigView] = useState<ConfigView>(null);
   const [resumo, setResumo] = useState<ResumoShop | null>(null);
+  const [verRelatorio, setVerRelatorio] = useState(false);
   const [banned, setBanned] = useState<BannedItem[]>([]);
   const [bannedLoading, setBannedLoading] = useState(false);
   const [baningClient, setBaningClient] = useState(false);
@@ -365,6 +367,9 @@ export default function PainelPage() {
   }, [token, activeTab, configView, fetchResumo]);
   // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
   useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
+  useEffect(() => { if (activeTab !== "financeiro") setVerRelatorio(false); }, [activeTab]);
+  // O filtro por barbeiro do relatorio precisa da lista carregada
+  useEffect(() => { if (token && verRelatorio && barbers.length === 0) fetchBarbers(); }, [token, verRelatorio, barbers.length, fetchBarbers]);
 
   useEffect(() => { if (token && activeTab === "home") fetchAppointments(); }, [selectedDate]);
   useEffect(() => { if (token && activeTab === "agenda") fetchSlots(); }, [availDate]);
@@ -1635,14 +1640,39 @@ export default function PainelPage() {
             )}
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}
-            {activeTab === "financeiro" && user?.role === "owner" && (
+            {activeTab === "financeiro" && verRelatorio && (
+              <Relatorio
+                token={token}
+                ehDono={user?.role === "owner"}
+                barbeiros={barbers.map(b => ({ id: b.id, name: b.name }))}
+                onVoltar={() => setVerRelatorio(false)}
+                onUnauthorized={handleUnauthorized}
+              />
+            )}
+
+            {activeTab === "financeiro" && !verRelatorio && user?.role === "owner" && (
               <div className="mb-5 space-y-4">
                 <Ocupacao token={token} />
                 <Conversao token={token} />
               </div>
             )}
-            {activeTab === "financeiro" && (
+            {activeTab === "financeiro" && !verRelatorio && (
               <div className="space-y-5">
+                {/* O resumo responde "como estou indo". O relatorio responde
+                    "quem me deve, como entrou, quanto pago de comissao" —
+                    perguntas diferentes, telas diferentes. */}
+                <button
+                  onClick={() => setVerRelatorio(true)}
+                  className="w-full flex items-center gap-3 rounded-xl border border-brand-400/40 bg-brand-500/5 px-4 py-3.5 text-left hover:bg-brand-500/10 transition press-scale"
+                >
+                  <span className="text-xl shrink-0">📄</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-brand-400">Relatório por período</span>
+                    <span className="block text-xs text-gray-500">Quem deve, como entrou, comissões</span>
+                  </span>
+                  <span className="text-brand-400/50 shrink-0">›</span>
+                </button>
+
                 {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-gray-500 py-10">Não foi possível carregar</p> : (
                   <>
                     <div className="rounded-2xl bg-brand-500/10 border border-brand-400/30 p-5">
