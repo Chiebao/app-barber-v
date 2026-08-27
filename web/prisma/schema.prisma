@@ -16,6 +16,13 @@ model Owner {
   passwordHash String
   // Codigo de recuperacao (hash) para redefinir a senha sem depender do suporte
   recoveryCodeHash String?
+  // Aceite dos termos.
+  //
+  // Checkbox que ninguem registra nao prova nada: se um dia houver disputa,
+  // o que vale e QUANDO a pessoa aceitou e QUAL versao estava no ar naquele
+  // dia. Guardar a versao permite mostrar o texto exato que ela leu.
+  termsAcceptedAt DateTime?
+  termsVersion    String?
   createdAt    DateTime @default(now())
 
   shops        Shop[]

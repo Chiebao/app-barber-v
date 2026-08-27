@@ -14,8 +14,7 @@ export default function PrivacidadePage() {
             Politica de Privacidade
           </h1>
           <p className="text-sm text-gray-500">
-            Ultima atualizacao: 20 de maio de 2026
-          </p>
+            Versao 2.0 — em vigor desde 27 de agosto de 2026</p>
         </header>
 
         <section className="space-y-4">
@@ -80,7 +79,11 @@ export default function PrivacidadePage() {
             <li>Numero de telefone (usado como login)</li>
             <li>Senha (armazenada com hash bcrypt, nunca em texto plano)</li>
             <li>Chave Pix (opcional, para recebimento de pagamentos)</li>
-            <li>Expo Push Token (para notificacoes no app)</li>
+            <li>Expo Push Token e inscricoes de notificacao do navegador (Web Push)</li>
+            <li>E-mail e foto do profissional (opcionais, informados por voce)</li>
+            <li>Endereco, bairro, cidade, estado, CEP e telefone da barbearia (opcionais, exibidos publicamente no seu link de agendamento)</li>
+            <li>Dados da assinatura: plano, datas de vigencia e historico de cobrancas</li>
+            <li>Data e versao do aceite dos Termos de Uso</li>
           </ul>
 
           <h3 className="text-lg font-medium text-gray-200">
@@ -92,6 +95,11 @@ export default function PrivacidadePage() {
             <li>Historico de agendamentos (data, servico, barbeiro)</li>
             <li>Avaliacoes (nota e comentario, opcionais)</li>
             <li>Contagem de faltas (no-show)</li>
+            <li>
+              Registro de bloqueio, quando a barbearia impede aquele telefone de
+              agendar — inclui o telefone, o nome e uma anotacao interna de motivo,
+              escrita pela barbearia e visivel apenas para ela
+            </li>
           </ul>
 
           <h3 className="text-lg font-medium text-gray-200">
@@ -180,6 +188,17 @@ export default function PrivacidadePage() {
             <li>
               <strong className="text-gray-200">Expo (Push Notifications):</strong>{" "}
               envio de notificacoes ao app mobile.
+            </li>
+            <li>
+              <strong className="text-gray-200">Mercado Pago:</strong> quando a
+              barbearia ativa o Pix automatico, geramos a cobranca na conta dela
+              atraves do Mercado Pago. Para isso, enviamos o{" "}
+              <strong className="text-gray-200">nome do cliente</strong> e um
+              identificador de e-mail tecnico gerado pela plataforma, junto do valor
+              e da referencia do agendamento. O dinheiro vai direto para a conta da
+              barbearia — o BarberPro nao recebe nem retem o valor pago pelo cliente.
+              O tratamento desses dados pelo Mercado Pago segue a politica de
+              privacidade da propria empresa.
             </li>
           </ul>
           <p>

@@ -5,6 +5,7 @@ import { generateRecoveryCode, hashRecoveryCode } from "@/app/lib/recovery-code"
 import slugify from "slugify";
 import { z } from "zod";
 import { iniciarTrial } from "@/app/lib/assinatura";
+import { VERSAO_TERMOS } from "@/app/lib/termos";
 
 const schema = z.object({
   ownerName: z.string().min(2),
@@ -16,6 +17,11 @@ const schema = z.object({
   workDays: z.array(z.number().min(0).max(6)),
   avgServiceTime: z.number().min(10).default(30),
   pixKey: z.string().optional(),
+  // Aceite obrigatorio. Recusar no schema, e nao so esconder o botao no
+  // formulario, e o que impede um cadastro sem aceite por chamada direta.
+  aceitouTermos: z.literal(true, {
+    errorMap: () => ({ message: "É preciso aceitar os Termos de Uso e a Política de Privacidade" }),
+  }),
   services: z.array(z.object({
     name: z.string(),
     duration: z.number().min(5),
@@ -50,6 +56,9 @@ export async function POST(req: NextRequest) {
         name: data.ownerName,
         phone: data.phone,
         passwordHash,
+        // Guardamos QUANDO e QUAL versao — checkbox sem registro nao prova nada
+        termsAcceptedAt: new Date(),
+        termsVersion: VERSAO_TERMOS,
         recoveryCodeHash,
         shops: {
           create: {

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   BASE, criarLoja, apagarLoja, apagarClientes, fecharDb,
-  envelhecerAssinatura, emDias, diaISO, type Loja,
+  envelhecerAssinatura, emDias, diaISO, telefoneDeTeste, type Loja,
 } from "./_ajudantes";
 
 /**
@@ -155,5 +155,60 @@ test.describe("Assinatura", () => {
       data: { plano: "anual" },
     });
     expect(r.status()).toBe(401);
+  });
+});
+
+test.describe("Aceite dos termos", () => {
+  const telefones: string[] = [];
+
+  test.afterAll(async () => {
+    const { db } = await import("./_ajudantes");
+    if (telefones.length) await db().owner.deleteMany({ where: { phone: { in: telefones } } });
+    await fecharDb();
+  });
+
+  test("cadastro sem aceitar os termos é recusado", async ({ request }) => {
+    const tel = telefoneDeTeste();
+    const r = await request.post(`${BASE}/api/auth/register`, {
+      data: {
+        ownerName: "Sem Aceite", shopName: "Sem Aceite " + Date.now(),
+        phone: tel, password: "teste123456",
+        openTime: "08:00", closeTime: "18:00", workDays: [1, 2, 3, 4, 5],
+        avgServiceTime: 30,
+        services: [{ name: "Corte", duration: 30, price: 40, category: "corte" }],
+        // aceitouTermos ausente de propósito
+      },
+    });
+    expect(r.status()).toBe(400);
+
+    const { db } = await import("./_ajudantes");
+    expect(await db().owner.findUnique({ where: { phone: tel } })).toBeNull();
+  });
+
+  test("aceitar false também é recusado", async ({ request }) => {
+    const tel = telefoneDeTeste();
+    const r = await request.post(`${BASE}/api/auth/register`, {
+      data: {
+        ownerName: "Recusou", shopName: "Recusou " + Date.now(),
+        phone: tel, password: "teste123456",
+        openTime: "08:00", closeTime: "18:00", workDays: [1, 2, 3, 4, 5],
+        avgServiceTime: 30, aceitouTermos: false,
+        services: [{ name: "Corte", duration: 30, price: 40, category: "corte" }],
+      },
+    });
+    expect(r.status()).toBe(400);
+  });
+
+  test("aceite fica gravado com data e versão", async ({ request }) => {
+    const loja = await criarLoja(request);
+    const { db } = await import("./_ajudantes");
+    const shop = await db().shop.findUniqueOrThrow({
+      where: { id: loja.shopId },
+      select: { owner: { select: { termsAcceptedAt: true, termsVersion: true } } },
+    });
+    // Checkbox sem registro não prova nada — o que vale é quando e qual versão
+    expect(shop.owner.termsAcceptedAt).toBeTruthy();
+    expect(shop.owner.termsVersion).toBe("2.0");
+    await apagarLoja(loja);
   });
 });

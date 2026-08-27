@@ -37,6 +37,7 @@ export default function AdminPage() {
   const [openTime, setOpenTime] = useState("08:00");
   const [closeTime, setCloseTime] = useState("20:00");
   const [workDays, setWorkDays] = useState([1, 2, 3, 4, 5, 6]);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [selectedCuts, setSelectedCuts] = useState<string[]>([]);
   const [fazBarba, setFazBarba] = useState(false);
   const [precoBarba, setPrecoBarba] = useState("25");
@@ -228,6 +229,7 @@ export default function AdminPage() {
 
     if (services.length === 0) { toast.error("Selecione pelo menos um serviço!"); return; }
     if (!name || !shopName || !phone || password.length < 6) { toast.error("Preencha todos os campos!"); return; }
+    if (!aceitouTermos) { toast.error("Aceite os Termos de Uso para continuar"); return; }
 
     setLoading(true);
     try {
@@ -238,6 +240,7 @@ export default function AdminPage() {
           ownerName: name, shopName,
           phone: phone.replace(/\D/g, ""),
           password, openTime, closeTime, workDays, avgServiceTime: 30, services,
+          aceitouTermos,
         }),
       });
       const data = await res.json();
@@ -635,8 +638,37 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <button onClick={handleRegister} disabled={loading}
-              className="w-full rounded-xl bg-brand-500 py-3.5 font-semibold text-dark-900 text-lg hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
+            {/* Aceite dos termos. Fica colado no botao de propria:
+                consentimento que exige rolar para achar nao vale muito. */}
+            <label className="flex items-start gap-3 rounded-xl border border-gray-700 bg-dark-800 p-4 cursor-pointer hover:border-brand-400/50 transition">
+              <input
+                type="checkbox"
+                checked={aceitouTermos}
+                onChange={(e) => setAceitouTermos(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-500 cursor-pointer"
+              />
+              <span className="text-sm text-gray-300 leading-relaxed">
+                Li e aceito os{" "}
+                <a href="/termos" target="_blank" rel="noopener noreferrer"
+                  className="text-brand-400 underline hover:text-brand-300"
+                  onClick={(e) => e.stopPropagation()}>
+                  Termos de Uso
+                </a>{" "}
+                e a{" "}
+                <a href="/privacidade" target="_blank" rel="noopener noreferrer"
+                  className="text-brand-400 underline hover:text-brand-300"
+                  onClick={(e) => e.stopPropagation()}>
+                  Política de Privacidade
+                </a>
+                .
+                <span className="block text-xs text-gray-500 mt-1.5">
+                  Sua barbearia começa com 14 dias grátis. Não pedimos cartão agora.
+                </span>
+              </span>
+            </label>
+
+            <button onClick={handleRegister} disabled={loading || !aceitouTermos}
+              className="w-full rounded-xl bg-brand-500 py-3.5 font-semibold text-dark-900 text-lg hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all press-scale">
               {loading ? "Cadastrando..." : "Cadastrar Barbearia"}
             </button>
           </div>

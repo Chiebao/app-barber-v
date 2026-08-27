@@ -62,6 +62,7 @@ export async function criarLoja(
       closeTime: opcoes.fecha ?? "20:00",
       workDays: opcoes.dias ?? [0, 1, 2, 3, 4, 5, 6],
       avgServiceTime: 30,
+      aceitouTermos: true,
       services: [{ name: "Corte", duration: 30, price: 40, category: "corte" }],
     },
   });

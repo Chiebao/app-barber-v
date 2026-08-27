@@ -14,7 +14,7 @@ export default function TermosPage() {
             Termos de Uso
           </h1>
           <p className="text-sm text-gray-500">
-            Ultima atualizacao: 20 de maio de 2026
+            Versao 2.0 — em vigor desde 27 de agosto de 2026
           </p>
         </header>
 
@@ -124,41 +124,82 @@ export default function TermosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            6. Planos, assinatura e cancelamento
+            6. Planos, assinatura, teste gratis e inadimplencia
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              O BarberPro e oferecido as barbearias mediante{" "}
-              <strong className="text-gray-200">assinatura</strong>, em planos com
-              periodicidade mensal, semestral ou anual. Os valores e o que cada
-              plano inclui sao apresentados no momento da contratacao.
+              <strong className="text-gray-200">Teste gratis:</strong> toda barbearia
+              nova comeca com <strong className="text-gray-200">14 dias de acesso
+              completo e gratuito</strong>, sem necessidade de informar forma de
+              pagamento. Nao ha cobranca automatica ao fim do teste: se voce nao
+              contratar um plano, o acesso simplesmente deixa de aceitar novos
+              agendamentos.
             </li>
             <li>
-              A assinatura da direito ao uso da plataforma durante a vigencia
-              contratada, incluindo atualizacoes e correcoes lancadas no periodo.
+              <strong className="text-gray-200">Planos:</strong> mensal, semestral ou
+              anual, com preco fixo por barbearia, independentemente da quantidade de
+              barbeiros cadastrados. Os valores vigentes sao exibidos no painel, na
+              tela de assinatura, antes da contratacao.
             </li>
             <li>
-              <strong className="text-gray-200">Cancelamento:</strong> voce pode
-              cancelar quando quiser. O acesso permanece ativo ate o fim do periodo
-              ja pago e nao ha multa por cancelamento.
+              <strong className="text-gray-200">Troca de plano:</strong> passa a valer
+              a partir da proxima cobranca. O periodo ja pago nao e reprecificado,
+              para nenhuma das partes.
             </li>
             <li>
-              <strong className="text-gray-200">Reajuste:</strong> mudancas de preco
-              nao afetam o periodo ja contratado e serao comunicadas com pelo menos
-              30 dias de antecedencia antes da renovacao.
+              <strong className="text-gray-200">Cancelamento:</strong> pode ser feito a
+              qualquer momento pelo painel, sem multa. O acesso permanece integral ate
+              o fim do periodo ja pago — nao ha corte imediato nem devolucao
+              proporcional do periodo em curso.
             </li>
             <li>
-              <strong className="text-gray-200">Falta de pagamento:</strong> em caso
-              de inadimplencia, o acesso ao painel pode ser suspenso apos aviso
-              previo. Seus dados sao preservados por 60 dias para eventual
-              reativacao ou exportacao.
+              <strong className="text-gray-200">Reajuste:</strong> mudancas de preco nao
+              afetam o periodo ja contratado e serao comunicadas com pelo menos 30 dias
+              de antecedencia da renovacao.
+            </li>
+          </ul>
+
+          <h3 className="text-lg font-semibold text-white pt-2">
+            6.1. O que acontece se o pagamento atrasar
+          </h3>
+          <p className="text-sm text-gray-400">
+            Descrevemos abaixo exatamente o comportamento do sistema, para que nao haja
+            surpresa:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              <strong className="text-gray-200">Ate 7 dias apos o vencimento</strong>{" "}
+              (carencia): acesso permanece completo, com aviso no painel.
             </li>
             <li>
-              Periodos de teste ou uso gratuito, quando oferecidos, sao informados
-              expressamente e nao geram obrigacao de contratacao.
+              <strong className="text-gray-200">Apos a carencia:</strong> o painel entra
+              em <strong className="text-gray-200">modo somente leitura</strong>. Voce
+              continua vendo a agenda, o historico e os relatorios, e continua podendo
+              confirmar pagamentos ja realizados — mas nao cria nem edita servicos,
+              produtos, barbeiros ou bloqueios de horario.
+            </li>
+            <li>
+              A pagina publica de agendamento <strong className="text-gray-200">deixa
+              de aceitar novos agendamentos</strong>. Os agendamentos ja marcados nao
+              sao cancelados e continuam visiveis para voce e para os clientes.
+            </li>
+            <li>
+              A mensagem exibida ao cliente final nao menciona inadimplencia nem
+              assinatura: informa apenas que a barbearia nao esta aceitando
+              agendamentos online no momento.
+            </li>
+            <li>
+              <strong className="text-gray-200">Regularizado o pagamento</strong>, o
+              acesso e restabelecido imediatamente, sem taxa de reativacao.
+            </li>
+            <li>
+              Seus dados sao preservados por <strong className="text-gray-200">60 dias
+              </strong> a contar do bloqueio, para reativacao ou exportacao. Apos esse
+              prazo, podem ser excluidos definitivamente.
             </li>
           </ul>
         </section>
+
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
@@ -177,6 +218,15 @@ export default function TermosPage() {
               de forma licita, informando-os quando necessario e atendendo pedidos
               de exclusao — o painel permite excluir os dados de um cliente a
               qualquer momento.
+            </li>
+            <li>
+              <strong className="text-gray-200">Bloqueio de clientes:</strong> a
+              plataforma permite que a barbearia impeca um telefone de agendar,
+              opcionalmente com uma anotacao interna do motivo. Essa decisao e da
+              barbearia, que responde por ela como controladora dos dados. O bloqueio
+              vale apenas para a barbearia que o aplicou, nunca para as demais, e o
+              motivo anotado nao e exibido ao cliente nem compartilhado com terceiros.
+              A barbearia pode remover o bloqueio a qualquer momento.
             </li>
             <li>
               O BarberPro nao comercializa, cede ou usa os dados de clientes de uma
