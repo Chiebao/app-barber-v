@@ -90,7 +90,26 @@ const ROTULO_ASSINATURA: Record<string, string> = {
 };
 interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
 
-type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos";
+type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos";
+
+/** Corte que se repete toda semana. A regra, nao as ocorrencias. */
+type CorteFixo = {
+  id: string;
+  clientName: string;
+  clientPhone: string;
+  barberId: string;
+  barberName: string;
+  weekday: number;
+  startTime: string;
+  totalDuration: number;
+  totalPrice: number;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+  services: { id: string; name: string }[];
+};
+
+const DIAS_DA_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 /** "faltam 3h20" / "faltam 45min" a partir de um prazo ISO. */
 function timeLeftLabel(iso?: string | null): string {
@@ -308,6 +327,26 @@ export default function PainelPage() {
     finally { setSlotsLoading(false); }
   }, [token, availDate, authHeaders, ownerBarberId, user?.role]);
 
+  // ─── CORTE FIXO (agendamento recorrente) ───
+  const [fixos, setFixos] = useState<CorteFixo[]>([]);
+  const [fixosLoading, setFixosLoading] = useState(false);
+  const [novoFixo, setNovoFixo] = useState({
+    clientName: "", clientPhone: "", barberId: "", serviceIds: [] as string[],
+    weekday: 2, startTime: "10:00", startDate: "", endDate: "",
+  });
+  const [salvandoFixo, setSalvandoFixo] = useState(false);
+  const [encerrandoFixo, setEncerrandoFixo] = useState<string | null>(null);
+
+  const fetchFixos = useCallback(async () => {
+    setFixosLoading(true);
+    try {
+      const res = await fetch("/api/me/recurring", { headers: authHeaders() });
+      const data = await res.json();
+      setFixos(data.recurring || []);
+    } catch { /* silencioso: a tela mostra a lista vazia */ }
+    setFixosLoading(false);
+  }, [authHeaders]);
+
   const fetchBarbers = useCallback(async () => {
     if (!token) return; setBarbersLoading(true);
     try { const res = await fetch("/api/auth/add-barber", { headers: authHeaders() }); const data = await res.json(); setBarbers(data.barbers || []); }
@@ -415,6 +454,9 @@ export default function PainelPage() {
     if (subView === "servicos") fetchServices();
     if (subView === "clientes") { fetchClients(); fetchBanned(); }
     if (subView === "produtos") fetchProducts();
+    // O corte fixo precisa de servicos (duracao/preco) e barbeiros (de quem
+    // e a agenda) para o formulario existir.
+    if (subView === "fixos") { fetchFixos(); fetchServices(); fetchBarbers(); }
   }, [token, subView]);
 
   // ── Cancel state ──
@@ -990,6 +1032,7 @@ export default function PainelPage() {
     { icon: "👥", label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
     { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
     { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
+    { icon: "🔁", label: "Corte fixo", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
     ] : []),
@@ -1360,6 +1403,192 @@ export default function PainelPage() {
         )}
       </div>
     );
+
+    // ─── CORTE FIXO ───
+    //
+    // O cliente que vem toda semana no mesmo horario. O barbeiro cria UMA regra
+    // e as ocorrencias nascem sozinhas conforme a agenda avanca — nao existe
+    // "criar 52 agendamentos".
+    if (subView === "fixos") {
+      const servicosAtivos = services.filter(s => s.active);
+      const escolhidos = servicosAtivos.filter(s => novoFixo.serviceIds.includes(s.id));
+      const duracao = escolhidos.reduce((soma, s) => soma + s.duration, 0);
+      const valor = escolhidos.reduce((soma, s) => soma + s.price, 0);
+
+      const podeSalvar =
+        novoFixo.clientName.trim().length >= 2 &&
+        novoFixo.clientPhone.replace(/\D/g, "").length >= 8 &&
+        novoFixo.serviceIds.length > 0 &&
+        !!novoFixo.startDate && !!novoFixo.endDate &&
+        novoFixo.endDate >= novoFixo.startDate;
+
+      const salvarFixo = async () => {
+        setSalvandoFixo(true);
+        try {
+          const res = await fetch("/api/me/recurring", {
+            method: "POST",
+            headers: { ...authHeaders(), "Content-Type": "application/json" },
+            body: JSON.stringify({ ...novoFixo, barberId: novoFixo.barberId || undefined }),
+          });
+          const data = await res.json();
+          if (!res.ok) { toast.error(data.error || "Não consegui criar"); setSalvandoFixo(false); return; }
+          toast.success(
+            data.ocorrenciasCriadas > 0
+              ? `Corte fixo criado — ${data.ocorrenciasCriadas} já entraram na agenda`
+              : "Corte fixo criado",
+          );
+          setNovoFixo(prev => ({ ...prev, clientName: "", clientPhone: "", serviceIds: [] }));
+          fetchFixos();
+          fetchAppointments();
+        } catch { toast.error("Erro de conexão"); }
+        setSalvandoFixo(false);
+      };
+
+      const encerrarFixo = async (f: CorteFixo) => {
+        const aviso = "Encerrar o corte fixo de " + f.clientName + "?\n\n"
+          + "Os cortes que já aconteceram continuam no histórico. "
+          + "Os futuros que ninguém tocou saem da agenda.";
+        if (!confirm(aviso)) return;
+        setEncerrandoFixo(f.id);
+        try {
+          const res = await fetch("/api/me/recurring?id=" + f.id, { method: "DELETE", headers: authHeaders() });
+          const data = await res.json();
+          if (!res.ok) { toast.error(data.error || "Não consegui encerrar"); setEncerrandoFixo(null); return; }
+          toast.success(`Encerrado — ${data.ocorrenciasRemovidas} horário(s) liberado(s)`);
+          fetchFixos();
+          fetchAppointments();
+        } catch { toast.error("Erro de conexão"); }
+        setEncerrandoFixo(null);
+      };
+
+      return (
+        <div className="space-y-6">{backBtn}
+          <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+            <div>
+              <h3 className="font-semibold text-white">Novo corte fixo</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Um agendamento que se repete toda semana. Você cria uma vez e ele
+                aparece sozinho na agenda até a data final.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input type="text" placeholder="Nome do cliente *" value={novoFixo.clientName}
+                onChange={e => setNovoFixo(prev => ({ ...prev, clientName: e.target.value }))}
+                className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+              <input type="tel" placeholder="Telefone *" value={novoFixo.clientPhone}
+                onChange={e => setNovoFixo(prev => ({ ...prev, clientPhone: e.target.value }))}
+                className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Serviços *</label>
+              <div className="flex gap-2 flex-wrap">
+                {servicosAtivos.map(s => {
+                  const marcado = novoFixo.serviceIds.includes(s.id);
+                  return (
+                    <button key={s.id}
+                      onClick={() => setNovoFixo(prev => ({
+                        ...prev,
+                        serviceIds: marcado
+                          ? prev.serviceIds.filter(x => x !== s.id)
+                          : [...prev.serviceIds, s.id],
+                      }))}
+                      className={`px-3 py-2 rounded-lg text-sm border transition ${marcado ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>
+                      {s.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {novoFixo.serviceIds.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2">{duracao} min · R$ {valor.toFixed(2)}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
+                <select value={novoFixo.weekday}
+                  onChange={e => setNovoFixo(prev => ({ ...prev, weekday: Number(e.target.value) }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
+                  {DIAS_DA_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Horário</label>
+                <input type="time" value={novoFixo.startTime}
+                  onChange={e => setNovoFixo(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">De</label>
+                <input type="date" value={novoFixo.startDate}
+                  onChange={e => setNovoFixo(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Até</label>
+                <input type="date" value={novoFixo.endDate} min={novoFixo.startDate || undefined}
+                  onChange={e => setNovoFixo(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+            </div>
+
+            {user?.role === "owner" && barbers.length > 1 && (
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Barbeiro</label>
+                <select value={novoFixo.barberId}
+                  onChange={e => setNovoFixo(prev => ({ ...prev, barberId: e.target.value }))}
+                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
+                  <option value="">Eu mesmo</option>
+                  {barbers.filter(b => b.active).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            <button onClick={salvarFixo} disabled={!podeSalvar || salvandoFixo}
+              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+              {salvandoFixo ? "Criando..." : "Criar corte fixo"}
+            </button>
+          </div>
+
+          {fixosLoading ? <Spinner /> : fixos.length === 0 ? (
+            <p className="text-center text-gray-500 py-6">Nenhum corte fixo cadastrado</p>
+          ) : (
+            <div className="space-y-3">
+              {fixos.map(f => (
+                <div key={f.id} className={`rounded-xl border bg-dark-800 p-4 ${f.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🔁</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white">{f.clientName}</p>
+                      <p className="text-sm text-brand-400">{DIAS_DA_SEMANA[f.weekday]} às {f.startTime}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {f.services.map(s => s.name).join(", ")} · {f.totalDuration}min · R$ {f.totalPrice.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {f.startDate.split("-").reverse().join("/")} até {f.endDate.split("-").reverse().join("/")}
+                        {user?.role === "owner" ? " · " + f.barberName : ""}
+                      </p>
+                      {!f.active && <p className="text-xs text-gray-500 mt-1">encerrado</p>}
+                    </div>
+                    {f.active && (
+                      <button onClick={() => encerrarFixo(f)} disabled={encerrandoFixo === f.id}
+                        title="Encerrar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">
+                        {encerrandoFixo === f.id ? "…" : "⏹"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
 
     // ─── CLIENTES ───
     if (subView === "clientes") {

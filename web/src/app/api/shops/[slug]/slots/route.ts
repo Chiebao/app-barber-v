@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { generateTimeSlots, agoraNaBarbearia } from "@/app/lib/time-slots";
 import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
+import { materializarRecorrentes } from "@/app/lib/recurrence";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   try {
@@ -17,6 +18,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const dayOfWeek = new Date(date + "T12:00:00").getDay();
     if (!shop.workDays.includes(dayOfWeek)) return NextResponse.json({ slots: [], message: "Dia nao disponivel" });
+
+    // Cortes fixos viram agendamento de verdade ANTES de contar o que está
+    // ocupado. Sem isso o horário do cliente que vem toda terça apareceria
+    // livre para outra pessoa marcar por cima.
+    await materializarRecorrentes(shop.id, date, date);
 
     const startOfDay = new Date(date + "T00:00:00");
     const endOfDay = new Date(date + "T23:59:59");

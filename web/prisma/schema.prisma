@@ -70,6 +70,7 @@ model Shop {
   barbers      Barber[]
   services     Service[]
   appointments Appointment[]
+  recurring    RecurringAppointment[]
   products     Product[]
   loyalties    LoyaltyCount[]
   blockedSlots BlockedSlot[]
@@ -104,6 +105,7 @@ model Barber {
 
   shop          Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
   appointments  Appointment[]
+  recurring     RecurringAppointment[]
   blockedSlots  BlockedSlot[]
   waitlist      Waitlist[]
   pushSubs      PushSubscription[]
@@ -172,6 +174,7 @@ model Service {
 
   shop         Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
   appointments AppointmentService[]
+  recurring    RecurringAppointmentService[]
 
   @@map("services")
 }
@@ -204,6 +207,7 @@ model Client {
   createdAt   DateTime @default(now())
 
   appointments  Appointment[]
+  recurring     RecurringAppointment[]
   loyalties     LoyaltyCount[]
   ratings       Rating[]
 
@@ -235,15 +239,21 @@ model Appointment {
   cancelledAt     DateTime?
   cancelledBy     String?   // "client" | "barber" | "owner"
   pixRequested    Boolean   @default(false)
+  // Ocorrencia gerada por um agendamento recorrente. Nulo = agendamento avulso.
+  recurringId     String?
   createdAt       DateTime  @default(now())
 
   shop         Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
   barber       Barber               @relation(fields: [barberId], references: [id], onDelete: Cascade)
   client       Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
   services     AppointmentService[]
+  recurring    RecurringAppointment? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
   rating       Rating?
   comandaItems ComandaItem[]
 
+  // Uma regra so pode gerar UMA ocorrencia por dia. E esta trava que torna a
+  // materializacao idempotente: ler a agenda duas vezes nao duplica o corte.
+  @@unique([recurringId, date])
   @@map("appointments")
 }
 
@@ -429,4 +439,56 @@ model SubscriptionInvoice {
   @@index([subscriptionId])
   @@index([status, vencimento])
   @@map("subscription_invoices")
+}
+
+/// Corte que se repete toda semana no mesmo dia e horario.
+///
+/// MODELO: guarda a REGRA, nao as ocorrencias. O barbeiro cria uma vez ("toda
+/// terca as 10h, ate 31/12") e o sistema materializa cada corte como um
+/// Appointment normal quando aquele dia entra no horizonte da agenda.
+///
+/// Por que materializar em vez de manter tudo virtual: pagamento, falta,
+/// comanda, avaliacao e fidelidade se penduram num Appointment de verdade. Uma
+/// ocorrencia virtual obrigaria cada uma dessas funcionalidades a entender um
+/// segundo formato — e a primeira que esquecesse quebraria em silencio.
+///
+/// Por que nao criar tudo de uma vez: era exatamente o que o dono queria
+/// evitar. Um corte semanal por um ano sao 52 linhas criadas hoje para um
+/// compromisso que pode acabar em marco.
+model RecurringAppointment {
+  id            String   @id @default(cuid())
+  shopId        String
+  barberId      String
+  clientId      String
+  /// 0 = domingo ... 6 = sabado
+  weekday       Int
+  startTime     String
+  totalDuration Int
+  totalPrice    Decimal  @db.Decimal(10, 2)
+  /// Primeira e ultima data em que a regra vale. O fim e obrigatorio: sem ele
+  /// o compromisso seria eterno e ninguem lembraria de encerrar.
+  startDate     DateTime
+  endDate       DateTime
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  shop         Shop                         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  barber       Barber                       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  client       Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  services     RecurringAppointmentService[]
+  appointments Appointment[]
+
+  @@index([shopId, barberId, weekday])
+  @@map("recurring_appointments")
+}
+
+model RecurringAppointmentService {
+  id          String @id @default(cuid())
+  recurringId String
+  serviceId   String
+
+  recurring RecurringAppointment @relation(fields: [recurringId], references: [id], onDelete: Cascade)
+  service   Service              @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("recurring_appointment_services")
 }

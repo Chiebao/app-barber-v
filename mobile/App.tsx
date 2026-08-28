@@ -21,6 +21,7 @@ import ProductsScreen from "./src/screens/ProductsScreen";
 import AvailabilityScreen from "./src/screens/AvailabilityScreen";
 import SobreScreen from "./src/screens/SobreScreen";
 import ServicesScreen from "./src/screens/ServicesScreen";
+import RecurringScreen from "./src/screens/RecurringScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import ClientsScreen from "./src/screens/ClientsScreen";
 
@@ -36,7 +37,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-type Screen = "login" | "register" | "home" | "finance" | "loyalty" | "barbers" | "dashboard" | "products" | "availability" | "sobre" | "services" | "clients";
+type Screen = "login" | "register" | "home" | "finance" | "loyalty" | "barbers" | "dashboard" | "products" | "availability" | "sobre" | "services" | "clients" | "recurring";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -141,6 +142,7 @@ export default function App() {
           onOpenSobre={() => setScreen("sobre")}
           onOpenServices={() => setScreen("services")}
           onOpenClients={() => setScreen("clients")}
+          onOpenRecurring={() => setScreen("recurring")}
         />
       )}
       {screen === "finance" && (
@@ -190,6 +192,12 @@ export default function App() {
       )}
       {screen === "services" && barber && (
         <ServicesScreen
+          token={token}
+          onBack={() => setScreen("home")}
+        />
+      )}
+      {screen === "recurring" && barber && (
+        <RecurringScreen
           token={token}
           onBack={() => setScreen("home")}
         />

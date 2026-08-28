@@ -285,6 +285,33 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
+  // ── Corte fixo (agendamento recorrente) ──
+  // O barbeiro cria a REGRA; as ocorrencias nascem sozinhas na agenda.
+  getRecurring: (token: string) =>
+    request("/api/me/recurring", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  addRecurring: (
+    token: string,
+    data: {
+      clientName: string; clientPhone: string; serviceIds: string[];
+      weekday: number; startTime: string; startDate: string; endDate: string;
+      barberId?: string;
+    },
+  ) =>
+    request("/api/me/recurring", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
+
+  endRecurring: (token: string, id: string) =>
+    request(`/api/me/recurring?id=${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   addService: (token: string, data: { name: string; duration: number; price: number; category: string; imageUrl?: string }) =>
     request("/api/me/services", {
       method: "POST",

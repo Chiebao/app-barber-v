@@ -61,6 +61,7 @@ interface Props {
   onOpenSobre?: () => void;
   onOpenServices?: () => void;
   onOpenClients?: () => void;
+  onOpenRecurring?: () => void;
 }
 
 // Greeting baseado na hora
@@ -71,7 +72,7 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
-export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onOpenLoyalty, onOpenBarbers, onOpenDashboard, onOpenProducts, onOpenAvailability, onOpenSobre, onOpenServices, onOpenClients }: Props) {
+export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onOpenLoyalty, onOpenBarbers, onOpenDashboard, onOpenProducts, onOpenAvailability, onOpenSobre, onOpenServices, onOpenClients, onOpenRecurring }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -167,6 +168,11 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
       : []),
     ...(barber.role === "owner" && onOpenClients
       ? [{ icon: "👥", label: "Clientes", onPress: onOpenClients }]
+      : []),
+    // Corte fixo: o barbeiro tambem agenda, e o cliente semanal entra numa
+    // regra so em vez de virar dezenas de agendamentos iguais.
+    ...(onOpenRecurring
+      ? [{ icon: "🔁", label: "Corte fixo", onPress: onOpenRecurring }]
       : []),
   ];
 

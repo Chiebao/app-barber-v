@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num, money, multiplyMoney } from "@/app/lib/money";
 import { isPendingExpired } from "@/app/lib/pending-deadline";
+import { materializarRecorrentes } from "@/app/lib/recurrence";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +22,11 @@ export async function GET(req: NextRequest) {
     if (payload.role === "barber") where.barberId = payload.userId;
 
     if (date) {
+      // Materializa os cortes fixos do dia antes de listar. É o que faz o
+      // recorrente aparecer na agenda como um agendamento comum — e é por isso
+      // que pagamento, falta, comanda e fidelidade funcionam nele sem que
+      // nenhuma dessas telas precise saber o que é recorrência.
+      await materializarRecorrentes(payload.shopId, date, date);
       where.date = { gte: new Date(date + "T00:00:00"), lte: new Date(date + "T23:59:59") };
     }
 
