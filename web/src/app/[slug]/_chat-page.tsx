@@ -24,6 +24,19 @@ type ChatStep =
   | "name" | "phone" | "rating" | "services"
   | "barber" | "date" | "time" | "confirm" | "booking" | "pix" | "done";
 
+/**
+ * Data local no formato YYYY-MM-DD.
+ *
+ * NÃO usar `toISOString()` aqui: ele converte para UTC, e às 22h de Brasília
+ * já devolve o dia seguinte — a agenda passava a oferecer só a partir de
+ * amanhã e o dia de hoje sumia da lista.
+ */
+function diaLocal(d: Date): string {
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
 export default function BarberPageChat({
   shop,
   slug,
@@ -189,7 +202,7 @@ export default function BarberPageChat({
     for (let i = 0; i < 30; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
-      if (shop.workDays.includes(d.getDay())) dates.push(d.toISOString().split("T")[0]);
+      if (shop.workDays.includes(d.getDay())) dates.push(diaLocal(d));
     }
     return dates;
   };

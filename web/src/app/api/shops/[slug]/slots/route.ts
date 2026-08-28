@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { generateTimeSlots } from "@/app/lib/time-slots";
+import { generateTimeSlots, agoraNaBarbearia } from "@/app/lib/time-slots";
 import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -61,6 +61,23 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       shop.openTime, shop.closeTime, parseInt(duration), booked, shop.slotInterval,
     );
 
+    // HOJE: tirar o que já passou. Este corte é do SERVIDOR de propósito.
+    //
+    // Antes ele vivia no navegador, comparando os horários com o relógio de
+    // quem estava olhando. Isso quebra de duas formas: o cliente pode estar em
+    // outro fuso, e cada tela (passo-a-passo, chat, mobile) precisa repetir a
+    // mesma regra — quem esquecesse mostraria horário que já passou e deixaria
+    // o cliente agendar no passado.
+    //
+    // Quem decide que horas são é a barbearia.
+    const { dia: hojeNaLoja, hora: agoraNaLoja } = agoraNaBarbearia();
+    let expedienteAcabou = false;
+    if (date === hojeNaLoja) {
+      const restantes = slots.filter((s) => s > agoraNaLoja);
+      expedienteAcabou = restantes.length === 0 && slots.length > 0;
+      slots = restantes;
+    }
+
     // Filtrar slots bloqueados pelo barbeiro nesse dia
     if (barberId) {
       const blocked = await prisma.blockedSlot.findMany({
@@ -73,6 +90,13 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       if (blockedTimes.length > 0) {
         slots = slots.filter((s) => !blockedTimes.includes(s));
       }
+    }
+
+    // Mensagem própria para "o dia acabou". Sem ela a tela mostra o mesmo vazio
+    // de "agenda cheia", e o cliente não distingue barbearia lotada de
+    // expediente encerrado.
+    if (slots.length === 0 && expedienteAcabou) {
+      return NextResponse.json({ slots: [], message: "Os horários de hoje já passaram" });
     }
 
     return NextResponse.json({ slots });

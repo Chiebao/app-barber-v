@@ -110,6 +110,19 @@ type Step =
   | "pix_sent"
   | "done";
 
+/**
+ * Data local no formato YYYY-MM-DD.
+ *
+ * NÃO usar `toISOString()` aqui: ele converte para UTC, e às 22h de Brasília
+ * já devolve o dia seguinte — a agenda passava a oferecer só a partir de
+ * amanhã e o dia de hoje sumia da lista.
+ */
+function diaLocal(d: Date): string {
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
 export default function BarberPage() {
   const params = useParams();
   const router = useRouter();
@@ -129,6 +142,9 @@ export default function BarberPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  // Mensagem do servidor quando não há horário: distingue "hoje já acabou"
+  // de "dia cheio". Sem ela as duas situações mostram o mesmo vazio.
+  const [slotsMessage, setSlotsMessage] = useState("");
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   // Rating
@@ -311,7 +327,7 @@ export default function BarberPage() {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
       if (shop.workDays.includes(d.getDay())) {
-        dates.push(d.toISOString().split("T")[0]);
+        dates.push(diaLocal(d));
       }
     }
     return dates;
@@ -326,14 +342,11 @@ export default function BarberPage() {
       const barberId = selectedBarberId || shop!.barbers[0]?.id;
       const res = await fetch(`/api/shops/${slug}/slots?date=${date}&duration=${totalDuration}&barberId=${barberId}`);
       const data = await res.json();
-      let slots: string[] = data.slots || [];
-      const todayStr = new Date().toISOString().split("T")[0];
-      if (date === todayStr) {
-        const now = new Date();
-        const cur = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        slots = slots.filter((s: string) => s > cur);
-      }
-      setAvailableSlots(slots);
+      // O corte do que já passou é do SERVIDOR (ver /api/shops/[slug]/slots).
+      // Filtrar de novo aqui usaria o relógio de quem está olhando, que pode
+      // estar em outro fuso — e foi o que fazia a agenda de hoje vir vazia.
+      setAvailableSlots(data.slots || []);
+      setSlotsMessage(data.message || "");
     } catch { /* ignore */ }
 
     setSlotsLoading(false);
@@ -947,7 +960,7 @@ export default function BarberPage() {
               <div className="space-y-4">
                 <div className="text-center py-6 space-y-3">
                   <p className="text-2xl">📅</p>
-                  <p className="text-gray-400">Nenhum horário disponível neste dia</p>
+                  <p className="text-gray-400">{slotsMessage || "Nenhum horário disponível neste dia"}</p>
                   <button onClick={() => setStep("date")} className="text-brand-400 underline text-sm">
                     Escolher outra data
                   </button>

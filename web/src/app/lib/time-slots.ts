@@ -1,4 +1,7 @@
 import { format, parse, addMinutes, isBefore, isEqual } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
+
+import { SHOP_TIMEZONE } from "./pending-deadline";
 
 /**
  * Horários que a agenda oferece num dia.
@@ -51,4 +54,26 @@ export function generateTimeSlots(
   }
 
   return slots;
+}
+
+
+/**
+ * Que dia e que horas são AGORA, do ponto de vista da barbearia.
+ *
+ * Quem decide se um horário já passou é a barbearia, não o relógio de quem
+ * está olhando. O servidor roda em UTC e o cliente pode estar em qualquer
+ * fuso — os dois dariam respostas diferentes para a mesma pergunta.
+ *
+ * O erro concreto que isso evita: `new Date().toISOString()` devolve a data em
+ * UTC, então às 22h de Brasília ele já responde o dia seguinte. A agenda
+ * passava a oferecer só a partir de amanhã, e o dia de hoje sumia da lista.
+ *
+ * @param agora instante de referência (default: agora). Injetável para teste.
+ * @returns `dia` no formato YYYY-MM-DD e `hora` no formato HH:mm.
+ */
+export function agoraNaBarbearia(agora: Date = new Date()): { dia: string; hora: string } {
+  return {
+    dia: formatInTimeZone(agora, SHOP_TIMEZONE, "yyyy-MM-dd"),
+    hora: formatInTimeZone(agora, SHOP_TIMEZONE, "HH:mm"),
+  };
 }
