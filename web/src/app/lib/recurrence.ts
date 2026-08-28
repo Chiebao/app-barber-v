@@ -109,6 +109,29 @@ export async function materializarRecorrentes(
   de: string,
   ate: string,
 ): Promise<number> {
+  try {
+    return await criarOcorrencias(shopId, de, ate);
+  } catch (erro) {
+    // Corte fixo é um ACRÉSCIMO à agenda; não pode derrubá-la.
+    //
+    // Esta função é chamada de dentro da rota de horários livres e da agenda do
+    // barbeiro — os dois caminhos mais quentes do sistema. Se ela deixar a
+    // exceção subir, um problema aqui vira "nenhum horário disponível" para
+    // TODOS os clientes.
+    //
+    // O caso concreto que motivou a guarda: o deploy chega ao ar antes de
+    // `prisma db push` criar a tabela `recurring_appointments`. Sem isto, essa
+    // janela de minutos derrubaria o agendamento inteiro.
+    console.error("Falha ao materializar cortes fixos:", erro);
+    return 0;
+  }
+}
+
+async function criarOcorrencias(
+  shopId: string,
+  de: string,
+  ate: string,
+): Promise<number> {
   const shop = await prisma.shop.findUnique({
     where: { id: shopId },
     select: { workDays: true },
