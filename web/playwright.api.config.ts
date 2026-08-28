@@ -20,7 +20,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 60_000,
+  // Espera pelo limite de cadastro (5/min) sem estourar
+  timeout: 180_000,
   reporter: [["list"]],
   use: {
     baseURL: process.env.TEST_BASE_URL || "http://localhost:3000",

@@ -44,15 +44,13 @@ export interface Loja {
   barbeiroDonoId: string;
 }
 
-/** Cria uma barbearia completa pela API pública de cadastro. */
-export async function criarLoja(
+function postCadastro(
   req: APIRequestContext,
-  opcoes: { abre?: string; fecha?: string; dias?: number[] } = {},
-): Promise<Loja> {
-  const telefone = telefoneDeTeste();
-  const senha = "teste123456";
-
-  const res = await req.post(`${BASE}/api/auth/register`, {
+  telefone: string,
+  senha: string,
+  opcoes: { abre?: string; fecha?: string; dias?: number[] },
+) {
+  return req.post(`${BASE}/api/auth/register`, {
     data: {
       ownerName: "Dono Teste",
       shopName: "Teste " + Date.now() + Math.floor(Math.random() * 1000),
@@ -66,6 +64,25 @@ export async function criarLoja(
       services: [{ name: "Corte", duration: 30, price: 40, category: "corte" }],
     },
   });
+}
+
+/** Cria uma barbearia completa pela API pública de cadastro. */
+export async function criarLoja(
+  req: APIRequestContext,
+  opcoes: { abre?: string; fecha?: string; dias?: number[] } = {},
+): Promise<Loja> {
+  const telefone = telefoneDeTeste();
+  const senha = "teste123456";
+
+  // O cadastro tem limite de 5 por minuto, que e o comportamento certo em
+  // producao. A suite cria uma barbearia por teste e naturalmente esbarra
+  // nisso — entao ela espera, em vez de o limite ser afrouxado por causa
+  // dos testes.
+  let res = await postCadastro(req, telefone, senha, opcoes);
+  for (let tentativa = 0; res.status() === 429 && tentativa < 4; tentativa++) {
+    await new Promise((r) => setTimeout(r, 20_000));
+    res = await postCadastro(req, telefone, senha, opcoes);
+  }
 
   if (!res.ok()) throw new Error("cadastro falhou: " + res.status() + " " + (await res.text()).slice(0, 200));
   const d = await res.json();
