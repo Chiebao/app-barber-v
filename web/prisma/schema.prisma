@@ -40,6 +40,10 @@ model Shop {
   closeTime       String   // "20:00"
   workDays        Int[]    // [1,2,3,4,5,6]
   avgServiceTime  Int      @default(30) // minutos, para calcular limite diario
+  /// De quanto em quanto tempo a agenda oferece horario: 15, 20, 30, 45 ou 60.
+  /// Barbearia que atende 1h por cliente nao quer oferecer 08:30 — quer
+  /// 08:00, 09:00, 10:00. Antes disso o passo era fixo em 30 no codigo.
+  slotInterval    Int      @default(30)
   pixKey          String?  // chave pix manual (usada quando o Mercado Pago nao esta conectado)
   // Mercado Pago: quando conectado, o Pix vira automatico — o dinheiro cai
   // direto na conta da barbearia e o sistema confirma sozinho via webhook.

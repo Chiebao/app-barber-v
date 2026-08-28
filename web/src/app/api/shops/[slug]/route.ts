@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
       where: { slug: params.slug },
       select: {
         id: true, name: true, slug: true,
-        openTime: true, closeTime: true, workDays: true, avgServiceTime: true,
+        openTime: true, closeTime: true, workDays: true, avgServiceTime: true, slotInterval: true,
         pixKey: true, logoUrl: true, colorTheme: true, bookingMode: true,
         // Endereco e contato: publicos de proposito — e como o cliente
         // descobre onde fica a barbearia antes de fechar o agendamento.

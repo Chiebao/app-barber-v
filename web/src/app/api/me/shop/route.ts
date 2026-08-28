@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
         closeTime: true,
         workDays: true,
         avgServiceTime: true,
+        slotInterval: true,
         pixKey: true,
         logoUrl: true,
         phone: true,
@@ -51,7 +52,7 @@ export async function PATCH(req: NextRequest) {
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const {
-      name, openTime, closeTime, workDays, avgServiceTime, pixKey, logoUrl, colorTheme, bookingMode,
+      name, openTime, closeTime, workDays, avgServiceTime, slotInterval, pixKey, logoUrl, colorTheme, bookingMode,
       phone, address, neighborhood, city, state, zipCode,
     } = await req.json();
 
@@ -65,6 +66,15 @@ export async function PATCH(req: NextRequest) {
     if (closeTime !== undefined) data.closeTime = closeTime;
     if (workDays !== undefined) data.workDays = workDays;
     if (avgServiceTime !== undefined) data.avgServiceTime = parseInt(avgServiceTime);
+    if (slotInterval !== undefined) {
+      const n = parseInt(slotInterval);
+      // Lista fechada: um valor solto como 7 minutos geraria uma grade
+      // ilegível e não resolve problema de ninguém.
+      if (![15, 20, 30, 45, 60].includes(n)) {
+        return NextResponse.json({ error: "Intervalo inválido" }, { status: 400 });
+      }
+      data.slotInterval = n;
+    }
     if (pixKey !== undefined) data.pixKey = pixKey || null;
     if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
     if (colorTheme !== undefined) data.colorTheme = colorTheme;
@@ -90,6 +100,7 @@ export async function PATCH(req: NextRequest) {
         closeTime: true,
         workDays: true,
         avgServiceTime: true,
+        slotInterval: true,
         pixKey: true,
         logoUrl: true,
         phone: true,

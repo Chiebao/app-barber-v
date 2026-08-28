@@ -55,7 +55,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       return NextResponse.json({ slots: [], message: "Agenda cheia para este dia" });
     }
 
-    let slots = generateTimeSlots(shop.openTime, shop.closeTime, parseInt(duration), booked);
+    // A duração é a soma dos serviços escolhidos; o passo é a divisão do
+    // dia definida pela barbearia. São coisas diferentes de propósito.
+    let slots = generateTimeSlots(
+      shop.openTime, shop.closeTime, parseInt(duration), booked, shop.slotInterval,
+    );
 
     // Filtrar slots bloqueados pelo barbeiro nesse dia
     if (barberId) {

@@ -212,3 +212,114 @@ test.describe("Aceite dos termos", () => {
     await apagarLoja(loja);
   });
 });
+
+test.describe("Re-aceite dos termos", () => {
+  let loja: Loja;
+
+  test.beforeEach(async ({ request }) => { loja = await criarLoja(request); });
+  test.afterEach(async () => { await apagarLoja(loja); await fecharDb(); });
+
+  test("quem acabou de se cadastrar não precisa aceitar de novo", async ({ request }) => {
+    const r = await request.get(`${BASE}/api/me/aceite`, { headers: loja.auth });
+    const d = await r.json();
+    expect(d.precisaAceitar).toBe(false);
+    expect(d.versaoAceita).toBe(d.versaoVigente);
+  });
+
+  test("conta sem aceite é sinalizada como primeira vez", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    const shop = await db().shop.findUniqueOrThrow({ where: { id: loja.shopId }, select: { ownerId: true } });
+    await db().owner.update({
+      where: { id: shop.ownerId },
+      data: { termsAcceptedAt: null, termsVersion: null },
+    });
+
+    const d = await (await request.get(`${BASE}/api/me/aceite`, { headers: loja.auth })).json();
+    expect(d.precisaAceitar).toBe(true);
+    expect(d.primeiraVez).toBe(true);
+  });
+
+  test("versão antiga pede aceite novo, sem marcar como primeira vez", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    const shop = await db().shop.findUniqueOrThrow({ where: { id: loja.shopId }, select: { ownerId: true } });
+    await db().owner.update({
+      where: { id: shop.ownerId },
+      data: { termsVersion: "1.0", termsAcceptedAt: new Date("2026-05-20") },
+    });
+
+    const d = await (await request.get(`${BASE}/api/me/aceite`, { headers: loja.auth })).json();
+    expect(d.precisaAceitar).toBe(true);
+    expect(d.primeiraVez).toBe(false);
+    expect(d.versaoAceita).toBe("1.0");
+  });
+
+  test("aceitar grava data e versão vigente", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    const shop = await db().shop.findUniqueOrThrow({ where: { id: loja.shopId }, select: { ownerId: true } });
+    await db().owner.update({ where: { id: shop.ownerId }, data: { termsAcceptedAt: null, termsVersion: null } });
+
+    const r = await request.post(`${BASE}/api/me/aceite`, { headers: loja.auth, data: { versao: "2.0" } });
+    expect(r.ok()).toBeTruthy();
+
+    const dono = await db().owner.findUniqueOrThrow({ where: { id: shop.ownerId } });
+    expect(dono.termsVersion).toBe("2.0");
+    expect(dono.termsAcceptedAt).toBeTruthy();
+  });
+
+  test("aceitar uma versão que não é a vigente é recusado", async ({ request }) => {
+    // Se o texto que a pessoa leu não é o que está no ar, o aceite não vale
+    const r = await request.post(`${BASE}/api/me/aceite`, { headers: loja.auth, data: { versao: "1.0" } });
+    expect(r.status()).toBe(409);
+  });
+
+  test("barbeiro contratado não precisa aceitar nem consegue", async ({ request }) => {
+    await request.post(`${BASE}/api/auth/add-barber`, {
+      headers: loja.auth,
+      data: { name: "Func", phone: "11944443001", password: "senha123" },
+    });
+    const login = await request.post(`${BASE}/api/auth/login`, {
+      data: { phone: "11944443001", password: "senha123" },
+    });
+    const { token } = await login.json();
+    const auth = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+    const consulta = await (await request.get(`${BASE}/api/me/aceite`, { headers: auth })).json();
+    expect(consulta.precisaAceitar).toBe(false);
+
+    const tentativa = await request.post(`${BASE}/api/me/aceite`, { headers: auth, data: { versao: "2.0" } });
+    expect(tentativa.status()).toBe(401);
+  });
+});
+
+test.describe("Intervalo da agenda", () => {
+  test("60 minutos oferece hora cheia, 30 oferece meia em meia", async ({ request }) => {
+    const loja = await criarLoja(request, { abre: "08:00", fecha: "12:00" });
+    const { db } = await import("./_ajudantes");
+
+    const slots = async () => {
+      const r = await request.get(`${BASE}/api/shops/${loja.slug}/slots?date=${diaISO(1)}&duration=30`);
+      return (await r.json()).slots as string[];
+    };
+
+    // Padrão: de 30 em 30
+    expect(await slots()).toEqual(["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30"]);
+
+    const r = await request.patch(`${BASE}/api/me/shop`, { headers: loja.auth, data: { slotInterval: 60 } });
+    expect(r.ok()).toBeTruthy();
+
+    // Agora só hora cheia — é o que a barbearia de 1h por cliente quer
+    expect(await slots()).toEqual(["08:00", "09:00", "10:00", "11:00"]);
+
+    await db().$disconnect;
+    await apagarLoja(loja);
+    await fecharDb();
+  });
+
+  test("intervalo fora da lista é recusado", async ({ request }) => {
+    const loja = await criarLoja(request);
+    const r = await request.patch(`${BASE}/api/me/shop`, { headers: loja.auth, data: { slotInterval: 7 } });
+    expect(r.status()).toBe(400);
+    await apagarLoja(loja);
+    await fecharDb();
+  });
+});

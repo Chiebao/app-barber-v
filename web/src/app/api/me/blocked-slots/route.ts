@@ -59,7 +59,11 @@ export async function GET(req: NextRequest) {
 
     const allDay = blocked.some((b) => b.time === null);
     const blockedTimes = blocked.filter((b) => b.time !== null).map((b) => b.time as string);
-    const allSlots = generateTimeSlots(shop.openTime, shop.closeTime, shop.avgServiceTime, []);
+    // Na grade do painel, duração e passo são o mesmo número: o barbeiro
+    // bloqueia exatamente os blocos que a agenda oferece ao cliente.
+    const allSlots = generateTimeSlots(
+      shop.openTime, shop.closeTime, shop.slotInterval, [], shop.slotInterval,
+    );
     const bookedTimes = appointments.map((a) => a.startTime);
 
     return NextResponse.json({
@@ -67,7 +71,7 @@ export async function GET(req: NextRequest) {
       blocked: blockedTimes,
       allDay,
       booked: bookedTimes,
-      shopHours: { openTime: shop.openTime, closeTime: shop.closeTime },
+      shopHours: { openTime: shop.openTime, closeTime: shop.closeTime, slotInterval: shop.slotInterval },
     });
   } catch (error) {
     console.error(error);

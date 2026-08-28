@@ -12,6 +12,7 @@ import RecoveryNag from "./_recovery-nag";
 import Relatorio from "./_relatorio";
 import Assinatura from "./_assinatura";
 import AReceber from "./_a-receber";
+import Aceite from "./_aceite";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
@@ -206,7 +207,7 @@ export default function PainelPage() {
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
   // ── Config state ──
-  const [shopSettings, setShopSettings] = useState<{ name: string; openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string; phone: string; address: string; neighborhood: string; city: string; state: string; zipCode: string } | null>(null);
+  const [shopSettings, setShopSettings] = useState<{ name: string; openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string; phone: string; address: string; neighborhood: string; city: string; state: string; zipCode: string; slotInterval: number } | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -252,6 +253,7 @@ export default function PainelPage() {
           city: data.shop.city || "",
           state: data.shop.state || "",
           zipCode: data.shop.zipCode || "",
+          slotInterval: data.shop.slotInterval || 30,
           openTime: data.shop.openTime || "08:00",
           closeTime: data.shop.closeTime || "20:00",
           workDays: data.shop.workDays || [1,2,3,4,5,6],
@@ -1988,6 +1990,30 @@ export default function PainelPage() {
                       <p className="text-xs text-gray-400 mb-2">Dias de trabalho</p>
                       <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map((d, i) => (<button key={i} onClick={() => setShopSettings(p => p ? {...p, workDays: p.workDays.includes(i) ? p.workDays.filter(x => x !== i) : [...p.workDays, i].sort()} : p)} className={`py-2.5 rounded-lg border text-sm font-medium transition ${shopSettings.workDays.includes(i) ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-500"}`}>{d}</button>))}</div>
                     </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">De quanto em quanto tempo</p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {[15, 20, 30, 45, 60].map(min => (
+                          <button
+                            key={min}
+                            onClick={() => setShopSettings(p => p ? { ...p, slotInterval: min } : p)}
+                            className={`py-2.5 rounded-lg border text-sm font-medium transition ${
+                              shopSettings.slotInterval === min
+                                ? "border-brand-400 bg-brand-500/10 text-brand-400"
+                                : "border-gray-700 text-gray-500 hover:text-gray-300"
+                            }`}
+                          >
+                            {min === 60 ? "1h" : min + "m"}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        {shopSettings.slotInterval === 60
+                          ? "O cliente vê 08:00, 09:00, 10:00 — um atendimento por hora."
+                          : `O cliente vê horários a cada ${shopSettings.slotInterval} minutos.`}
+                      </p>
+                    </div>
+
                     <div><p className="text-xs text-gray-400 mb-1">Chave Pix</p><input type="text" placeholder="Sua chave pix" value={shopSettings.pixKey} onChange={e => setShopSettings(p => p ? {...p, pixKey: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" /></div>
 
                     {/* Booking mode */}
@@ -2103,6 +2129,13 @@ export default function PainelPage() {
           </>
         )}
       </div>
+
+      {/* Aceite dos termos — cobre o painel inteiro ate ser resolvido */}
+      <Aceite
+        token={token}
+        onAceito={() => { fetchAppointments(); }}
+        onSair={handleLogout}
+      />
 
       {/* ── Cancel Confirmation Modal ── */}
       <CancelModal
