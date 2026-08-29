@@ -63,7 +63,9 @@ const STATUS_COLORS: Record<string, string> = {
 const PAYMENT_LABELS: Record<string, string> = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartao" };
 const CATEGORY_LABELS: Record<string, string> = { corte: "Corte", barba: "Barba", sobrancelha: "Sobrancelha", pezinho: "Pezinho", luzes: "Luzes" };
 const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒", sobrancelha: "👁️", pezinho: "💈", luzes: "✨" };
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+// Duas letras cabem nas 7 colunas até em tela de 320px; três não cabiam e
+// a última letra ficava cortada.
+const WEEKDAYS = ["Do", "Se", "Te", "Qa", "Qi", "Sx", "Sa"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
 type ConfigView = null | "dados" | "horario" | "pagamento" | "aparencia" | "notificacoes" | "senha" | "banidos" | "assinatura";
@@ -1162,7 +1164,6 @@ export default function PainelPage() {
                     </p>
                     <p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p>
                   </button>
-                  <button onClick={() => abrirEdicaoBarbeiro(b)} title="Editar perfil" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
                   <button onClick={() => { setResetBarberId(resetBarberId === b.id ? null : b.id); setResetPassword(""); }} title="Redefinir senha" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">🔑</button>
                   {!b.isOwnerProfile && (
                     <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
@@ -1252,12 +1253,14 @@ export default function PainelPage() {
             {services.map(s => (
               <div key={s.id} className={`flex items-center gap-4 rounded-xl border bg-dark-800 p-4 ${s.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
                 <span className="text-2xl">{CATEGORY_ICONS[s.category] || "✂️"}</span>
+                {/* Editar e apagar vivem no modal, que abre ao tocar no nome.
+                    Com os dois botões aqui, ícone e toggle sobrando, o texto
+                    era espremido a 28px numa tela de 320 — o nome do serviço
+                    não cabia em lugar nenhum. */}
                 <button onClick={() => abrirEdicaoServico(s)} className="flex-1 min-w-0 text-left group">
-                  <p className="font-medium text-white group-hover:text-brand-400 transition">{s.name}</p>
-                  <p className="text-sm text-gray-400">R$ {s.price.toFixed(2)} · {s.duration}min · {CATEGORY_LABELS[s.category] || s.category}</p>
+                  <p className="font-medium text-white group-hover:text-brand-400 transition truncate">{s.name}</p>
+                  <p className="text-sm text-gray-400 truncate">R$ {s.price.toFixed(2)} · {s.duration}min · {CATEGORY_LABELS[s.category] || s.category}</p>
                 </button>
-                <button onClick={() => abrirEdicaoServico(s)} title="Editar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
-                <button onClick={() => excluirServico(s)} disabled={deletingService === s.id} title="Apagar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">{deletingService === s.id ? "…" : "🗑️"}</button>
                 <button onClick={() => toggleService(s.id, !s.active)} title={s.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${s.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${s.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
               </div>
             ))}
@@ -1368,10 +1371,8 @@ export default function PainelPage() {
                   : <div className="w-12 h-12 rounded-lg bg-dark-900 border border-gray-700 flex items-center justify-center text-xl shrink-0">📷</div>}
                 <button onClick={() => abrirEdicaoProduto(p)} className="flex-1 min-w-0 text-left group">
                   <p className="font-medium text-white group-hover:text-brand-400 transition truncate">{p.name}</p>
-                  <p className="text-sm text-gray-400">R$ {p.price.toFixed(2)}{p.description ? ` · ${p.description}` : ""}</p>
+                  <p className="text-sm text-gray-400 truncate">R$ {p.price.toFixed(2)}{p.description ? ` · ${p.description}` : ""}</p>
                 </button>
-                <button onClick={() => abrirEdicaoProduto(p)} title="Editar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">✏️</button>
-                <button onClick={() => excluirProduto(p)} disabled={deletingProduct === p.id} title="Apagar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">{deletingProduct === p.id ? "…" : "🗑️"}</button>
                 <button onClick={() => toggleProduct(p.id, !p.active)} title={p.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${p.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${p.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
               </div>
             ))}
@@ -2473,7 +2474,10 @@ function StatBox({ value, label, color, extra, extraColor }: { value: string; la
     <div className="rounded-xl bg-dark-800 border border-gray-700 p-3 text-center">
       <p className={`text-lg font-semibold ${color || "text-white"}`}>{value}</p>
       {extra && <p className={`text-xs font-semibold ${extraColor || ""}`}>{extra}</p>}
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
+      {/* Quebra em duas linhas em vez de cortar: "Agendamentos" não cabe
+          numa coluna de 1/3 de tela a 320px, e cortar palavra é pior que
+          usar uma linha a mais. */}
+      <p className="text-xs text-gray-500 mt-1 leading-tight break-words">{label}</p>
     </div>
   );
 }

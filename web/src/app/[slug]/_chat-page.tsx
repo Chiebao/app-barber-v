@@ -191,6 +191,43 @@ export default function BarberPageChat({
 
   const handleSelectBarber = (b: Barber) => { setSelectedBarberId(b.id); addUser(b.name); goToDate(); };
 
+  /**
+   * Voltar um passo na conversa.
+   *
+   * Um chat sugere que dá para corrigir o que você acabou de dizer — e até
+   * agora não dava: escolheu a data errada e não tinha caminho de volta a
+   * não ser recomeçar tudo. Identificação (nome, telefone) fica de fora
+   * porque voltar ali não corrige nada, só apaga o que já foi confirmado.
+   */
+  const passoAnterior: Partial<Record<ChatStep, ChatStep>> = {
+    barber: "services",
+    date: (shop?.barbers.length ?? 0) > 1 ? "barber" : "services",
+    time: "date",
+    confirm: "time",
+  };
+
+  const voltarUmPasso = () => {
+    const alvo = passoAnterior[step];
+    if (!alvo) return;
+
+    // Desfaz a escolha do passo que está sendo abandonado, senão ela fica
+    // valendo por baixo e o resumo mostra o que o cliente já trocou
+    if (step === "time") setSelectedTime("");
+    if (step === "confirm") setSelectedTime("");
+    if (step === "date") setSelectedDate("");
+    if (step === "barber" && (shop?.barbers.length ?? 0) > 1) setSelectedBarberId("");
+
+    const fala: Record<string, string> = {
+      services: "Sem problema! Quais serviços você quer?",
+      barber: "Claro! Com qual profissional você prefere?",
+      date: "Tudo bem, vamos escolher outro dia.",
+      time: "Beleza, escolhe outro horário.",
+    };
+
+    setStep(alvo);
+    addBot(fala[alvo] || "Vamos voltar um passo.");
+  };
+
   const goToDate = () => {
     setTimeout(() => { addBot("Quando você prefere vir?"); setStep("date"); }, 400);
   };
@@ -369,6 +406,17 @@ export default function BarberPageChat({
             </div>
           </div>
         )}
+        {passoAnterior[step] && (
+          <div className="px-4 pt-3">
+            <button
+              onClick={voltarUmPasso}
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-brand-400 transition"
+            >
+              <span className="text-base">←</span> Voltar
+            </button>
+          </div>
+        )}
+
         {step === "services" && shop && (
           <div className="pt-3 pb-3">
             <p className="text-xs text-gray-500 px-4 mb-2 tracking-widest">SELECIONE OS SERVIÇOS:</p>
@@ -452,11 +500,11 @@ export default function BarberPageChat({
             ) : availableSlots.length === 0 ? (
               <div className="text-center py-3">
                 <p className="text-gray-400 text-sm mb-3">Nenhum horário disponível neste dia</p>
-                <button onClick={() => { setStep("date"); addBot("Vamos escolher outro dia?"); }}
+                <button onClick={voltarUmPasso}
                   className="text-brand-400 text-sm underline">Escolher outra data</button>
               </div>
             ) : (
-              <div className="grid grid-cols-5 gap-2 max-h-36 overflow-y-auto">
+              <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto">
                 {availableSlots.map((time) => (
                   <button key={time} onClick={() => handleSelectTime(time)}
                     className="py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm font-medium text-white hover:border-brand-400 hover:bg-brand-500/10 transition">
