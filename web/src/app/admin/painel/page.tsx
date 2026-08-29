@@ -1497,7 +1497,7 @@ export default function PainelPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input type="text" placeholder="Nome do cliente *" value={novoFixo.clientName}
                 onChange={e => setNovoFixo(prev => ({ ...prev, clientName: e.target.value }))}
                 className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
@@ -1530,7 +1530,7 @@ export default function PainelPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
                 <select value={novoFixo.weekday}
@@ -1547,7 +1547,7 @@ export default function PainelPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">De</label>
                 <input type="date" value={novoFixo.startDate}
