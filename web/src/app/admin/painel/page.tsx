@@ -17,6 +17,7 @@ import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
 import MercadoPago from "./_mercadopago";
+import { Modal } from "@/app/lib/modal";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -1184,9 +1185,7 @@ export default function PainelPage() {
           </div>
         )}
 
-        {editBarber && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditBarber(null)}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+        <Modal aberto={!!editBarber} onFechar={() => setEditBarber(null)}>{editBarber && (<>
               <h3 className="text-lg font-semibold text-white">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
 
               <div>
@@ -1225,9 +1224,7 @@ export default function PainelPage() {
 
               <button onClick={salvarBarbeiro} disabled={savingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingBarber ? "Salvando..." : "Salvar"}</button>
               <button onClick={() => setEditBarber(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
-            </div>
-          </div>
-        )}
+            </>)}</Modal>
       </div>
     );
 
@@ -1269,9 +1266,7 @@ export default function PainelPage() {
 
         {/* Modal de edicao — 100vw/100vh inline porque position:fixed sozinho
             se dimensiona pelo documento, nao pela viewport, e o modal some */}
-        {editService && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditService(null)}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+        <Modal aberto={!!editService} onFechar={() => setEditService(null)}>{editService && (<>
               <h3 className="text-lg font-semibold text-white">Editar serviço</h3>
 
               <div>
@@ -1344,9 +1339,7 @@ export default function PainelPage() {
                   Cancelar
                 </button>
               </div>
-            </div>
-          </div>
-        )}
+            </>)}</Modal>
       </div>
     );
 
@@ -1381,9 +1374,7 @@ export default function PainelPage() {
 
         {/* Modal de edição — 100vw/100vh inline porque position:fixed sozinho
             se dimensiona pelo documento, não pela viewport */}
-        {editProduct && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={() => setEditProduct(null)}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+        <Modal aberto={!!editProduct} onFechar={() => setEditProduct(null)}>{editProduct && (<>
               <h3 className="text-lg font-semibold text-white">Editar produto</h3>
 
               <div>
@@ -1423,9 +1414,7 @@ export default function PainelPage() {
                 <button onClick={() => { const alvo = products.find(x => x.id === editProduct.id); if (alvo) excluirProduto(alvo); }} disabled={deletingProduct === editProduct.id} className="w-full rounded-xl border border-red-500/30 py-2.5 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition">{deletingProduct === editProduct.id ? "Apagando..." : "🗑️ Apagar este produto"}</button>
                 <button onClick={() => setEditProduct(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
               </div>
-            </div>
-          </div>
-        )}
+            </>)}</Modal>
       </div>
     );
 
@@ -2497,7 +2486,13 @@ function CancelModal({ open, appt, waitlistCount, notifyWaitlist, onToggleNotify
   if (!mounted || !open) return null;
   return createPortal(
     <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)" }} onClick={onClose}>
-      <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+      {/* Fundo sólido: a classe de vidro é 74% opaca e faz o modal
+          parecer conteúdo desfocado em vez de uma caixa por cima. */}
+      <div
+        className="border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl"
+        style={{ backgroundColor: "#161625" }}
+        onClick={e => e.stopPropagation()}
+      >
         <h3 className="text-lg font-semibold text-white">Cancelar agendamento?</h3>
         {appt && (
           <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">

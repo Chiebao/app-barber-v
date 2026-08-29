@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/app/lib/toast";
+import { Modal } from "@/app/lib/modal";
 
 /**
  * Tela de assinatura do dono.
@@ -347,12 +348,7 @@ export default function Assinatura({
       )}
 
       {/* Confirmar troca de plano */}
-      {confirmarPlano && (
-        <div
-          style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.75)", overflowY: "auto" }}
-          onClick={() => setConfirmarPlano(null)}
-        >
-          <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+      <Modal aberto={!!confirmarPlano} onFechar={() => setConfirmarPlano(null)}>{confirmarPlano && (<>
             <div>
               <p className="text-xs text-brand-400 uppercase tracking-widest mb-1">Mudar de plano</p>
               <h3 className="text-xl font-semibold text-white">Plano {confirmarPlano.rotulo}</h3>
@@ -408,17 +404,10 @@ export default function Assinatura({
             >
               Deixar como está
             </button>
-          </div>
-        </div>
-      )}
+          </>)}</Modal>
 
       {/* Confirmar cancelamento */}
-      {confirmarCancelar && (
-        <div
-          style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.75)", overflowY: "auto" }}
-          onClick={() => setConfirmarCancelar(false)}
-        >
-          <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+      <Modal aberto={!!confirmarCancelar} onFechar={() => setConfirmarCancelar(false)}>{confirmarCancelar && (<>
             <h3 className="text-xl font-semibold text-white">Cancelar assinatura?</h3>
             <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-2">
               <p className="text-sm text-gray-300">
@@ -446,9 +435,7 @@ export default function Assinatura({
             >
               Continuar assinando
             </button>
-          </div>
-        </div>
-      )}
+          </>)}</Modal>
 
       {/* Cancelar / reativar */}
       {situacao.podeGerenciar && situacao.estado !== "cortesia" && (

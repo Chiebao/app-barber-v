@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/app/lib/toast";
+import { Modal } from "@/app/lib/modal";
 
 const CORTES = [
   { name: "Degrade", category: "corte", duration: 30, price: 35 },
@@ -395,9 +396,7 @@ export default function AdminPage() {
         )}
 
         {/* Modal: Esqueci senha — self-service com código de recuperação */}
-        {forgotOpen && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.7)", overflowY: "auto" }} onClick={closeForgot}>
-            <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={(e) => e.stopPropagation()}>
+        <Modal aberto={!!forgotOpen} onFechar={closeForgot}>{forgotOpen && (<>
 
               {/* ─── Caminho principal: código por WhatsApp ─── */}
               {!usarCodigoRecuperacao && forgotEtapa === "telefone" && (
@@ -521,9 +520,7 @@ export default function AdminPage() {
               <button onClick={closeForgot} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
                 Voltar ao login
               </button>
-            </div>
-          </div>
-        )}
+            </>)}</Modal>
 
         {step === "register" && (
           <div className="animate-slide-up space-y-5">

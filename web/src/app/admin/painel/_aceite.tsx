@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/app/lib/toast";
+import { Modal } from "@/app/lib/modal";
 
 /**
  * Porta de entrada do painel quando falta aceitar os termos.
@@ -69,14 +70,10 @@ export default function Aceite({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-        zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 16, background: "rgba(0,0,0,0.88)", overflowY: "auto",
-      }}
-    >
-      <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-md w-full p-6 space-y-5 my-auto">
+    // Bloqueante: o aceite não é uma sugestão, e clicar fora não pode
+    // servir de saída.
+    <Modal aberto onFechar={() => {}} bloqueante largura="max-w-md">
+
         <div>
           <p className="text-xs text-brand-400 uppercase tracking-widest mb-2">
             {estado.primeiraVez ? "Antes de continuar" : "Termos atualizados"}
@@ -156,7 +153,6 @@ export default function Aceite({
           Registramos a data e a versão do seu aceite. Seus dados e sua agenda
           continuam intactos.
         </p>
-      </div>
-    </div>
+    </Modal>
   );
 }
