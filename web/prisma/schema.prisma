@@ -427,7 +427,11 @@ model SubscriptionInvoice {
   pagaEm     DateTime?
   metodo     String?
 
-  /// Cobrança Pix no Mercado Pago — o webhook reencontra por aqui.
+  /// Quem processou: "infinitepay" ou "mercadopago".
+  provedor      String?
+  /// Link de checkout que o dono abre para pagar.
+  linkPagamento String?
+  /// Identificador da transação no provedor — o webhook reencontra por aqui.
   mpPaymentId  String? @unique
   copiaECola   String?
   qrCodeBase64 String?

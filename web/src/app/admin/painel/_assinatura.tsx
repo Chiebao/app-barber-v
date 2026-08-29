@@ -59,6 +59,8 @@ export default function Assinatura({
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [gerando, setGerando] = useState(false);
+  const [cobranca, setCobranca] = useState<{ id: string; valor: number; link: string } | null>(null);
 
   const buscar = useCallback(async () => {
     if (!token) return;
@@ -95,6 +97,33 @@ export default function Assinatura({
       toast.error("Erro de conexão");
     } finally {
       setSalvando(false);
+    }
+  };
+
+  /**
+   * Gera a cobrança do ciclo e abre o checkout.
+   *
+   * O link abre em aba nova de propósito: o barbeiro volta para o painel e
+   * encontra tudo como deixou, em vez de perder o contexto no meio do
+   * pagamento.
+   */
+  const pagarAgora = async () => {
+    if (!token) return;
+    setGerando(true);
+    try {
+      const res = await fetch("/api/me/assinatura/cobranca", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) { onUnauthorized(); return; }
+      const d = await res.json();
+      if (!res.ok) { toast.error(d.error || "Não foi possível gerar a cobrança"); return; }
+      setCobranca(d.cobranca);
+      window.open(d.cobranca.link, "_blank");
+    } catch {
+      toast.error("Erro de conexão");
+    } finally {
+      setGerando(false);
     }
   };
 
@@ -157,6 +186,53 @@ export default function Assinatura({
 
         {situacao.aviso && <p className="text-sm text-gray-300 mt-2">{situacao.aviso}</p>}
       </div>
+
+      {/* Pagar. Só aparece quando faz sentido: em cortesia não há cobrança,
+          e no meio de um período pago não há o que acertar. */}
+      {situacao.podeGerenciar &&
+        situacao.estado !== "cortesia" &&
+        (situacao.estado !== "ativa" || situacao.diasRestantes <= 7) && (
+        <div className="rounded-xl bg-dark-800 border border-brand-400/40 p-4 space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-sm text-gray-300">
+              {situacao.estado === "trial" ? "Assinar agora" : "Renovar assinatura"}
+            </p>
+            <p className="text-lg font-semibold text-white tabular-nums">{BRL(situacao.valorCiclo)}</p>
+          </div>
+
+          <button
+            onClick={pagarAgora}
+            disabled={gerando}
+            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all press-scale"
+          >
+            {gerando ? "Gerando cobrança..." : "Pagar com Pix ou cartão"}
+          </button>
+
+          {cobranca && (
+            <div className="space-y-2 pt-1">
+              <p className="text-xs text-gray-400">
+                A página de pagamento abriu em outra aba. Se não abriu, use o link:
+              </p>
+              <a
+                href={cobranca.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-xs text-brand-400 truncate"
+              >
+                {cobranca.link}
+              </a>
+              <p className="text-xs text-gray-500">
+                Assim que o pagamento cair, sua assinatura é liberada sozinha — não precisa
+                avisar ninguém.
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-500">
+            Pix ou cartão. No cartão, compromete apenas {BRL(situacao.valorCiclo)} do seu limite.
+          </p>
+        </div>
+      )}
 
       {/* O que acontece se eu não pagar — dito antes de ele perguntar */}
       {situacao.estado !== "cortesia" && (
