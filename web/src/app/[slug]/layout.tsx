@@ -8,28 +8,44 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const shop = await prisma.shop.findUnique({
     where: { slug: params.slug },
-    select: { name: true, slug: true },
+    select: { name: true, slug: true, logoUrl: true, colorTheme: true, city: true, state: true },
   });
 
   if (!shop) {
     return { title: "Barbearia não encontrada" };
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://barberpro-black.vercel.app").replace(/\/+$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://barberpro-mauve.vercel.app").replace(/\/+$/, "");
   const url = `${baseUrl}/${shop.slug}`;
 
+  const cidade = [shop.city, shop.state].filter(Boolean).join("/");
+
+  // A imagem carrega a logo e a paleta da barbearia — é o cartão que o
+  // cliente vê no WhatsApp, e ele deve parecer da barbearia, não da
+  // plataforma.
+  const og = new URLSearchParams({ shop: shop.name, tema: shop.colorTheme });
+  if (shop.logoUrl) og.set("logo", shop.logoUrl);
+  if (cidade) og.set("cidade", cidade);
+  const imagem = `${baseUrl}/api/og?${og.toString()}`;
+
+  // Descrição curta de propósito: no cartão do WhatsApp, cada linha de texto
+  // abaixo da imagem empurra a imagem para cima e deixa o preview mais
+  // parecido com propaganda. O nome da barbearia já está DENTRO da imagem.
+  const descricao = cidade ? `Agende seu horário · ${cidade}` : "Agende seu horário";
+
   return {
-    title: `${shop.name} — Agende seu corte online`,
-    description: `Agende seu corte em ${shop.name} de forma rápida e fácil. Escolha o profissional, horário e serviço que preferir.`,
+    title: shop.name,
+    description: descricao,
     openGraph: {
-      title: `✂️ ${shop.name} — Agende seu corte online`,
-      description: `Agende em ${shop.name} de forma rápida e fácil. Escolha o profissional, horário e serviço.`,
+      title: shop.name,
+      description: descricao,
       url,
-      siteName: "BarberPro",
+      siteName: shop.name,
+      locale: "pt_BR",
       type: "website",
       images: [
         {
-          url: `${baseUrl}/api/og?shop=${encodeURIComponent(shop.name)}`,
+          url: imagem,
           width: 1200,
           height: 630,
           alt: `Agende em ${shop.name}`,
@@ -38,9 +54,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `✂️ ${shop.name} — Agende online`,
-      description: `Agende seu corte em ${shop.name}.`,
-      images: [`${baseUrl}/api/og?shop=${encodeURIComponent(shop.name)}`],
+      title: shop.name,
+      description: descricao,
+      images: [imagem],
     },
   };
 }

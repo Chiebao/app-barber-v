@@ -64,7 +64,26 @@ export async function GET(req: NextRequest) {
     const allSlots = generateTimeSlots(
       shop.openTime, shop.closeTime, shop.slotInterval, [], shop.slotInterval,
     );
-    const bookedTimes = appointments.map((a) => a.startTime);
+    // Um atendimento ocupa TODOS os blocos que ele atravessa, não só o de
+    // início. Com passo de 30 min e um corte de 1h marcado às 08:00, o
+    // barbeiro via 08:30 verde na própria agenda e podia encaixar alguém
+    // por cima de si mesmo. A página do cliente já respeitava a duração —
+    // era só o painel que mostrava errado.
+    const emMinutos = (hhmm: string) => {
+      const [h, m] = hhmm.split(":").map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+
+    const bookedTimes = allSlots.filter((slot) => {
+      const inicio = emMinutos(slot);
+      const fim = inicio + shop.slotInterval;
+      return appointments.some((a) => {
+        const aInicio = emMinutos(a.startTime);
+        // endTime pode faltar em registro antigo — cai na duração do bloco
+        const aFim = a.endTime ? emMinutos(a.endTime) : aInicio + shop.slotInterval;
+        return inicio < aFim && fim > aInicio;
+      });
+    });
 
     return NextResponse.json({
       allSlots,

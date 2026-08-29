@@ -177,3 +177,56 @@ test.describe("A receber", () => {
     expect(depois.total).toBeCloseTo(antes.total - alvo.total, 2);
   });
 });
+
+test.describe("Duração ocupa os blocos seguintes", () => {
+  let loja: Loja;
+  const CLIENTE = "11966660030";
+
+  test.beforeAll(async ({ request }) => {
+    loja = await criarLoja(request, { abre: "08:00", fecha: "12:00" });
+    // Serviço de 1h numa agenda de 30 em 30
+    await request.post(`${BASE}/api/me/services`, {
+      headers: loja.auth,
+      data: { name: "Corte 1h", duration: 60, price: 80, category: "corte" },
+    });
+  });
+
+  test.afterAll(async () => {
+    await apagarLoja(loja);
+    await apagarClientes([CLIENTE]);
+    await fecharDb();
+  });
+
+  test("um corte de 1h fecha o bloco de 30 seguinte, no cliente e no painel", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    const servico = await db().service.findFirstOrThrow({ where: { shopId: loja.shopId, duration: 60 } });
+    const dia = diaISO(1);
+
+    const ag = await request.post(`${BASE}/api/appointments`, {
+      data: {
+        shopId: loja.shopId, barberId: loja.barbeiroDonoId,
+        clientName: "Cliente", clientPhone: CLIENTE,
+        serviceIds: [servico.id], date: dia, startTime: "08:00",
+      },
+    });
+    expect(ag.ok()).toBeTruthy();
+
+    // Página do cliente: 08:00 e 08:30 saem, 09:00 fica
+    const r = await request.get(`${BASE}/api/shops/${loja.slug}/slots?date=${dia}&duration=30&barberId=${loja.barbeiroDonoId}`);
+    const { slots } = await r.json();
+    expect(slots).not.toContain("08:00");
+    expect(slots).not.toContain("08:30");
+    expect(slots).toContain("09:00");
+
+    // Painel: o barbeiro precisa ver os DOIS blocos ocupados, senão encaixa
+    // alguém por cima de si mesmo
+    const painel = await request.get(
+      `${BASE}/api/me/blocked-slots?date=${dia}&barberId=${loja.barbeiroDonoId}`,
+      { headers: loja.auth },
+    );
+    const d = await painel.json();
+    expect(d.booked).toContain("08:00");
+    expect(d.booked).toContain("08:30");
+    expect(d.booked).not.toContain("09:00");
+  });
+});

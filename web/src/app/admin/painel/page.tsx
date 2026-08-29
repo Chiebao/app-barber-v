@@ -1008,6 +1008,30 @@ export default function PainelPage() {
     } catch { toast.error("Erro ao alterar senha"); } finally { setChangingPassword(false); }
   };
 
+  /**
+   * Compartilhar o link.
+   *
+   * No celular, o menu nativo é o certo: o barbeiro escolhe WhatsApp,
+   * Instagram, ou o contato que quiser, sem sair do app. Onde não existe
+   * (desktop, navegador antigo), cai no WhatsApp Web, que é para onde ele
+   * ia de qualquer jeito.
+   */
+  const compartilharLink = async () => {
+    const texto = `Agende seu horário na ${user?.shopName || "barbearia"} pelo link:`;
+    const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+
+    if (nav.share) {
+      try {
+        await nav.share({ title: user?.shopName || "Agendamento", text: texto, url: bookingLink });
+        return;
+      } catch (e) {
+        // Cancelar o menu nativo não é erro — só não faz nada
+        if ((e as Error)?.name === "AbortError") return;
+      }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto + " " + bookingLink)}`, "_blank");
+  };
+
   const handleLogout = () => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); localStorage.removeItem("admin_token_renewed_at"); router.push("/admin"); };
 
   const isAppointmentPast = (dateStr: string, startTime: string) => {
@@ -1704,8 +1728,19 @@ export default function PainelPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-brand-400 truncate">{bookingLink}</div>
-            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg bg-brand-500 text-dark-900 font-semibold px-4 py-2 text-sm hover:bg-brand-400 transition whitespace-nowrap">{linkCopied ? "✓ Copiado!" : "Copiar"}</button>
+            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg border border-gray-700 text-gray-300 font-semibold px-3 py-2 text-sm hover:text-white transition whitespace-nowrap">{linkCopied ? "✓" : "Copiar"}</button>
           </div>
+
+          <button
+            onClick={compartilharLink}
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-brand-500 text-dark-900 font-semibold py-2.5 text-sm hover:bg-brand-400 transition press-scale"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M22 2 11 13" />
+              <path d="M22 2 15 22l-4-9-9-4 20-7z" />
+            </svg>
+            Compartilhar link
+          </button>
           <div className="flex flex-col items-center gap-3">
             <div ref={qrRef} className="bg-white rounded-xl p-4"><QRCodeCanvas value={bookingLink} size={180} level="H" includeMargin={false} /></div>
             <button onClick={() => { const canvas = qrRef.current?.querySelector("canvas"); if (!canvas) return; const link = document.createElement("a"); link.download = `qrcode-${user.shopSlug}.png`; link.href = canvas.toDataURL("image/png"); link.click(); }} className="border border-gray-700 text-gray-300 rounded-lg px-4 py-2 text-sm hover:text-white transition">⬇️ Baixar QR Code</button>

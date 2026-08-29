@@ -3,8 +3,37 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
+/**
+ * Imagem do link quando ele é compartilhado no WhatsApp.
+ *
+ * É a primeira coisa que o cliente vê da barbearia — muitas vezes antes do
+ * site. Então mostra a LOGO dela, não um ícone genérico de tesoura, e usa a
+ * paleta que o dono escolheu.
+ *
+ * Edge runtime: sem Prisma aqui. Os dados chegam por query string, montados
+ * pelo layout do slug, que tem acesso ao banco.
+ */
+
+/** Paletas espelhadas de palettes.ts — o Edge não importa o módulo do app. */
+const PALETAS: Record<string, { brand: string; fundo: string; fundo2: string }> = {
+  midnight_gold: { brand: "#c9a96e", fundo: "#0B0B14", fundo2: "#161625" },
+  deep_emerald: { brand: "#10b981", fundo: "#081A10", fundo2: "#0F2A1B" },
+  royal_amethyst: { brand: "#a78bfa", fundo: "#12081A", fundo2: "#1E1030" },
+  warm_parchment: { brand: "#b45309", fundo: "#FAF6EF", fundo2: "#F0E8DA" },
+  clean_stone: { brand: "#475569", fundo: "#F8FAFC", fundo2: "#E9EEF4" },
+};
+
 export async function GET(req: NextRequest) {
-  const shopName = req.nextUrl.searchParams.get("shop") || "BarberPro";
+  const p = req.nextUrl.searchParams;
+  const nome = p.get("shop") || "BarberPro";
+  const logo = p.get("logo");
+  const cidade = p.get("cidade");
+  const tema = PALETAS[p.get("tema") || "midnight_gold"] || PALETAS.midnight_gold;
+
+  // Fundo claro pede texto escuro — senão o nome some no cartão do WhatsApp
+  const claro = tema.fundo.toUpperCase() > "#800000";
+  const corTexto = claro ? "#1A1A1F" : "#F5F5F7";
+  const corSuave = claro ? "#6B6B75" : "#8B8FA3";
 
   return new ImageResponse(
     (
@@ -16,96 +45,105 @@ export async function GET(req: NextRequest) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)",
+          background: `linear-gradient(135deg, ${tema.fundo} 0%, ${tema.fundo2} 55%, ${tema.fundo} 100%)`,
           fontFamily: "sans-serif",
+          position: "relative",
         }}
       >
-        {/* Top decorative line */}
+        {/* Fio dourado no topo — a moldura da barbearia */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: 6,
-            background: "linear-gradient(90deg, transparent, #f59e0b, transparent)",
+            height: 8,
+            background: `linear-gradient(90deg, transparent, ${tema.brand}, transparent)`,
           }}
         />
 
-        {/* Scissors icon */}
-        <div
-          style={{
-            fontSize: 72,
-            marginBottom: 16,
-          }}
-        >
-          ✂️
-        </div>
-
-        {/* Shop name */}
-        <div
-          style={{
-            fontSize: 56,
-            fontWeight: 800,
-            color: "#f59e0b",
-            textAlign: "center",
-            maxWidth: "80%",
-            lineHeight: 1.2,
-          }}
-        >
-          {shopName}
-        </div>
-
-        {/* Subtitle */}
-        <div
-          style={{
-            fontSize: 28,
-            color: "#9ca3af",
-            marginTop: 20,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          Agende seu corte online
-        </div>
-
-        {/* CTA badge */}
-        <div
-          style={{
-            marginTop: 40,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            background: "rgba(245, 158, 11, 0.15)",
-            border: "2px solid rgba(245, 158, 11, 0.4)",
-            borderRadius: 16,
-            padding: "14px 32px",
-          }}
-        >
-          <div style={{ fontSize: 22, color: "#f59e0b", fontWeight: 700 }}>
-            📱 Toque para agendar
+        {logo ? (
+          <img
+            src={logo}
+            width={190}
+            height={190}
+            style={{
+              width: 190,
+              height: 190,
+              borderRadius: 999,
+              objectFit: "cover",
+              border: `5px solid ${tema.brand}`,
+              marginBottom: 32,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 190,
+              height: 190,
+              borderRadius: 999,
+              border: `5px solid ${tema.brand}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 84,
+              marginBottom: 32,
+              background: tema.fundo2,
+            }}
+          >
+            ✂️
           </div>
+        )}
+
+        <div
+          style={{
+            fontSize: 60,
+            fontWeight: 700,
+            color: corTexto,
+            textAlign: "center",
+            maxWidth: "84%",
+            lineHeight: 1.15,
+            display: "flex",
+          }}
+        >
+          {nome}
         </div>
 
-        {/* Bottom branding */}
+        {cidade && (
+          <div style={{ fontSize: 28, color: corSuave, marginTop: 14, display: "flex" }}>
+            {cidade}
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 36,
+            padding: "16px 44px",
+            borderRadius: 999,
+            background: tema.brand,
+            color: claro ? "#FFFFFF" : "#14121B",
+            fontSize: 30,
+            fontWeight: 700,
+            display: "flex",
+          }}
+        >
+          Agendar horário
+        </div>
+
         <div
           style={{
             position: "absolute",
-            bottom: 30,
+            bottom: 34,
+            fontSize: 20,
+            color: corSuave,
+            letterSpacing: 3,
             display: "flex",
-            alignItems: "center",
-            gap: 8,
           }}
         >
-          <div style={{ fontSize: 16, color: "#6b7280" }}>Powered by</div>
-          <div style={{ fontSize: 18, color: "#9ca3af", fontWeight: 700 }}>BarberPro</div>
+          BARBERPRO
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    { width: 1200, height: 630 },
   );
 }
