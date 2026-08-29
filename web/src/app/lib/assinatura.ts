@@ -10,10 +10,44 @@ import { num } from "@/app/lib/money";
  * decidido no momento em que alguém pede, não no momento em que um job passou.
  */
 
+/**
+ * Planos.
+ *
+ * Dois números diferentes governam um plano, e confundir os dois é o que
+ * gerava o mal-entendido:
+ *
+ *   mesesCobranca  — quanto tempo CADA cobrança compra. É por ele que o
+ *                    vencimento avança e é ele que define o valor do link.
+ *   compromisso    — o tamanho do plano. Serve para explicar e para dar
+ *                    desconto; não afeta a cobrança.
+ *
+ * Um "Anual pago todo mês" tem compromisso 12 e cobrança 1: o barbeiro paga
+ * R$ 59,90 por mês com preço de anual, em vez de R$ 598,80 de uma vez.
+ *
+ * Quem paga à vista ganha mais desconto porque entrega dinheiro E certeza —
+ * é o que justifica a diferença entre 59,90 e 49,90.
+ */
 export const PLANOS = {
-  mensal: { meses: 1, mensal: 79.9, rotulo: "Mensal" },
-  semestral: { meses: 6, mensal: 64.9, rotulo: "Semestral" },
-  anual: { meses: 12, mensal: 49.9, rotulo: "Anual" },
+  mensal: {
+    mensal: 79.9, mesesCobranca: 1, compromisso: 1,
+    rotulo: "Mensal", comoPaga: "todo mês",
+  },
+  semestral_mensal: {
+    mensal: 69.9, mesesCobranca: 1, compromisso: 6,
+    rotulo: "Semestral", comoPaga: "todo mês",
+  },
+  semestral: {
+    mensal: 64.9, mesesCobranca: 6, compromisso: 6,
+    rotulo: "Semestral", comoPaga: "à vista",
+  },
+  anual_mensal: {
+    mensal: 59.9, mesesCobranca: 1, compromisso: 12,
+    rotulo: "Anual", comoPaga: "todo mês",
+  },
+  anual: {
+    mensal: 49.9, mesesCobranca: 12, compromisso: 12,
+    rotulo: "Anual", comoPaga: "à vista",
+  },
 } as const;
 
 export type PlanoId = keyof typeof PLANOS;
@@ -58,17 +92,17 @@ function diasEntre(de: Date, ate: Date): number {
   return Math.ceil((ate.getTime() - de.getTime()) / 86_400_000);
 }
 
-/** Valor cobrado num ciclo do plano (o semestral cobra os 6 meses de uma vez). */
+/** Quanto sai em CADA cobrança — não o total do compromisso. */
 export function valorDoCiclo(plano: PlanoId): number {
   const p = PLANOS[plano];
-  return Math.round(p.mensal * p.meses * 100) / 100;
+  return Math.round(p.mensal * p.mesesCobranca * 100) / 100;
 }
 
-/** Soma os meses do plano a uma data, respeitando fim de mês. */
+/** Soma à data o tempo que a cobrança comprou, respeitando fim de mês. */
 export function proximoVencimento(de: Date, plano: PlanoId): Date {
   const d = new Date(de);
   const diaOriginal = d.getDate();
-  d.setMonth(d.getMonth() + PLANOS[plano].meses);
+  d.setMonth(d.getMonth() + PLANOS[plano].mesesCobranca);
   // 31 de janeiro + 1 mês vira 3 de março se não corrigir
   if (d.getDate() !== diaOriginal) d.setDate(0);
   return d;

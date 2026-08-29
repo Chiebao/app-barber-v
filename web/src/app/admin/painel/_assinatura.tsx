@@ -27,8 +27,10 @@ interface Situacao {
 }
 
 interface Plano {
-  id: string; rotulo: string; meses: number;
-  mensal: number; total: number; economiaMensal: number;
+  id: string; rotulo: string; comoPaga: string;
+  compromisso: number; mesesCobranca: number;
+  mensal: number; porCobranca: number; totalCompromisso: number;
+  economiaMensal: number;
 }
 
 interface Cobranca {
@@ -242,45 +244,76 @@ export default function Assinatura({
         </div>
       )}
 
-      {/* Planos */}
+      {/* Planos.
+          Agrupados por COMPROMISSO, não por preço: o barbeiro decide primeiro
+          por quanto tempo quer se comprometer, e só então como quer pagar.
+          Cinco cartões soltos numa lista ele não compara. */}
       {situacao.podeGerenciar && situacao.estado !== "cortesia" && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <p className="text-xs text-gray-500 uppercase tracking-widest">Planos</p>
-          {planos.map((p) => {
-            const atual = p.id === situacao.plano;
+
+          {[1, 6, 12].map((meses) => {
+            const doGrupo = planos.filter(p => p.compromisso === meses);
+            if (doGrupo.length === 0) return null;
+            const titulo = meses === 1 ? "Sem compromisso" : meses === 6 ? "Semestral" : "Anual";
+            const melhor = doGrupo.reduce((a, b) => (a.mensal <= b.mensal ? a : b));
+
             return (
-              <button
-                key={p.id}
-                onClick={() => trocarPlano(p)}
-                disabled={salvando || atual}
-                className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition ${
-                  atual
-                    ? "border-brand-400 bg-brand-500/10"
-                    : "border-gray-700 bg-dark-800 hover:border-brand-400/60"
-                } disabled:cursor-default`}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold ${atual ? "text-brand-400" : "text-white"}`}>
-                    {p.rotulo}
-                    {atual && <span className="ml-2 text-xs font-normal">· seu plano</span>}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {p.meses === 1
-                      ? "cobrado todo mês"
-                      : `${BRL(p.total)} a cada ${p.meses} meses`}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-semibold text-white tabular-nums">{BRL(p.mensal)}</p>
-                  <p className="text-xs text-gray-500">por mês</p>
-                  {p.economiaMensal > 0 && (
-                    <p className="text-xs text-green-400">economiza {BRL(p.economiaMensal)}/mês</p>
+              <div key={meses} className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-sm font-semibold text-white">{titulo}</p>
+                  {meses === 12 && (
+                    <span className="text-[10px] uppercase tracking-wide text-brand-400 border border-brand-400/40 rounded px-1.5 py-0.5">
+                      mais barato
+                    </span>
                   )}
                 </div>
-              </button>
+
+                {doGrupo.map((p) => {
+                  const atual = p.id === situacao.plano;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => trocarPlano(p)}
+                      disabled={salvando || atual}
+                      className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition ${
+                        atual
+                          ? "border-brand-400 bg-brand-500/10"
+                          : "border-gray-700 bg-dark-800 hover:border-brand-400/60"
+                      } disabled:cursor-default`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold ${atual ? "text-brand-400" : "text-white"}`}>
+                          Pagando {p.comoPaga}
+                          {atual && <span className="ml-2 text-xs font-normal">· seu plano</span>}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {p.mesesCobranca === 1
+                            ? `${BRL(p.porCobranca)} por mês`
+                            : `${BRL(p.porCobranca)} de uma vez, cobre ${p.mesesCobranca} meses`}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-lg font-semibold text-white tabular-nums">{BRL(p.mensal)}</p>
+                        <p className="text-xs text-gray-500">por mês</p>
+                        {p.economiaMensal > 0 && (
+                          <p className="text-xs text-green-400 tabular-nums">−{BRL(p.economiaMensal)}/mês</p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {meses > 1 && (
+                  <p className="text-xs text-gray-600 pl-1">
+                    À vista sai {BRL(melhor.mensal)}/mês porque você adianta o período inteiro.
+                  </p>
+                )}
+              </div>
             );
           })}
-          <p className="text-xs text-gray-500 pt-1">
+
+          <p className="text-xs text-gray-500">
             Preço fixo por barbearia — vale para 1 ou 10 barbeiros.
           </p>
         </div>
@@ -334,16 +367,23 @@ export default function Assinatura({
               </div>
               <div className="border-t border-gray-700/60 pt-3 flex items-baseline justify-between">
                 <span className="text-sm text-gray-400">
-                  {confirmarPlano.meses === 1 ? "Cobrado todo mês" : `Cobrado a cada ${confirmarPlano.meses} meses`}
+                  {confirmarPlano.mesesCobranca === 1
+                    ? "Você paga todo mês"
+                    : `Você paga uma vez a cada ${confirmarPlano.mesesCobranca} meses`}
                 </span>
-                <span className="text-lg font-semibold text-white tabular-nums">{BRL(confirmarPlano.total)}</span>
+                <span className="text-lg font-semibold text-white tabular-nums">{BRL(confirmarPlano.porCobranca)}</span>
               </div>
-              {confirmarPlano.meses > 1 && (
+              {confirmarPlano.mesesCobranca > 1 ? (
                 <p className="text-xs text-gray-500">
-                  É um pagamento único de {BRL(confirmarPlano.total)} que cobre {confirmarPlano.meses} meses —
-                  não é uma mensalidade de {BRL(confirmarPlano.mensal)}.
+                  É um pagamento único de {BRL(confirmarPlano.porCobranca)} que cobre{" "}
+                  {confirmarPlano.mesesCobranca} meses — não é uma mensalidade de {BRL(confirmarPlano.mensal)}.
                 </p>
-              )}
+              ) : confirmarPlano.compromisso > 1 ? (
+                <p className="text-xs text-gray-500">
+                  Preço de plano {confirmarPlano.compromisso === 12 ? "anual" : "semestral"}, mas cobrado
+                  mês a mês — sem desembolsar {BRL(confirmarPlano.totalCompromisso)} de uma vez.
+                </p>
+              ) : null}
               {confirmarPlano.economiaMensal > 0 && (
                 <p className="text-xs text-green-400">
                   Economiza {BRL(confirmarPlano.economiaMensal)} por mês em relação ao mensal.

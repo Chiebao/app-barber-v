@@ -54,10 +54,14 @@ export async function GET(req: NextRequest) {
       planos: (Object.keys(PLANOS) as PlanoId[]).map((id) => ({
         id,
         rotulo: PLANOS[id].rotulo,
-        meses: PLANOS[id].meses,
+        comoPaga: PLANOS[id].comoPaga,
+        compromisso: PLANOS[id].compromisso,
+        mesesCobranca: PLANOS[id].mesesCobranca,
         mensal: PLANOS[id].mensal,
-        total: valorDoCiclo(id),
-        // Quanto se economiza por mês contra o plano mensal
+        // O que sai em CADA cobrança
+        porCobranca: valorDoCiclo(id),
+        // O que o compromisso inteiro custa — para comparar honestamente
+        totalCompromisso: Math.round(PLANOS[id].mensal * PLANOS[id].compromisso * 100) / 100,
         economiaMensal: Math.round((PLANOS.mensal.mensal - PLANOS[id].mensal) * 100) / 100,
       })),
       cobrancas: (assinatura?.cobrancas ?? []).map((c) => ({
