@@ -45,11 +45,14 @@ export function Modal({
   useEffect(() => {
     if (!aberto) return;
     const aoTeclar = (e: KeyboardEvent) => { if (e.key === "Escape" && !bloqueante) onFechar(); };
-    const overflowAntes = document.body.style.overflow;
+    const janela = window as unknown as { __modaisAbertos?: number };
+    janela.__modaisAbertos = (janela.__modaisAbertos || 0) + 1;
+    const overflowAntes = janela.__modaisAbertos === 1 ? document.body.style.overflow : null;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", aoTeclar);
     return () => {
-      document.body.style.overflow = overflowAntes;
+      janela.__modaisAbertos = Math.max(0, (janela.__modaisAbertos || 1) - 1);
+      if (janela.__modaisAbertos === 0) document.body.style.overflow = overflowAntes ?? "";
       window.removeEventListener("keydown", aoTeclar);
     };
   }, [aberto, onFechar, bloqueante]);

@@ -68,14 +68,19 @@ body > * {
   z-index: 1;
 }
 
-/* ── Glass Effect ───────────────────────────────────────────────────────── */
-.bg-dark-800 {
+/* ── Efeito de vidro ─────────────────────────────────────────────────────
+   O :not(body) nao e enfeite. O backdrop-filter cria um containing block
+   para descendentes com position: fixed — e como o <body> carrega
+   .bg-dark-900, TODA a pagina virava esse bloco e nenhum modal conseguia
+   se posicionar pela tela. Alem disso, desfocar o fundo do body nao faz
+   nada: nao ha nada atras dele. */
+.bg-dark-800:not(body) {
   background-color: rgba(18, 16, 32, 0.74) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-.bg-dark-900 {
+.bg-dark-900:not(body) {
   background-color: rgba(8, 6, 18, 0.82) !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
