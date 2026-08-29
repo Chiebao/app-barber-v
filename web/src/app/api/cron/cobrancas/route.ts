@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
         data: {
           subscriptionId: a.id,
           valor,
+          plano,
           status: "pendente",
           vencimento: a.periodoFim > agora ? a.periodoFim : agora,
           provedor: "infinitepay",

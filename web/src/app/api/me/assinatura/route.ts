@@ -111,10 +111,20 @@ export async function PATCH(req: NextRequest) {
       }
       // A troca vale a partir da próxima cobrança — o período já pago não
       // muda de preço no meio do caminho, para nenhum dos dois lados.
-      await prisma.subscription.update({
-        where: { shopId: payload.shopId },
-        data: { plano, valorCiclo: valorDoCiclo(plano as PlanoId) },
-      });
+      //
+      // Cobrança aberta do plano anterior é cancelada junto: ela foi gerada
+      // com outro preço, e deixar viva significaria oferecer um link antigo
+      // que entrega o plano novo.
+      await prisma.$transaction([
+        prisma.subscription.update({
+          where: { shopId: payload.shopId },
+          data: { plano, valorCiclo: valorDoCiclo(plano as PlanoId) },
+        }),
+        prisma.subscriptionInvoice.updateMany({
+          where: { subscriptionId: atual.id, status: "pendente", plano: { not: plano } },
+          data: { status: "cancelada" },
+        }),
+      ]);
       return NextResponse.json({
         ok: true,
         mensagem: `Plano alterado para ${PLANOS[plano as PlanoId].rotulo}. Vale a partir da próxima cobrança.`,

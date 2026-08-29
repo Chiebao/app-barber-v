@@ -61,6 +61,10 @@ export default function Assinatura({
   const [salvando, setSalvando] = useState(false);
   const [gerando, setGerando] = useState(false);
   const [cobranca, setCobranca] = useState<{ id: string; valor: number; link: string } | null>(null);
+  // Confirmações em modal do app. O confirm() do navegador rompe o visual e
+  // no celular parece notificação do sistema, não parte do produto.
+  const [confirmarPlano, setConfirmarPlano] = useState<Plano | null>(null);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false);
 
   const buscar = useCallback(async () => {
     if (!token) return;
@@ -129,22 +133,7 @@ export default function Assinatura({
 
   const trocarPlano = (p: Plano) => {
     if (p.id === situacao?.plano) return;
-    if (!confirm(
-      `Mudar para o plano ${p.rotulo}?\n\n` +
-      `${BRL(p.mensal)} por mês, cobrado ${BRL(p.total)} a cada ${p.meses} ${p.meses === 1 ? "mês" : "meses"}.\n\n` +
-      `Vale a partir da próxima cobrança — o período que você já pagou não muda.`
-    )) return;
-    alterar({ plano: p.id });
-  };
-
-  const cancelar = () => {
-    if (!confirm(
-      "Cancelar a assinatura?\n\n" +
-      "Você continua com acesso normal até o fim do período já pago. " +
-      "Depois disso a agenda para de aceitar agendamento novo.\n\n" +
-      "Dá para reativar a qualquer momento."
-    )) return;
-    alterar({ cancelar: true });
+    setConfirmarPlano(p);
   };
 
   if (carregando) {
@@ -324,6 +313,103 @@ export default function Assinatura({
         </div>
       )}
 
+      {/* Confirmar troca de plano */}
+      {confirmarPlano && (
+        <div
+          style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.75)", overflowY: "auto" }}
+          onClick={() => setConfirmarPlano(null)}
+        >
+          <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+            <div>
+              <p className="text-xs text-brand-400 uppercase tracking-widest mb-1">Mudar de plano</p>
+              <h3 className="text-xl font-semibold text-white">Plano {confirmarPlano.rotulo}</h3>
+            </div>
+
+            <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-gray-400">Sai por</span>
+                <span className="text-2xl font-semibold text-brand-400 tabular-nums">
+                  {BRL(confirmarPlano.mensal)}<span className="text-sm font-normal text-gray-500">/mês</span>
+                </span>
+              </div>
+              <div className="border-t border-gray-700/60 pt-3 flex items-baseline justify-between">
+                <span className="text-sm text-gray-400">
+                  {confirmarPlano.meses === 1 ? "Cobrado todo mês" : `Cobrado a cada ${confirmarPlano.meses} meses`}
+                </span>
+                <span className="text-lg font-semibold text-white tabular-nums">{BRL(confirmarPlano.total)}</span>
+              </div>
+              {confirmarPlano.meses > 1 && (
+                <p className="text-xs text-gray-500">
+                  É um pagamento único de {BRL(confirmarPlano.total)} que cobre {confirmarPlano.meses} meses —
+                  não é uma mensalidade de {BRL(confirmarPlano.mensal)}.
+                </p>
+              )}
+              {confirmarPlano.economiaMensal > 0 && (
+                <p className="text-xs text-green-400">
+                  Economiza {BRL(confirmarPlano.economiaMensal)} por mês em relação ao mensal.
+                </p>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Vale a partir da próxima cobrança. O período que você já pagou não muda de preço.
+            </p>
+
+            <button
+              onClick={() => { const p = confirmarPlano; setConfirmarPlano(null); alterar({ plano: p.id }); }}
+              disabled={salvando}
+              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
+            >
+              {salvando ? "Alterando..." : `Mudar para ${confirmarPlano.rotulo}`}
+            </button>
+            <button
+              onClick={() => setConfirmarPlano(null)}
+              className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1"
+            >
+              Deixar como está
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmar cancelamento */}
+      {confirmarCancelar && (
+        <div
+          style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.75)", overflowY: "auto" }}
+          onClick={() => setConfirmarCancelar(false)}
+        >
+          <div className="bg-dark-800 border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 my-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold text-white">Cancelar assinatura?</h3>
+            <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-2">
+              <p className="text-sm text-gray-300">
+                <span className="text-green-400">•</span> Você continua com acesso normal até{" "}
+                <strong className="text-white">{vence}</strong>.
+              </p>
+              <p className="text-sm text-gray-300">
+                <span className="text-yellow-400">•</span> Depois disso o link para de aceitar agendamento novo.
+              </p>
+              <p className="text-sm text-gray-300">
+                <span className="text-green-400">•</span> Sua agenda e seu histórico continuam salvos.
+              </p>
+            </div>
+            <p className="text-xs text-gray-500">Dá para reativar a qualquer momento, sem taxa.</p>
+            <button
+              onClick={() => { setConfirmarCancelar(false); alterar({ cancelar: true }); }}
+              disabled={salvando}
+              className="w-full rounded-xl border border-red-500/40 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition"
+            >
+              {salvando ? "Cancelando..." : "Sim, cancelar"}
+            </button>
+            <button
+              onClick={() => setConfirmarCancelar(false)}
+              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition"
+            >
+              Continuar assinando
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Cancelar / reativar */}
       {situacao.podeGerenciar && situacao.estado !== "cortesia" && (
         <div className="pt-2">
@@ -337,7 +423,7 @@ export default function Assinatura({
             </button>
           ) : (
             <button
-              onClick={cancelar}
+              onClick={() => setConfirmarCancelar(true)}
               disabled={salvando}
               className="w-full text-sm text-gray-500 hover:text-red-400 disabled:opacity-50 transition py-2"
             >

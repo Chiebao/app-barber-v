@@ -323,3 +323,61 @@ test.describe("Intervalo da agenda", () => {
     await fecharDb();
   });
 });
+
+test.describe("Fatura é um contrato pelo plano dela", () => {
+  let loja: Loja;
+
+  test.beforeEach(async ({ request }) => { loja = await criarLoja(request); });
+  test.afterEach(async () => { await apagarLoja(loja); await fecharDb(); });
+
+  test("trocar de plano cancela a cobrança aberta do plano antigo", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+
+    // Gera no mensal
+    const r1 = await request.post(`${BASE}/api/me/assinatura/cobranca`, { headers: loja.auth });
+    expect(r1.ok()).toBeTruthy();
+    const c1 = (await r1.json()).cobranca;
+    expect(c1.valor).toBeCloseTo(79.9, 2);
+
+    // Troca para anual
+    const troca = await request.patch(`${BASE}/api/me/assinatura`, {
+      headers: loja.auth, data: { plano: "anual" },
+    });
+    expect(troca.ok()).toBeTruthy();
+
+    // A cobrança antiga não pode continuar viva: ela vale R$79,90 e o plano
+    // agora entrega 12 meses
+    const antiga = await db().subscriptionInvoice.findUniqueOrThrow({ where: { id: c1.id } });
+    expect(antiga.status).toBe("cancelada");
+  });
+
+  test("a nova cobrança sai com o valor do plano novo", async ({ request }) => {
+    await request.post(`${BASE}/api/me/assinatura/cobranca`, { headers: loja.auth });
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual" } });
+
+    const r = await request.post(`${BASE}/api/me/assinatura/cobranca`, { headers: loja.auth });
+    expect(r.ok()).toBeTruthy();
+    const c = (await r.json()).cobranca;
+    // 49,90 x 12
+    expect(c.valor).toBeCloseTo(598.8, 2);
+    expect(c.reaproveitada).toBe(false);
+  });
+
+  test("pagar uma fatura do mensal avança um mês, mesmo com o plano já em anual", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+
+    const r1 = await request.post(`${BASE}/api/me/assinatura/cobranca`, { headers: loja.auth });
+    const c1 = (await r1.json()).cobranca;
+    const fatura = await db().subscriptionInvoice.findUniqueOrThrow({ where: { id: c1.id } });
+    expect(fatura.plano).toBe("mensal");
+
+    // Troca o plano DEPOIS de a fatura existir
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual" } });
+
+    // A fatura guarda o plano que ela cobrou — é isso que impede pagar
+    // R$79,90 e receber doze meses
+    const depois = await db().subscriptionInvoice.findUniqueOrThrow({ where: { id: c1.id } });
+    expect(depois.plano).toBe("mensal");
+    expect(Number(depois.valor)).toBeCloseTo(79.9, 2);
+  });
+});

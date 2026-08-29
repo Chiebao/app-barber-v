@@ -66,7 +66,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, valorInsuficiente: true });
     }
 
-    const plano = (fatura.subscription.plano in PLANOS ? fatura.subscription.plano : "mensal") as PlanoId;
+    // O plano vem DA FATURA, não da assinatura.
+    //
+    // Sem isto havia um furo de dinheiro: gerava-se a cobrança no mensal
+    // (R$ 79,90), trocava-se para anual, pagava-se os R$ 79,90 e o webhook
+    // avançava doze meses. A fatura é um contrato por um valor E um período;
+    // trocar de plano depois não pode reescrever o que ela comprou.
+    const plano = (fatura.plano in PLANOS ? fatura.plano : "mensal") as PlanoId;
     const agora = new Date();
 
     // O novo período começa no fim do anterior quando ele ainda está em dia —

@@ -34,10 +34,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Esta barbearia não tem cobrança." }, { status: 400 });
     }
 
-    // Já existe cobrança aberta e recente? Devolve a mesma.
+    const plano = (assinatura.plano in PLANOS ? assinatura.plano : "mensal") as PlanoId;
+    const valor = valorDoCiclo(plano);
+
+    // Reaproveita a cobrança aberta — mas só se ela for do MESMO plano.
+    // Quem trocou de plano depois de gerar precisa de uma cobrança nova, com
+    // o valor certo; devolver a antiga cobraria um preço e entregaria outro.
     const limite = new Date(Date.now() - VALIDADE_DIAS * 86_400_000);
     const aberta = await prisma.subscriptionInvoice.findFirst({
-      where: { subscriptionId: assinatura.id, status: "pendente", createdAt: { gte: limite } },
+      where: {
+        subscriptionId: assinatura.id,
+        status: "pendente",
+        plano,
+        createdAt: { gte: limite },
+      },
       orderBy: { createdAt: "desc" },
     });
     if (aberta?.linkPagamento) {
@@ -52,15 +62,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const plano = (assinatura.plano in PLANOS ? assinatura.plano : "mensal") as PlanoId;
-    const valor = valorDoCiclo(plano);
-
     // A fatura nasce antes do link: o id dela é o order_nsu que a InfinitePay
     // devolve no webhook, e é por ele que reencontramos a assinatura.
     const fatura = await prisma.subscriptionInvoice.create({
       data: {
         subscriptionId: assinatura.id,
         valor,
+        plano,
         status: "pendente",
         vencimento: assinatura.periodoFim > new Date() ? assinatura.periodoFim : new Date(),
         provedor: "infinitepay",

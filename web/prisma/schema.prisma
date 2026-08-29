@@ -422,6 +422,10 @@ model SubscriptionInvoice {
   subscriptionId String
 
   valor      Decimal  @db.Decimal(10, 2)
+  /// Plano que esta fatura cobra. Guardado AQUI, e nao lido da assinatura,
+  /// porque o dono pode trocar de plano depois de a cobranca ser gerada — e
+  /// o webhook precisa honrar o que foi efetivamente pago, nao o plano atual.
+  plano      String   @default("mensal")
   status     String   @default("pendente") // "pendente" | "paga" | "vencida" | "cancelada"
   vencimento DateTime
   pagaEm     DateTime?
