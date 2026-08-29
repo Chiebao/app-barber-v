@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
+import { PLANOS, type PlanoId, situacaoDe } from "@/app/lib/assinatura";
 
 /**
  * Visão do dono da PLATAFORMA (não do dono da barbearia).
@@ -32,6 +33,17 @@ export async function POST(req: NextRequest) {
         select: {
           id: true, name: true, slug: true, createdAt: true,
           _count: { select: { barbers: true, appointments: true } },
+          subscription: {
+            select: {
+              status: true, plano: true, valorCiclo: true, trialEndsAt: true,
+              periodoFim: true, canceladaEm: true, metodo: true,
+              cobrancas: {
+                orderBy: { createdAt: "desc" },
+                take: 1,
+                select: { status: true, valor: true, vencimento: true, pagaEm: true, linkPagamento: true },
+              },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -65,11 +77,33 @@ export async function POST(req: NextRequest) {
       const diasParado = ultimo
         ? Math.floor((agora.getTime() - new Date(ultimo).getTime()) / 86400000)
         : null;
+      // O estado da assinatura é derivado das datas, igual no painel do dono —
+      // não dá para confiar na coluna, que não sabe que o tempo passou.
+      const assin = situacaoDe(s.subscription ?? null, agora);
+      const ultimaCobranca = s.subscription?.cobrancas?.[0] ?? null;
+
       return {
         id: s.id,
         nome: s.name,
         slug: s.slug,
         criadaEm: s.createdAt,
+        assinatura: {
+          estado: assin.estado,
+          plano: assin.plano,
+          valorCiclo: assin.valorCiclo,
+          diasRestantes: assin.diasRestantes,
+          venceEm: assin.periodoFim,
+          metodo: s.subscription?.metodo ?? null,
+          ultimaCobranca: ultimaCobranca
+            ? {
+                status: ultimaCobranca.status,
+                valor: num(ultimaCobranca.valor),
+                vencimento: ultimaCobranca.vencimento,
+                pagaEm: ultimaCobranca.pagaEm,
+                link: ultimaCobranca.linkPagamento,
+              }
+            : null,
+        },
         barbeiros: s._count.barbers,
         agendamentosTotal: s._count.appointments,
         receitaMes: Math.round((receitaPorShop.get(s.id) || 0) * 100) / 100,
@@ -78,6 +112,30 @@ export async function POST(req: NextRequest) {
         // Nunca agendou = ainda não ativou. Parado há 30+ dias = risco de churn.
         situacao: !ultimo ? "sem_uso" : diasParado !== null && diasParado > 30 ? "em_risco" : "ativa",
       };
+    });
+
+    // MRR: o que entra por mês, normalizado. Semestral e anual são cobrados
+    // de uma vez, mas o que interessa para medir o negócio é a fatia mensal.
+    const pagantes = barbearias.filter(
+      (b) => b.assinatura.estado === "ativa" || b.assinatura.estado === "carencia",
+    );
+    const mrr = Math.round(
+      pagantes.reduce((soma, b) => {
+        const p = (b.assinatura.plano in PLANOS ? b.assinatura.plano : "mensal") as PlanoId;
+        return soma + PLANOS[p].mensal;
+      }, 0) * 100,
+    ) / 100;
+
+    const porEstado = barbearias.reduce((acc, b) => {
+      acc[b.assinatura.estado] = (acc[b.assinatura.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Cobranças pendentes: dinheiro gerado e ainda não recebido
+    const aReceber = await prisma.subscriptionInvoice.aggregate({
+      where: { status: "pendente" },
+      _sum: { valor: true },
+      _count: true,
     });
 
     const ativas = barbearias.filter((b) => b.situacao === "ativa").length;
@@ -97,6 +155,13 @@ export async function POST(req: NextRequest) {
           [...receitaPorShop.values()].reduce((s, v) => s + v, 0) * 100,
         ) / 100,
         novasEm30Dias: shops.filter((s) => s.createdAt >= trintaDias).length,
+      },
+      assinaturas: {
+        mrr,
+        pagantes: pagantes.length,
+        porEstado,
+        cobrancasPendentes: aReceber._count,
+        valorPendente: aReceber._sum.valor ? num(aReceber._sum.valor) : 0,
       },
       barbearias,
     });

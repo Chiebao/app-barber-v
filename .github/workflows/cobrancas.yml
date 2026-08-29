@@ -1,0 +1,36 @@
+name: Cobranças da assinatura
+
+# Gera as cobranças que estão para vencer, uma vez por dia.
+#
+# Separado do workflow de lembretes de propósito: lembrete precisa de
+# frequência (meia em meia hora), cobrança não — gerar duas vezes no mesmo dia
+# não adianta nada e só gastaria minutos do plano grátis.
+#
+# ~30 execuções/mês × 1 min mínimo cobrado pelo GitHub = 30 min. Irrelevante
+# dentro dos 2.000 do plano grátis.
+#
+# Às 12:00 UTC = 9h da manhã em Brasília: o dono vê a cobrança quando abre o
+# painel para começar o dia.
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}   # permite disparar na mão pelo site do GitHub
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Gerar cobranças a vencer
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://barberpro-mauve.vercel.app/api/cron/cobrancas")
+          codigo=$(echo "$resposta" | tail -n1)
+          corpo=$(echo "$resposta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$corpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Endpoint de cobranças respondeu $codigo"
+            exit 1
+          fi

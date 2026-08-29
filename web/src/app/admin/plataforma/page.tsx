@@ -13,12 +13,31 @@ interface Barbearia {
   barbeiros: number; agendamentosTotal: number; receitaMes: number;
   ultimoAgendamento: string | null; diasParado: number | null;
   situacao: "ativa" | "em_risco" | "sem_uso";
+  assinatura: {
+    estado: string; plano: string; valorCiclo: number; diasRestantes: number;
+    venceEm: string; metodo: string | null;
+    ultimaCobranca: { status: string; valor: number; vencimento: string; pagaEm: string | null; link: string | null } | null;
+  };
+}
+interface Assinaturas {
+  mrr: number; pagantes: number;
+  porEstado: Record<string, number>;
+  cobrancasPendentes: number; valorPendente: number;
 }
 interface Resumo {
   barbearias: number; ativas: number; emRisco: number; semUso: number;
   ativasNaSemana: number; clientesTotal: number; agendamentosMes: number;
   receitaMes: number; novasEm30Dias: number;
 }
+
+const ASSINATURA_VISUAL: Record<string, { label: string; cor: string }> = {
+  trial:     { label: "Teste",     cor: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  ativa:     { label: "Pagando",   cor: "bg-green-500/15 text-green-400 border-green-500/30" },
+  carencia:  { label: "Atrasada",  cor: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  bloqueada: { label: "Bloqueada", cor: "bg-red-500/15 text-red-400 border-red-500/30" },
+  cortesia:  { label: "Cortesia",  cor: "bg-brand-500/15 text-brand-400 border-brand-400/30" },
+  cancelada: { label: "Cancelada", cor: "bg-gray-700/40 text-gray-400 border-gray-600" },
+};
 
 const SITUACAO = {
   ativa:    { label: "Ativa",    cor: "bg-green-500/15 text-green-400 border-green-500/30" },
@@ -28,7 +47,7 @@ const SITUACAO = {
 
 export default function PlataformaPage() {
   const [secret, setSecret] = useState("");
-  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[] } | null>(null);
+  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[]; assinaturas: Assinaturas } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const carregar = async () => {
@@ -131,6 +150,43 @@ export default function PlataformaPage() {
           ))}
         </section>
 
+        {/* Dinheiro da plataforma — o que o BarberPro fatura, não as barbearias */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Assinaturas</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4">
+              <p className="text-3xl font-bold text-brand-400 tabular-nums">
+                {dados.assinaturas.mrr.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+              {/* Semestral e anual são cobrados de uma vez; aqui entram pela
+                  fatia mensal, senão o número pula e não serve de termômetro */}
+              <p className="text-xs text-gray-500 mt-1">Por mês (MRR)</p>
+            </div>
+            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
+              <p className="text-3xl font-bold text-green-400 tabular-nums">{dados.assinaturas.pagantes}</p>
+              <p className="text-xs text-gray-500 mt-1">Pagantes</p>
+            </div>
+            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
+              <p className="text-3xl font-bold text-blue-400 tabular-nums">{dados.assinaturas.porEstado.trial || 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Em teste grátis</p>
+            </div>
+            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
+              <p className="text-3xl font-bold text-yellow-400 tabular-nums">
+                {dados.assinaturas.valorPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {dados.assinaturas.cobrancasPendentes} cobrança{dados.assinaturas.cobrancasPendentes !== 1 ? "s" : ""} em aberto
+              </p>
+            </div>
+          </div>
+          {((dados.assinaturas.porEstado.carencia || 0) + (dados.assinaturas.porEstado.bloqueada || 0)) > 0 && (
+            <p className="text-sm text-yellow-400">
+              ⚠️ {dados.assinaturas.porEstado.carencia || 0} atrasada(s) e{" "}
+              {dados.assinaturas.porEstado.bloqueada || 0} bloqueada(s) — vale uma mensagem antes de virar cancelamento.
+            </p>
+          )}
+        </section>
+
         {/* Lista */}
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Barbearias</h2>
@@ -143,6 +199,7 @@ export default function PlataformaPage() {
                   <tr>
                     <th className="text-left px-4 py-3 font-medium">Barbearia</th>
                     <th className="text-center px-3 py-3 font-medium">Situação</th>
+                    <th className="text-center px-3 py-3 font-medium">Assinatura</th>
                     <th className="text-right px-3 py-3 font-medium">Barbeiros</th>
                     <th className="text-right px-3 py-3 font-medium">Agend.</th>
                     <th className="text-right px-3 py-3 font-medium">No mês</th>
@@ -160,6 +217,16 @@ export default function PlataformaPage() {
                         <span className={"text-xs px-2 py-1 rounded-full border " + SITUACAO[b.situacao].cor}>
                           {SITUACAO[b.situacao].label}
                         </span>
+                      </td>
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
+                        <span className={"text-xs px-2 py-1 rounded-full border " + (ASSINATURA_VISUAL[b.assinatura.estado]?.cor || "border-gray-700 text-gray-400")}>
+                          {ASSINATURA_VISUAL[b.assinatura.estado]?.label || b.assinatura.estado}
+                        </span>
+                        {b.assinatura.estado !== "cortesia" && (
+                          <p className="text-[10px] text-gray-600 mt-1 tabular-nums">
+                            {b.assinatura.diasRestantes}d · {moeda(b.assinatura.valorCiclo)}
+                          </p>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums text-gray-300">{b.barbeiros}</td>
                       <td className="px-3 py-3 text-right tabular-nums text-gray-300">{b.agendamentosTotal}</td>
