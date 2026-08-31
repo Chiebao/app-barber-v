@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
     // Modelo aprovado, não texto livre: quem pede recuperação de senha
     // quase nunca escreveu para o número nas últimas 24h, então texto
     // livre seria recusado pela Meta justo no momento mais crítico.
-    await enviarModelo(telefone, "codigo_recuperacao", [codigo, String(VALIDADE_MINUTOS)]);
+    // Uma variavel so: o prazo e configurado no proprio modelo, na Meta.
+    await enviarModelo(telefone, "codigo_recuperacao", [codigo]);
 
     return respostaPadrao;
   } catch (error) {

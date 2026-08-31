@@ -55,13 +55,14 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "Se ainda tiver interesse, corre que é por ordem de chegada!",
   },
 
+  // Categoria Autenticacao: a Meta monta o corpo e so aceita UMA variavel,
+  // que e o proprio codigo. O prazo de expiracao vira opcao do formulario, nao
+  // variavel — por isso este modelo tem 1, e nao 2 como os outros.
   codigo_recuperacao: {
     nome: "codigo_recuperacao",
     idioma: "pt_BR",
-    variaveis: 2,
-    textoAprovado:
-      "Seu código de acesso ao BarberPro é {{1}}. Ele vale por {{2}} minutos. " +
-      "Se não foi você quem pediu, ignore esta mensagem.",
+    variaveis: 1,
+    textoAprovado: "{{1}} é seu código de verificação do BarberPro.",
   },
 
   novo_agendamento: {
