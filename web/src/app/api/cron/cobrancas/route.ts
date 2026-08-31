@@ -26,6 +26,23 @@ const VALIDADE_DIAS = 3;
 const MAX_POR_RODADA = 40;
 
 /**
+ * Quantos avisos de WhatsApp uma mesma dívida gera, no máximo.
+ *
+ * A cobrança é regerada a cada VALIDADE_DIAS porque o link de pagamento
+ * expira — isso é sobre o link, não sobre insistir. Sem este teto, quem
+ * parou de pagar receberia mensagem paga a cada 3 dias para sempre.
+ */
+const MAX_AVISOS = 2;
+
+/**
+ * Quantas faturas em aberto uma assinatura acumula antes de pararmos.
+ *
+ * Passado disso, quem não pagou não vai pagar por link novo: os antigos
+ * continuam no painel, e a loja já está em leitura apenas.
+ */
+const MAX_FATURAS_ABERTAS = 4;
+
+/**
  * Prazo em português, para a mensagem do dono.
  *
  * Arredonda para cima porque "vence em 0 dias" não diz nada a ninguém —
@@ -64,9 +81,11 @@ export async function GET(req: NextRequest) {
       },
       include: {
         shop: { select: { name: true, owner: { select: { name: true, phone: true } } } },
+        // Todas as em aberto, não só as recentes: a data separa "o link
+        // ainda serve" de "já avisamos vezes demais".
         cobrancas: {
-          where: { status: "pendente", createdAt: { gte: limiteFatura } },
-          select: { id: true },
+          where: { status: "pendente" },
+          select: { id: true, createdAt: true },
         },
       },
       take: MAX_POR_RODADA,
@@ -75,7 +94,12 @@ export async function GET(req: NextRequest) {
     resultado.verificadas = candidatas.length;
 
     for (const a of candidatas) {
-      if (a.cobrancas.length > 0) {
+      // Link recente ainda serve — não há o que gerar.
+      if (a.cobrancas.some((c) => c.createdAt >= limiteFatura)) {
+        resultado.puladas++;
+        continue;
+      }
+      if (a.cobrancas.length >= MAX_FATURAS_ABERTAS) {
         resultado.puladas++;
         continue;
       }
@@ -126,11 +150,19 @@ export async function GET(req: NextRequest) {
       // Avisa o dono que a cobrança está pronta. Sem isso ele só descobre
       // ao abrir o painel — e quem esquece de abrir é justamente quem
       // acaba bloqueado por não ter pago.
-      enviarModelo(a.shop.owner.phone, "cobranca_assinatura", [
-        a.shop.owner.name.split(" ")[0],
-        prazoEmTexto(fatura.vencimento, agora),
-        `R$ ${num(fatura.valor).toFixed(2).replace(".", ",")}`,
-      ]).catch(console.error);
+      //
+      // Mas só nas primeiras vezes, e nunca depois de bloqueada: a essa
+      // altura ele já foi avisado e já perdeu o acesso de escrita. Insistir
+      // custa dinheiro nosso e irrita quem já decidiu sair.
+      const avisosJaDados = a.cobrancas.length;
+      const deveAvisar = avisosJaDados < MAX_AVISOS && situacao.estado !== "bloqueada";
+      if (deveAvisar) {
+        enviarModelo(a.shop.owner.phone, "cobranca_assinatura", [
+          a.shop.owner.name.split(" ")[0],
+          prazoEmTexto(fatura.vencimento, agora),
+          `R$ ${num(fatura.valor).toFixed(2).replace(".", ",")}`,
+        ]).catch(console.error);
+      }
     }
 
 
