@@ -59,14 +59,24 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "abriu um horário em {{3}} às {{4}}. Acesse seu link de agendamento para confirmar.",
   },
 
-  // Categoria Autenticacao: a Meta monta o corpo e so aceita UMA variavel,
-  // que e o proprio codigo. O prazo de expiracao vira opcao do formulario, nao
-  // variavel — por isso este modelo tem 1, e nao 2 como os outros.
+  // Categoria Autenticacao: a Meta escreve o corpo, nao nos. So aceita UMA
+  // variavel, o proprio codigo — o prazo de expiracao e a linha de seguranca
+  // sao opcoes do formulario, nao variaveis. Por isso este modelo tem 1.
+  //
+  // Cadastrado com entrega "Copiar codigo": as opcoes de preenchimento
+  // automatico exigem pacote Android e hash de assinatura, e a recuperacao
+  // de senha acontece no navegador — nao ha app para receber o codigo.
+  //
+  // Os 10 minutos do formulario precisam continuar batendo com o
+  // VALIDADE_MINUTOS de api/auth/forgot.
   codigo_recuperacao: {
     nome: "codigo_recuperacao",
     idioma: "pt_BR",
     variaveis: 1,
-    textoAprovado: "{{1}} é seu código de verificação do BarberPro.",
+    // Texto gerado pela Meta, reproduzido aqui so para conferencia.
+    textoAprovado:
+      "{{1}} é seu código de verificação. Por segurança, não compartilhe esse código. " +
+      "Esse código expira em 10 minutos.",
   },
 
   novo_agendamento: {
