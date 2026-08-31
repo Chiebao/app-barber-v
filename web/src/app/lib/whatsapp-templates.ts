@@ -44,6 +44,15 @@ export interface Modelo {
    * agendamento, uma lista de espera ou uma fatura só para ver se chega.
    */
   exemplo: string[];
+  /**
+   * Modelo de autenticação com botão "Copiar código".
+   *
+   * A Meta põe {{1}} dentro da URL do botão, então o mesmo código precisa
+   * ser enviado DUAS vezes: no corpo e no botão. Mandar só o corpo faz o
+   * envio ser recusado por parâmetro faltando — foi exatamente o que
+   * aconteceu na primeira tentativa.
+   */
+  botaoComCodigo?: true;
 }
 
 export const MODELOS: Record<NomeModelo, Modelo> = {
@@ -87,9 +96,10 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     variaveis: 1,
     // Texto gerado pela Meta, reproduzido aqui so para conferencia.
     textoAprovado:
-      "{{1}} é seu código de verificação. Por segurança, não compartilhe esse código. " +
-      "Esse código expira em 10 minutos.",
+      "Seu código de verificação é *{{1}}*. Para sua segurança, não o compartilhe. " +
+      "[rodapé] Expira em 10 minutos.",
     exemplo: ["123456"],
+    botaoComCodigo: true,
   },
 
 
