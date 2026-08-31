@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
+import { useConfirmacao } from "@/app/lib/modal";
 
 function applyWebTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -44,6 +45,9 @@ interface AppointmentItem {
 }
 
 export default function MeusAgendamentos() {
+  // O diálogo vive dentro deste componente porque a pergunta é dele; o
+  // portal do Modal garante que ele apareça sobre a tela toda mesmo assim.
+  const [confirmar, dialogoConfirmacao] = useConfirmacao();
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
@@ -112,7 +116,13 @@ export default function MeusAgendamentos() {
   }, [shopId, phone, name]);
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Deseja cancelar este agendamento?")) return;
+    if (!(await confirmar({
+      titulo: "Cancelar este agendamento?",
+      texto: "O horário volta a ficar livre para outra pessoa.",
+      acao: "Sim, cancelar",
+      cancelar: "Manter",
+      perigo: true,
+    }))) return;
     setCancelling(id);
     try {
       const cleanPhone = phone.replace(/\D/g, "");
@@ -654,6 +664,7 @@ export default function MeusAgendamentos() {
 
   return (
     <main className="min-h-screen bg-dark-900 pb-8">
+      {dialogoConfirmacao}
       <header className="bg-dark-800 border-b border-gray-800 p-6 flex flex-col items-center gap-2">
         {shopLogo && <img src={shopLogo} alt={shopName} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />}
         <h1 className="text-2xl font-semibold text-brand-400">{shopName || "..."}</h1>

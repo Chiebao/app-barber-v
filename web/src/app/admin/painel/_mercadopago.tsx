@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "@/app/lib/toast";
+import { useConfirmacao } from "@/app/lib/modal";
 
 /**
  * Conectar a conta do Mercado Pago da barbearia.
@@ -19,6 +20,9 @@ interface Situacao {
 }
 
 export default function MercadoPago({ token }: { token: string | null }) {
+  // O diálogo vive dentro deste componente porque a pergunta é dele; o
+  // portal do Modal garante que ele apareça sobre a tela toda mesmo assim.
+  const [confirmar, dialogoConfirmacao] = useConfirmacao();
   const [s, setS] = useState<Situacao | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -64,7 +68,12 @@ export default function MercadoPago({ token }: { token: string | null }) {
 
   const desconectar = async () => {
     if (!token) return;
-    if (!confirm("Desconectar o Mercado Pago? O Pix volta a ser confirmado na mão.")) return;
+    if (!(await confirmar({
+      titulo: "Desconectar o Mercado Pago?",
+      texto: "O Pix volta a ser confirmado na mão, um a um, no painel.",
+      acao: "Desconectar",
+      perigo: true,
+    }))) return;
     setBusy(true);
     try {
       const res = await fetch("/api/me/mercadopago", {
@@ -84,6 +93,7 @@ export default function MercadoPago({ token }: { token: string | null }) {
 
   return (
     <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+      {dialogoConfirmacao}
       <div>
         <h3 className="font-semibold text-white">💠 Pix automático (Mercado Pago)</h3>
         <p className="text-xs text-gray-500 mt-1">

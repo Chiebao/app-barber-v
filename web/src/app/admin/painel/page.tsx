@@ -17,7 +17,7 @@ import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
 import Sumidos from "./_sumidos";
 import MercadoPago from "./_mercadopago";
-import { Modal } from "@/app/lib/modal";
+import { Modal, useConfirmacao } from "@/app/lib/modal";
 
 function applyAdminTheme(themeId: string) {
   const p = getPaletteById(themeId);
@@ -134,6 +134,9 @@ function getGreeting(): string {
 }
 
 export default function PainelPage() {
+  // Uma confirmação para o painel inteiro. Cada pergunta é uma chamada;
+  // o diálogo em si é renderizado uma vez só, lá no fim do JSX.
+  const [confirmar, dialogoConfirmacao] = useConfirmacao();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<{ name?: string; shopName?: string; shopSlug?: string; role?: string } | null>(null);
@@ -521,7 +524,12 @@ export default function PainelPage() {
   };
 
   const markNoShow = async (id: string, clientName: string) => {
-    if (!confirm(`${clientName} nao compareceu? Isso sera registrado.`)) return;
+    if (!(await confirmar({
+      titulo: `${clientName} não veio?`,
+      texto: "A falta fica registrada no cadastro do cliente. Com duas faltas, ele passa a precisar pagar antes de agendar.",
+      acao: "Registrar falta",
+      perigo: true,
+    }))) return;
     try {
       await fetch(`/api/appointments/${id}/no-show`, { method: "PATCH", headers: authHeaders() });
       toast.success("Falta registrada");
@@ -530,7 +538,11 @@ export default function PainelPage() {
   };
 
   const confirmPixPayment = async (id: string) => {
-    if (!confirm("Confirmar que o Pix caiu na conta?")) return;
+    if (!(await confirmar({
+      titulo: "O Pix caiu na conta?",
+      texto: "Confirme só depois de ver o dinheiro. O agendamento passa a valer e a falta anterior do cliente é zerada.",
+      acao: "Sim, recebi",
+    }))) return;
     try {
       const res = await fetch(`/api/appointments/${id}/confirm-payment`, { method: "PATCH", headers: authHeaders() });
       if (res.status === 401) { handleUnauthorized(); return; }
@@ -627,7 +639,11 @@ export default function PainelPage() {
   };
 
   const blockAllDay = async () => {
-    if (!confirm("Bloquear o dia todo?")) return;
+    if (!(await confirmar({
+      titulo: "Bloquear o dia inteiro?",
+      texto: "Nenhum horário deste dia vai aparecer para o cliente agendar. Dá para liberar depois.",
+      acao: "Bloquear o dia",
+    }))) return;
     setSlotsSaving(true);
     const bid = user?.role === "owner" && ownerBarberId ? ownerBarberId : undefined;
     try {
@@ -648,7 +664,14 @@ export default function PainelPage() {
   };
 
   const deleteClient = async (id: string, name: string) => {
-    if (!confirm(`Excluir TODOS os dados de ${name} nesta barbearia?\n\nApaga agendamentos, fidelidade e histórico do cliente. Esta ação não pode ser desfeita (LGPD - direito ao esquecimento).`)) return;
+    if (!(await confirmar({
+      titulo: `Apagar todos os dados de ${name}?`,
+      texto:
+        "Some agendamentos, fidelidade e histórico deste cliente NESTA barbearia.\n\n" +
+        "Não tem volta — é o direito ao esquecimento da LGPD.",
+      acao: "Apagar tudo",
+      perigo: true,
+    }))) return;
     setDeletingClientId(id);
     try {
       const res = await fetch(`/api/me/clients/${id}`, { method: "DELETE", headers: authHeaders() });
@@ -725,7 +748,12 @@ export default function PainelPage() {
   };
 
   const excluirServico = async (s: ServiceItem) => {
-    if (!confirm(`Apagar "${s.name}" de vez? Essa ação não tem volta.`)) return;
+    if (!(await confirmar({
+      titulo: `Apagar "${s.name}"?`,
+      texto: "O serviço some da lista para sempre. Se ele já foi usado em atendimento, eu aviso antes de fazer qualquer coisa.",
+      acao: "Apagar",
+      perigo: true,
+    }))) return;
     setDeletingService(s.id);
     try {
       const res = await fetch("/api/me/services", {
@@ -738,15 +766,15 @@ export default function PainelPage() {
       // entao oferecemos desativar, que resolve o problema real do dono
       // (sumir da tela do cliente) sem mexer no que ja aconteceu.
       if (res.status === 409) {
-        const ok = confirm(
-          `"${s.name}" já foi usado em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}.
-
-` +
-          `Apagar apagaria esses atendimentos do histórico e o financeiro deixaria de fechar.
-
-` +
-          `Quer DESATIVAR? Ele some da tela de agendamento do cliente e o histórico fica intacto.`
-        );
+        const ok = await confirmar({
+          titulo: "Melhor desativar que apagar",
+          texto:
+            `"${s.name}" já foi usado em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}. ` +
+            "Apagar levaria esses atendimentos junto e o financeiro deixaria de fechar.\n\n" +
+            "Desativando, ele some da tela do cliente e o histórico fica intacto.",
+          acao: "Desativar",
+          cancelar: "Deixar como está",
+        });
         if (ok) await toggleService(s.id, false);
         return;
       }
@@ -759,11 +787,15 @@ export default function PainelPage() {
   const banirCliente = async (telefone: string, nome?: string, motivo?: string) => {
     const tel = (telefone || "").replace(/\D/g, "");
     if (tel.length < 10) { toast.error("Telefone inválido"); return; }
-    if (!confirm(
-      `Banir ${nome || tel}?\n\n` +
-      `Ele não vai mais conseguir agendar nem entrar na lista de espera desta barbearia, e os agendamentos futuros dele serão cancelados.\n\n` +
-      `O histórico e o financeiro não mudam. Dá para liberar depois.`
-    )) return;
+    if (!(await confirmar({
+      titulo: `Banir ${nome || tel}?`,
+      texto:
+        "Ele para de conseguir agendar e de entrar na lista de espera desta barbearia, " +
+        "e os agendamentos futuros dele são cancelados.\n\n" +
+        "O histórico e o financeiro não mudam. Dá para liberar depois.",
+      acao: "Banir",
+      perigo: true,
+    }))) return;
 
     setBaningClient(true);
     try {
@@ -875,7 +907,12 @@ export default function PainelPage() {
   };
 
   const excluirProduto = async (p: ProductItem) => {
-    if (!confirm(`Apagar "${p.name}" de vez? Essa ação não tem volta.`)) return;
+    if (!(await confirmar({
+      titulo: `Apagar "${p.name}"?`,
+      texto: "O produto some da lista para sempre. Se ele já foi vendido, eu aviso antes de fazer qualquer coisa.",
+      acao: "Apagar",
+      perigo: true,
+    }))) return;
     setDeletingProduct(p.id);
     try {
       const res = await fetch("/api/me/products", { method: "DELETE", headers: authHeaders(), body: JSON.stringify({ id: p.id }) });
@@ -883,15 +920,15 @@ export default function PainelPage() {
       const d = await res.json().catch(() => ({}));
       // 409 = produto ja vendido. Apagar levaria as linhas de comanda junto.
       if (res.status === 409) {
-        const ok = confirm(
-          `"${p.name}" já foi vendido em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}.
-
-` +
-          `Apagar apagaria essas vendas do histórico e o financeiro deixaria de fechar.
-
-` +
-          `Quer DESATIVAR? Ele some da comanda e o histórico fica intacto.`
-        );
+        const ok = await confirmar({
+          titulo: "Melhor desativar que apagar",
+          texto:
+            `"${p.name}" já foi vendido em ${d.usos} atendimento${d.usos === 1 ? "" : "s"}. ` +
+            "Apagar levaria essas vendas junto e o financeiro deixaria de fechar.\n\n" +
+            "Desativando, ele some da comanda e o histórico fica intacto.",
+          acao: "Desativar",
+          cancelar: "Deixar como está",
+        });
         if (ok) await toggleProduct(p.id, false);
         return;
       }
@@ -1459,10 +1496,14 @@ export default function PainelPage() {
       };
 
       const encerrarFixo = async (f: CorteFixo) => {
-        const aviso = "Encerrar o corte fixo de " + f.clientName + "?\n\n"
-          + "Os cortes que já aconteceram continuam no histórico. "
-          + "Os futuros que ninguém tocou saem da agenda.";
-        if (!confirm(aviso)) return;
+        if (!(await confirmar({
+          titulo: `Encerrar o corte fixo de ${f.clientName}?`,
+          texto:
+            "Os cortes que já aconteceram continuam no histórico. " +
+            "Os futuros que ninguém tocou saem da agenda.",
+          acao: "Encerrar",
+          perigo: true,
+        }))) return;
         setEncerrandoFixo(f.id);
         try {
           const res = await fetch("/api/me/recurring?id=" + f.id, { method: "DELETE", headers: authHeaders() });
@@ -2392,6 +2433,7 @@ export default function PainelPage() {
       />
 
       {/* ── Cancel Confirmation Modal ── */}
+      {dialogoConfirmacao}
       <CancelModal
         open={!!cancelModalId}
         appt={cancelModalId ? appointments.find(a => a.id === cancelModalId) || null : null}

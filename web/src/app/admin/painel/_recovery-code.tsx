@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "@/app/lib/toast";
+import { useConfirmacao } from "@/app/lib/modal";
 
 /**
  * Código de recuperação — permite o barbeiro/dono redefinir a própria senha
@@ -11,6 +12,9 @@ import { toast } from "@/app/lib/toast";
  * insiste para o usuário anotar antes de sair.
  */
 export default function RecoveryCode({ token }: { token: string | null }) {
+  // O diálogo vive dentro deste componente porque a pergunta é dele; o
+  // portal do Modal garante que ele apareça sobre a tela toda mesmo assim.
+  const [confirmar, dialogoConfirmacao] = useConfirmacao();
   const [hasCode, setHasCode] = useState<boolean | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,7 +30,11 @@ export default function RecoveryCode({ token }: { token: string | null }) {
 
   const generate = async () => {
     if (!token) return;
-    if (hasCode && !confirm("Gerar um código novo invalida o anterior. Continuar?")) return;
+    if (hasCode && !(await confirmar({
+      titulo: "Gerar um código novo?",
+      texto: "O código anterior para de funcionar na hora. Se você anotou o antigo em algum lugar, ele deixa de servir.",
+      acao: "Gerar novo",
+    }))) return;
     setBusy(true);
     try {
       const res = await fetch("/api/me/recovery-code", {
@@ -58,6 +66,7 @@ export default function RecoveryCode({ token }: { token: string | null }) {
 
   return (
     <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+      {dialogoConfirmacao}
       <div>
         <h3 className="font-semibold text-white">🔑 Código de recuperação</h3>
         <p className="text-xs text-gray-500 mt-1">
