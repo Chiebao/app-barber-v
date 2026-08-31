@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
 import { num, sumMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercadopago";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { z } from "zod";
 import { situacaoDaLoja } from "@/app/lib/assinatura";
 
@@ -192,19 +189,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Envia notificacao WhatsApp ao barbeiro
+    // O barbeiro é avisado só por push — Expo no app, Web Push no painel.
+    // WhatsApp aqui seria a mensagem de maior volume do sistema (uma por
+    // agendamento), paga por envio, dizendo o que as duas notificações já
+    // disseram de graça.
     const serviceNames = services.map((s) => s.name).join(", ");
-    const formattedDate = format(dateObj, "dd 'de' MMMM", { locale: ptBR });
-
-    sendWhatsAppNotification({
-      barberPhone: barber.phone,
-      clientName: data.clientName,
-      serviceName: serviceNames,
-      date: formattedDate,
-      time: data.startTime,
-      shopName: shop.name,
-      ...(needsPix && data.pendingPayment ? { isPendingPayment: true } : {}),
-    }).catch(console.error);
 
     // Envia push notification ao barbeiro (Expo Push API)
     const isPendingPix = needsPix && data.pendingPayment;

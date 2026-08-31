@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
-import { sendWhatsAppNotification } from "@/app/lib/whatsapp";
+import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -46,18 +46,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // Notifica o barbeiro se cancelamento foi pelo cliente
     if (cancelledBy === "client" || !cancelledBy) {
+      // Aviso ao barbeiro é só por push, como no agendamento.
       const serviceNames = appointment.services.map(as => as.service.name).join(", ");
-      const formattedDate = format(appointment.date, "dd 'de' MMMM", { locale: ptBR });
-
-      sendWhatsAppNotification({
-        barberPhone: appointment.barber.phone,
-        clientName: appointment.client.name,
-        serviceName: serviceNames,
-        date: formattedDate,
-        time: appointment.startTime,
-        shopName: appointment.shop.name,
-        isCancellation: true,
-      }).catch(console.error);
 
       // Push notification ao barbeiro + owner
       const cancelBody = `${appointment.client.name} cancelou ${serviceNames} às ${appointment.startTime}`;
@@ -114,27 +104,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Notifica via WhatsApp API se disponível e se cancelamento foi pelo cliente
     if (waitlistEntries.length > 0 && (cancelledBy === "client" || !cancelledBy)) {
       const formattedDate = format(appointment.date, "dd 'de' MMMM", { locale: ptBR });
-      const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
-      const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-      if (WHATSAPP_API_TOKEN && WHATSAPP_PHONE_ID) {
-        for (const entry of waitlistEntries) {
-          const phone = entry.clientPhone.replace(/\D/g, "");
-          const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
-          fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messaging_product: "whatsapp",
-              to: phoneWithCountry,
-              type: "text",
-              text: {
-                body: `*Vaga disponível na ${appointment.shop.name}!* 🎉\n\n` +
-                  `${entry.clientName}, abrimos um horário no dia *${formattedDate}* às *${appointment.startTime}*.\n\n` +
-                  `Acesse agora para agendar: ${process.env.NEXT_PUBLIC_BASE_URL}/${appointment.shop.slug}`,
-              },
-            }),
-          }).catch(console.error);
-        }
+      // Modelo aprovado: quem está na lista de espera quase nunca escreveu
+      // para o número nas últimas 24h, então texto livre não sairia.
+      for (const entry of waitlistEntries) {
+        enviarModelo(entry.clientPhone, "vaga_disponivel", [
+          entry.clientName.split(" ")[0],
+          appointment.shop.name,
+          formattedDate,
+          appointment.startTime,
+        ]).catch(console.error);
       }
     }
 

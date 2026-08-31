@@ -16,13 +16,16 @@
  *
  * Ao alterar o texto de um modelo aprovado, a Meta exige nova aprovação —
  * então mudar aqui sem mudar lá (ou o contrário) quebra o envio.
+ *
+ * NÃO existe modelo para avisar o barbeiro de um novo agendamento: isso já
+ * chega por push (Expo no app, Web Push no painel) e seria a mensagem de
+ * maior volume do sistema, paga por envio, repetindo o que é de graça.
  */
 
 export type NomeModelo =
   | "lembrete_agendamento"
   | "vaga_disponivel"
   | "codigo_recuperacao"
-  | "novo_agendamento"
   | "cobranca_assinatura";
 
 export interface Modelo {
@@ -79,14 +82,6 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "Esse código expira em 10 minutos.",
   },
 
-  novo_agendamento: {
-    nome: "novo_agendamento",
-    idioma: "pt_BR",
-    variaveis: 4,
-    textoAprovado:
-      "Novo agendamento na {{1}}: {{2}} marcou para {{3}} às {{4}}. " +
-      "Confira os detalhes no seu painel.",
-  },
 
   // Tambem reprovado como Marketing na primeira versao. O gatilho aqui foi
   // outro: nome do produto ("assinatura do BarberPro") junto com o preco

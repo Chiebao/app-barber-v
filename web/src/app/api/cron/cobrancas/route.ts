@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
 import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe } from "@/app/lib/assinatura";
 import { criarLinkCobranca, cobrancaOk } from "@/app/lib/infinitepay";
+import { enviarModelo } from "@/app/lib/whatsapp-send";
 
 /**
  * Gera as cobranças que estão para vencer.
@@ -23,6 +24,18 @@ const VALIDADE_DIAS = 3;
 
 /** Teto por execução — evita uma rodada gigante travar a função. */
 const MAX_POR_RODADA = 40;
+
+/**
+ * Prazo em português, para a mensagem do dono.
+ *
+ * Arredonda para cima porque "vence em 0 dias" não diz nada a ninguém —
+ * o que falta hoje ainda é hoje.
+ */
+function prazoEmTexto(vencimento: Date, agora: Date): string {
+  const dias = Math.ceil((vencimento.getTime() - agora.getTime()) / 86_400_000);
+  if (dias <= 0) return "hoje";
+  return dias === 1 ? "1 dia" : `${dias} dias`;
+}
 
 export async function GET(req: NextRequest) {
   // Mesma proteção do cron de lembretes
@@ -109,10 +122,17 @@ export async function GET(req: NextRequest) {
 
       resultado.geradas++;
       resultado.detalhes.push(`${a.shop.name}: R$ ${num(fatura.valor).toFixed(2)} (${situacao.estado})`);
+
+      // Avisa o dono que a cobrança está pronta. Sem isso ele só descobre
+      // ao abrir o painel — e quem esquece de abrir é justamente quem
+      // acaba bloqueado por não ter pago.
+      enviarModelo(a.shop.owner.phone, "cobranca_assinatura", [
+        a.shop.owner.name.split(" ")[0],
+        prazoEmTexto(fatura.vencimento, agora),
+        `R$ ${num(fatura.valor).toFixed(2).replace(".", ",")}`,
+      ]).catch(console.error);
     }
 
-    // TODO(chip): quando o número definitivo do WhatsApp estiver ativo, avisar
-    // o dono aqui. Hoje ele encontra a cobrança pronta ao abrir o painel.
 
     return NextResponse.json(resultado);
   } catch (error) {
