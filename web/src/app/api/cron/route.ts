@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { MODELOS, preverTexto, type NomeModelo } from "@/app/lib/whatsapp-templates";
 import { ptBR } from "date-fns/locale";
 
 /**
@@ -123,9 +124,34 @@ export async function GET(req: NextRequest) {
 
       // ?send=55DDDNUMERO — envia uma mensagem de teste para validar o canal.
       // Protegido pelo CRON_SECRET, igual ao resto da rota.
+      //
+      // Com ?modelo=nome, dispara aquele modelo com os valores de exemplo.
+      // É o único jeito honesto de testar: modelo só entrega de verdade
+      // fora da janela de 24h, e forjar agendamento/fatura para ver cada um
+      // chegar seria trabalho demais para uma conferência de rotina.
       const destino = new URL(req.url).searchParams.get("send");
+      const modeloPedido = new URL(req.url).searchParams.get("modelo");
       let envioTeste: unknown = null;
-      if (destino) {
+
+      if (destino && modeloPedido) {
+        if (!(modeloPedido in MODELOS)) {
+          envioTeste = {
+            ok: false,
+            erro: `modelo desconhecido: ${modeloPedido}`,
+            disponiveis: Object.keys(MODELOS),
+          };
+        } else {
+          const nome = modeloPedido as NomeModelo;
+          const vars = MODELOS[nome].exemplo;
+          const ok = await enviarModelo(destino, nome, vars);
+          envioTeste = {
+            ok,
+            modelo: nome,
+            textoEsperado: preverTexto(nome, vars),
+            dica: ok ? undefined : "modelo nao aprovado em pt_BR, nome diferente, ou variaveis a mais/menos",
+          };
+        }
+      } else if (destino) {
         const tel = destino.replace(/\D/g, "");
         const r = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
           method: "POST",

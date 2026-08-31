@@ -37,6 +37,13 @@ export interface Modelo {
   variaveis: number;
   /** O texto aprovado, aqui só para conferência humana. */
   textoAprovado: string;
+  /**
+   * Valores de exemplo — os mesmos cadastrados como amostra na Meta.
+   *
+   * Servem para o diagnóstico disparar o modelo sem precisar forjar um
+   * agendamento, uma lista de espera ou uma fatura só para ver se chega.
+   */
+  exemplo: string[];
 }
 
 export const MODELOS: Record<NomeModelo, Modelo> = {
@@ -47,6 +54,7 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     textoAprovado:
       "Olá, {{1}}! Passando para lembrar do seu horário na {{2}} hoje às {{3}} com {{4}}. " +
       "Se precisar remarcar, é só responder por aqui.",
+    exemplo: ["João", "Barbearia do Zé", "14:30", "Corte + Barba"],
   },
 
   // Texto deliberadamente seco. A primeira versao ("corre que e por ordem de
@@ -60,6 +68,7 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     textoAprovado:
       "Olá, {{1}}. Sobre sua solicitação de lista de espera na {{2}}: " +
       "abriu um horário em {{3}} às {{4}}. Acesse seu link de agendamento para confirmar.",
+    exemplo: ["Maria", "Barbearia do Zé", "12 de setembro", "09:00"],
   },
 
   // Categoria Autenticacao: a Meta escreve o corpo, nao nos. So aceita UMA
@@ -80,6 +89,7 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     textoAprovado:
       "{{1}} é seu código de verificação. Por segurança, não compartilhe esse código. " +
       "Esse código expira em 10 minutos.",
+    exemplo: ["123456"],
   },
 
 
@@ -94,6 +104,7 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     textoAprovado:
       "Olá, {{1}}. Sua assinatura vence em {{2}}. A fatura de {{3}} já está " +
       "disponível no seu painel, em Configurações.",
+    exemplo: ["Eduardo", "3 dias", "R$ 79,90"],
   },
 };
 
