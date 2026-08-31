@@ -90,7 +90,23 @@ export async function GET(req: NextRequest) {
       );
       const num = await numRes.json().catch(() => ({}));
 
-      // 3) O token enxerga a conta do WhatsApp Business? (?waba=ID)
+      // 3) Quando este token expira?
+      // Token temporario do painel morre em 24h, e a falha e silenciosa:
+      // os lembretes simplesmente param de sair. Melhor descobrir aqui.
+      const dbgRes = await fetch(
+        `https://graph.facebook.com/v21.0/debug_token?input_token=${WHATSAPP_API_TOKEN}` +
+          `&access_token=${WHATSAPP_API_TOKEN}`,
+      );
+      const dbg = await dbgRes.json().catch(() => ({}));
+      const expiraEm = dbg?.data?.expires_at as number | undefined;
+      const validade =
+        expiraEm === undefined
+          ? "nao foi possivel consultar"
+          : expiraEm === 0
+          ? "nunca expira"
+          : `expira em ${new Date(expiraEm * 1000).toISOString()}`;
+
+      // 4) O token enxerga a conta do WhatsApp Business? (?waba=ID)
       // Se o System User nao tiver a WABA vinculada como ativo, falha aqui.
       const wabaId = new URL(req.url).searchParams.get("waba");
       let waba: unknown = "informe ?waba=ID para testar";
@@ -133,6 +149,7 @@ export async function GET(req: NextRequest) {
         numeroDetalhe: numRes.ok ? num : num?.error?.message,
         contaWhatsAppAcessivel: wabaRes.ok,
         numerosDaConta: waba,
+        tokenValidade: validade,
         tokenTamanho: WHATSAPP_API_TOKEN.length,
         phoneIdConfigurado: WHATSAPP_PHONE_ID,
         diagnostico: meRes.ok && !numRes.ok
