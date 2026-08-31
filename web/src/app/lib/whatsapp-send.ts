@@ -38,20 +38,6 @@ export async function enviarWhatsApp(telefone: string, texto: string): Promise<b
     return false;
   }
 
-  // O botão de copiar código carrega o próprio código na URL, então ele
-  // entra como um segundo componente com o mesmo valor do corpo.
-  const componentes: Record<string, unknown>[] = [
-    { type: "body", parameters: variaveis.map((v) => ({ type: "text", text: v })) },
-  ];
-  if (modelo.botaoComCodigo) {
-    componentes.push({
-      type: "button",
-      sub_type: "url",
-      index: "0",
-      parameters: [{ type: "text", text: variaveis[0] }],
-    });
-  }
-
   try {
     const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
       method: "POST",
@@ -107,6 +93,20 @@ export async function enviarModelo(
     // barrar aqui, onde da para ver o nome do modelo no log.
     console.error("[WhatsApp] modelo", nome, "espera", modelo.variaveis, "variaveis, recebeu", variaveis.length);
     return false;
+  }
+
+  // O botão de copiar código carrega o próprio código na URL, então ele
+  // entra como um segundo componente com o mesmo valor do corpo.
+  const componentes: Record<string, unknown>[] = [
+    { type: "body", parameters: variaveis.map((v) => ({ type: "text", text: v })) },
+  ];
+  if (modelo.botaoComCodigo) {
+    componentes.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [{ type: "text", text: variaveis[0] }],
+    });
   }
 
   try {
