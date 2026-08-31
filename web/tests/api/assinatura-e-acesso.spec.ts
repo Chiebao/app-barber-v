@@ -381,3 +381,98 @@ test.describe("Fatura é um contrato pelo plano dela", () => {
     expect(Number(depois.valor)).toBeCloseTo(79.9, 2);
   });
 });
+
+test.describe("Desconto adiantado de plano com compromisso", () => {
+  let loja: Loja;
+
+  test.beforeEach(async ({ request }) => { loja = await criarLoja(request); });
+  test.afterEach(async () => { await apagarLoja(loja); await fecharDb(); });
+
+  const situacao = async (request: import("@playwright/test").APIRequestContext) =>
+    (await (await request.get(`${BASE}/api/me/assinatura`, { headers: loja.auth })).json()).situacao;
+
+  test("quem está em dia não deve nada", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual_mensal" } });
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      data: { ciclosPagos: 6, trialEndsAt: emDias(-1), periodoFim: emDias(20) },
+    });
+    const s = await situacao(request);
+    expect(s.estado).toBe("ativa");
+    expect(s.descontoAAcertar).toBe(0);
+  });
+
+  test("sair no sexto mês do anual deixa a diferença dos seis meses", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual_mensal" } });
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      // Seis pagos, e já passou da carência
+      data: { ciclosPagos: 6, trialEndsAt: emDias(-40), periodoFim: emDias(-20) },
+    });
+    const s = await situacao(request);
+    expect(s.estado).toBe("bloqueada");
+    // (79,90 − 59,90) × 6
+    expect(s.descontoAAcertar).toBeCloseTo(120, 2);
+  });
+
+  test("plano à vista não gera diferença — já pagou tudo adiantado", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual" } });
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      data: { ciclosPagos: 1, trialEndsAt: emDias(-40), periodoFim: emDias(-20) },
+    });
+    const s = await situacao(request);
+    expect(s.descontoAAcertar).toBe(0);
+  });
+
+  test("mensal puro nunca deve diferença", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      data: { ciclosPagos: 5, trialEndsAt: emDias(-40), periodoFim: emDias(-20) },
+    });
+    const s = await situacao(request);
+    expect(s.estado).toBe("bloqueada");
+    expect(s.descontoAAcertar).toBe(0);
+  });
+
+  test("cumprir o compromisso inteiro zera a diferença", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual_mensal" } });
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      data: { ciclosPagos: 12, trialEndsAt: emDias(-400), periodoFim: emDias(-20) },
+    });
+    const s = await situacao(request);
+    expect(s.descontoAAcertar).toBe(0);
+  });
+
+  test("a cobrança da volta soma mensalidade e diferença", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual_mensal" } });
+    await db().subscription.update({
+      where: { shopId: loja.shopId },
+      data: { ciclosPagos: 6, trialEndsAt: emDias(-40), periodoFim: emDias(-20) },
+    });
+
+    const r = await request.post(`${BASE}/api/me/assinatura/cobranca`, { headers: loja.auth });
+    expect(r.ok()).toBeTruthy();
+    const c = (await r.json()).cobranca;
+    expect(c.mensalidade).toBeCloseTo(59.9, 2);
+    expect(c.descontoAAcertar).toBeCloseTo(120, 2);
+    expect(c.valor).toBeCloseTo(179.9, 2);
+  });
+
+  test("trocar de plano reinicia a contagem do compromisso", async ({ request }) => {
+    const { db } = await import("./_ajudantes");
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "anual_mensal" } });
+    await db().subscription.update({ where: { shopId: loja.shopId }, data: { ciclosPagos: 6 } });
+
+    await request.patch(`${BASE}/api/me/assinatura`, { headers: loja.auth, data: { plano: "mensal" } });
+    const a = await db().subscription.findUniqueOrThrow({ where: { shopId: loja.shopId } });
+    expect(a.ciclosPagos).toBe(0);
+  });
+});

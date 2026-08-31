@@ -95,9 +95,25 @@ export async function PATCH(req: NextRequest) {
         where: { shopId: payload.shopId },
         data: { canceladaEm: new Date() },
       });
+
+      // Se ele sai antes de cumprir um compromisso pago mês a mês, o desconto
+      // adiantado fica em aberto. Dizemos agora, e não na reativação: ninguém
+      // deve descobrir uma pendência meses depois.
+      const planoAtual = (s.plano in PLANOS ? s.plano : "mensal") as PlanoId;
+      const p = PLANOS[planoAtual];
+      const emAberto =
+        p.compromisso > 1 && p.mesesCobranca === 1 && s.ciclosPagos > 0 && s.ciclosPagos < p.compromisso
+          ? Math.round((PLANOS.mensal.mensal - p.mensal) * s.ciclosPagos * 100) / 100
+          : 0;
+
       return NextResponse.json({
         ok: true,
-        mensagem: `Assinatura cancelada. Você continua com acesso até ${s.periodoFim.toLocaleDateString("pt-BR")}.`,
+        mensagem:
+          `Assinatura cancelada. Você continua com acesso até ${s.periodoFim.toLocaleDateString("pt-BR")}.` +
+          (emAberto > 0
+            ? ` Você usou ${s.ciclosPagos} de ${p.compromisso} meses do plano ${p.rotulo}; se voltar, a diferença do desconto (R$ ${emAberto.toFixed(2).replace(".", ",")}) entra na primeira cobrança.`
+            : ""),
+        descontoAAcertar: emAberto,
       });
     }
 
@@ -122,7 +138,10 @@ export async function PATCH(req: NextRequest) {
       await prisma.$transaction([
         prisma.subscription.update({
           where: { shopId: payload.shopId },
-          data: { plano, valorCiclo: valorDoCiclo(plano as PlanoId) },
+          // ciclosPagos zera: o compromisso antigo deixou de existir, e
+          // contar meses de um plano dentro de outro daria um número que
+          // não corresponde a combinado nenhum.
+          data: { plano, valorCiclo: valorDoCiclo(plano as PlanoId), ciclosPagos: 0 },
         }),
         prisma.subscriptionInvoice.updateMany({
           where: { subscriptionId: atual.id, status: "pendente", plano: { not: plano } },

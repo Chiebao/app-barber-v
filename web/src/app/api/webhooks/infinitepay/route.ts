@@ -98,6 +98,10 @@ export async function POST(req: NextRequest) {
           metodo: conferido.metodo === "credit_card" ? "cartao" : "pix",
           trialEndsAt: null,
           canceladaEm: null,
+          // Cada pagamento avança o compromisso. É este contador que diz,
+          // se ele sair no meio, quantos meses de desconto adiantado foram
+          // usados — e portanto quanto ficou em aberto.
+          ciclosPagos: { increment: 1 },
         },
       }),
     ]);

@@ -86,6 +86,12 @@ export interface SituacaoAssinatura {
   valorCiclo: number;
   /** Texto curto para o painel — a mesma frase em todo lugar. */
   aviso: string | null;
+  /** Desconto adiantado que ficou em aberto ao sair antes do prazo. */
+  descontoAAcertar: number;
+  /** Quantos meses do compromisso já foram pagos. */
+  ciclosPagos: number;
+  /** Tamanho do compromisso do plano atual. */
+  compromisso: number;
 }
 
 function diasEntre(de: Date, ate: Date): number {
@@ -115,6 +121,44 @@ interface AssinaturaBruta {
   trialEndsAt: Date | null;
   periodoFim: Date;
   canceladaEm: Date | null;
+  ciclosPagos?: number;
+}
+
+/**
+ * Diferença de desconto usada sem cumprir o compromisso.
+ *
+ * Só existe nos planos de compromisso pagos mês a mês. Neles o barbeiro leva
+ * o preço de anual (ou semestral) já na primeira cobrança — o desconto é
+ * adiantado contra uma promessa de permanência. Quem sai antes ficou com a
+ * parte boa sem a contrapartida.
+ *
+ * A conta é a diferença exata do que ele economizou, nunca uma multa
+ * arbitrária: (preço mensal − preço do plano) × ciclos efetivamente pagos.
+ * Assim o valor é sempre proporcional ao que foi realmente usufruído.
+ *
+ * Não é dívida enquanto ele estiver em dia ou em carência — só passa a
+ * existir quando ele efetivamente sai (cancelou ou foi bloqueado). E não é
+ * cobrança forçada: aparece na próxima reativação, que é o único momento em
+ * que temos como condicionar alguma coisa.
+ */
+export function descontoAAcertar(
+  a: AssinaturaBruta | null,
+  estado: EstadoAssinatura,
+): number {
+  if (!a) return 0;
+  if (estado !== "bloqueada" && estado !== "cancelada") return 0;
+
+  const plano = (a.plano in PLANOS ? a.plano : "mensal") as PlanoId;
+  const p = PLANOS[plano];
+
+  // Plano à vista já pagou tudo adiantado; mensal puro não tem compromisso
+  if (p.compromisso <= 1 || p.mesesCobranca !== 1) return 0;
+
+  const pagos = a.ciclosPagos ?? 0;
+  if (pagos <= 0 || pagos >= p.compromisso) return 0;
+
+  const descontoPorMes = PLANOS.mensal.mensal - p.mensal;
+  return Math.round(descontoPorMes * pagos * 100) / 100;
 }
 
 /**
@@ -126,6 +170,21 @@ export function situacaoDe(
   a: AssinaturaBruta | null,
   agora: Date = new Date(),
 ): SituacaoAssinatura {
+  const base0 = calcularSituacao(a, agora);
+  const plano0 = (a && a.plano in PLANOS ? a.plano : "mensal") as PlanoId;
+  return {
+    ...base0,
+    descontoAAcertar: descontoAAcertar(a, base0.estado),
+    ciclosPagos: a?.ciclosPagos ?? 0,
+    compromisso: PLANOS[plano0].compromisso,
+  };
+}
+
+/** O cálculo puro do estado — sem os campos derivados de compromisso. */
+function calcularSituacao(
+  a: AssinaturaBruta | null,
+  agora: Date,
+): Omit<SituacaoAssinatura, "descontoAAcertar" | "ciclosPagos" | "compromisso"> {
   // Barbearia sem assinatura: trata como cortesia em vez de bloquear.
   // Se algum dia um cadastro escapar da criação da assinatura, o barbeiro
   // não pode ser trancado do lado de fora por um erro nosso.

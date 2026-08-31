@@ -35,7 +35,13 @@ export async function POST(req: NextRequest) {
     }
 
     const plano = (assinatura.plano in PLANOS ? assinatura.plano : "mensal") as PlanoId;
-    const valor = valorDoCiclo(plano);
+
+    // Quem saiu no meio de um compromisso pago mês a mês levou desconto
+    // adiantado sem cumprir o prazo. A diferença entra na cobrança da volta —
+    // é o único momento em que dá para condicionar alguma coisa, já que link
+    // de pagamento não guarda mandato para cobrar à força.
+    const pendente = situacao.descontoAAcertar;
+    const valor = Math.round((valorDoCiclo(plano) + pendente) * 100) / 100;
 
     // Reaproveita a cobrança aberta — mas só se ela for do MESMO plano.
     // Quem trocou de plano depois de gerar precisa de uma cobrança nova, com
@@ -58,6 +64,8 @@ export async function POST(req: NextRequest) {
           link: aberta.linkPagamento,
           vencimento: aberta.vencimento,
           reaproveitada: true,
+          mensalidade: valorDoCiclo(plano),
+          descontoAAcertar: Math.round((num(aberta.valor) - valorDoCiclo(plano)) * 100) / 100,
         },
       });
     }
@@ -79,7 +87,10 @@ export async function POST(req: NextRequest) {
     const link = await criarLinkCobranca({
       orderNsu: fatura.id,
       valor,
-      descricao: `BarberPro ${PLANOS[plano].rotulo} — ${assinatura.shop.name}`,
+      descricao:
+        pendente > 0
+          ? `BarberPro ${PLANOS[plano].rotulo} + diferença de desconto — ${assinatura.shop.name}`
+          : `BarberPro ${PLANOS[plano].rotulo} — ${assinatura.shop.name}`,
       baseUrl,
       cliente: {
         nome: assinatura.shop.owner.name,
@@ -108,6 +119,9 @@ export async function POST(req: NextRequest) {
         link: link.url,
         vencimento: atualizada.vencimento,
         reaproveitada: false,
+        // Separado para a tela poder explicar de onde veio a diferença
+        mensalidade: valorDoCiclo(plano),
+        descontoAAcertar: pendente,
       },
     });
   } catch (error) {

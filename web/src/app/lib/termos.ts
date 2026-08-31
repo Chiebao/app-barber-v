@@ -10,7 +10,7 @@
  * Ao alterar os termos de forma relevante, suba a versão aqui e atualize a
  * data em /termos e /privacidade.
  */
-export const VERSAO_TERMOS = "2.0";
+export const VERSAO_TERMOS = "2.1";
 
 /** Data em que esta versão entrou em vigor (para exibição). */
-export const VIGENCIA_TERMOS = "27 de agosto de 2026";
+export const VIGENCIA_TERMOS = "30 de agosto de 2026";

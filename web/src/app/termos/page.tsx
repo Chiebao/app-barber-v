@@ -14,7 +14,7 @@ export default function TermosPage() {
             Termos de Uso
           </h1>
           <p className="text-sm text-gray-500">
-            Versao 2.0 — em vigor desde 27 de agosto de 2026
+            Versao 2.1 — em vigor desde 30 de agosto de 2026
           </p>
         </header>
 
@@ -151,6 +151,26 @@ export default function TermosPage() {
               qualquer momento pelo painel, sem multa. O acesso permanece integral ate
               o fim do periodo ja pago — nao ha corte imediato nem devolucao
               proporcional do periodo em curso.
+            </li>
+            <li>
+              <strong className="text-gray-200">Planos de compromisso pagos mensalmente:</strong>{" "}
+              nos planos semestral e anual com pagamento mes a mes, o desconto e{" "}
+              <strong className="text-gray-200">antecipado</strong>: voce paga o preco reduzido
+              desde a primeira cobranca, em contrapartida ao periodo contratado. Se a assinatura
+              for cancelada ou bloqueada antes de completar esse periodo, fica em aberto a{" "}
+              <strong className="text-gray-200">diferenca entre o preco pago e o preco do plano
+              mensal</strong>, multiplicada apenas pelos meses efetivamente utilizados.
+            </li>
+            <li>
+              Essa diferenca <strong className="text-gray-200">nao e multa</strong> e nao e cobrada
+              de forma automatica: corresponde exatamente ao desconto ja usufruido e so e exigida
+              caso voce opte por reativar a assinatura, sendo somada a primeira cobranca da
+              reativacao. Se voce nunca reativar, nada e cobrado.
+            </li>
+            <li>
+              O valor em aberto e sempre exibido no painel, na tela de assinatura, e informado no
+              momento do cancelamento. Trocar de plano encerra o compromisso anterior e reinicia a
+              contagem.
             </li>
             <li>
               <strong className="text-gray-200">Reajuste:</strong> mudancas de preco nao

@@ -400,6 +400,13 @@ model Subscription {
   periodoFim   DateTime
   /// Cancelamento pedido pelo dono — o acesso segue até periodoFim.
   canceladaEm  DateTime?
+  /// Quantas cobranças do compromisso atual já foram pagas.
+  ///
+  /// Num plano "anual pago todo mês" o barbeiro leva o preço de anual desde
+  /// o primeiro mês. Se sair no sexto, usou seis meses de desconto sem
+  /// cumprir os doze — este contador é o que permite calcular a diferença.
+  /// Zera quando o plano muda, porque aí o compromisso é outro.
+  ciclosPagos  Int      @default(0)
 
   /// Assinatura recorrente no Mercado Pago (quando metodo = "cartao").
   mpPreapprovalId String?

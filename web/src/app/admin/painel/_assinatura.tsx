@@ -25,6 +25,9 @@ interface Situacao {
   diasCarencia: number;
   canceladaEm: string | null;
   metodo: string | null;
+  descontoAAcertar: number;
+  ciclosPagos: number;
+  compromisso: number;
 }
 
 interface Plano {
@@ -63,7 +66,7 @@ export default function Assinatura({
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [gerando, setGerando] = useState(false);
-  const [cobranca, setCobranca] = useState<{ id: string; valor: number; link: string } | null>(null);
+  const [cobranca, setCobranca] = useState<{ id: string; valor: number; link: string; mensalidade: number; descontoAAcertar: number } | null>(null);
   // Confirmações em modal do app. O confirm() do navegador rompe o visual e
   // no celular parece notificação do sistema, não parte do produto.
   const [confirmarPlano, setConfirmarPlano] = useState<Plano | null>(null);
@@ -202,6 +205,22 @@ export default function Assinatura({
 
           {cobranca && (
             <div className="space-y-2 pt-1">
+              {cobranca.descontoAAcertar > 0 && (
+                <div className="rounded-lg bg-dark-900 border border-gray-700 p-3 space-y-1 text-xs">
+                  <div className="flex justify-between text-gray-400">
+                    <span>Mensalidade</span>
+                    <span className="tabular-nums">{BRL(cobranca.mensalidade)}</span>
+                  </div>
+                  <div className="flex justify-between text-yellow-400">
+                    <span>Diferença de desconto</span>
+                    <span className="tabular-nums">{BRL(cobranca.descontoAAcertar)}</span>
+                  </div>
+                  <div className="flex justify-between text-white font-semibold border-t border-gray-700 pt-1">
+                    <span>Total</span>
+                    <span className="tabular-nums">{BRL(cobranca.valor)}</span>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-gray-400">
                 A página de pagamento abriu em outra aba. Se não abriu, use o link:
               </p>
@@ -222,6 +241,19 @@ export default function Assinatura({
 
           <p className="text-xs text-gray-500">
             Pix ou cartão. No cartão, compromete apenas {BRL(situacao.valorCiclo)} do seu limite.
+          </p>
+        </div>
+      )}
+
+      {situacao.descontoAAcertar > 0 && (
+        <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4 space-y-2">
+          <p className="text-xs text-yellow-500/80 uppercase tracking-widest">Diferença de desconto</p>
+          <p className="text-2xl font-semibold text-yellow-400 tabular-nums">
+            {BRL(situacao.descontoAAcertar)}
+          </p>
+          <p className="text-sm text-gray-300">
+            Você usou {situacao.ciclosPagos} de {situacao.compromisso} meses com preço de plano longo.
+            A diferença dos meses aproveitados entra na próxima cobrança, junto da mensalidade.
           </p>
         </div>
       )}
@@ -375,10 +407,20 @@ export default function Assinatura({
                   {confirmarPlano.mesesCobranca} meses — não é uma mensalidade de {BRL(confirmarPlano.mensal)}.
                 </p>
               ) : confirmarPlano.compromisso > 1 ? (
-                <p className="text-xs text-gray-500">
-                  Preço de plano {confirmarPlano.compromisso === 12 ? "anual" : "semestral"}, mas cobrado
-                  mês a mês — sem desembolsar {BRL(confirmarPlano.totalCompromisso)} de uma vez.
-                </p>
+                <>
+                  <p className="text-xs text-gray-500">
+                    Preço de plano {confirmarPlano.compromisso === 12 ? "anual" : "semestral"}, mas cobrado
+                    mês a mês — sem desembolsar {BRL(confirmarPlano.totalCompromisso)} de uma vez.
+                  </p>
+                  {/* Dito ANTES de escolher. Descobrir isso só na saída seria
+                      uma armadilha, por mais justa que a conta seja. */}
+                  <p className="text-xs text-yellow-400/90 leading-relaxed">
+                    O desconto vem adiantado: você paga preço de{" "}
+                    {confirmarPlano.compromisso === 12 ? "anual" : "semestral"} já no primeiro mês.
+                    Se sair antes de {confirmarPlano.compromisso} meses, a diferença dos meses usados
+                    ({BRL(confirmarPlano.economiaMensal)} por mês) entra na cobrança se você voltar.
+                  </p>
+                </>
               ) : null}
               {confirmarPlano.economiaMensal > 0 && (
                 <p className="text-xs text-green-400">
