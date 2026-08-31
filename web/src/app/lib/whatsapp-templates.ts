@@ -46,13 +46,17 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "Se precisar remarcar, é só responder por aqui.",
   },
 
+  // Texto deliberadamente seco. A primeira versao ("corre que e por ordem de
+  // chegada") foi classificada como Marketing pela Meta e seria rejeitada:
+  // urgencia e convite viram "oferta" para o classificador. Enquadrar como
+  // resposta a uma solicitacao que o cliente ja fez e o que mantem em Utilidade.
   vaga_disponivel: {
     nome: "vaga_disponivel",
     idioma: "pt_BR",
     variaveis: 4,
     textoAprovado:
-      "Oi, {{1}}! Abriu uma vaga na {{2}} para {{3}} às {{4}}. " +
-      "Se ainda tiver interesse, corre que é por ordem de chegada!",
+      "Olá, {{1}}. Sobre sua solicitação de lista de espera na {{2}}: " +
+      "abriu um horário em {{3}} às {{4}}. Acesse seu link de agendamento para confirmar.",
   },
 
   // Categoria Autenticacao: a Meta monta o corpo e so aceita UMA variavel,
