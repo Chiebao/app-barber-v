@@ -12,6 +12,8 @@ import RecoveryNag from "./_recovery-nag";
 import Relatorio from "./_relatorio";
 import Assinatura from "./_assinatura";
 import AReceber from "./_a-receber";
+import Despesas from "./_despesas";
+import Lucro from "./_lucro";
 import Aceite from "./_aceite";
 import Conversao from "./_conversao";
 import Ocupacao from "./_ocupacao";
@@ -48,7 +50,7 @@ interface DashboardData {
   peakHour: string | null; totalClients: number; barbers: number;
 }
 interface ServiceItem { id: string; name: string; duration: number; price: number; category: string; active: boolean; imageUrl?: string | null; }
-interface ProductItem { id: string; name: string; price: number; description: string | null; imageUrl: string | null; active: boolean; }
+interface ProductItem { id: string; name: string; price: number; custo: number | null; description: string | null; imageUrl: string | null; active: boolean; }
 interface ClientItem { id: string; name: string; phone: string; notes: string | null; noShowCount: number; firstDate: string; totalAppointments: number; }
 interface SlotData { allSlots: string[]; blocked: string[]; allDay: boolean; booked: string[]; }
 
@@ -146,6 +148,9 @@ export default function PainelPage() {
   const [resumo, setResumo] = useState<ResumoShop | null>(null);
   const [verRelatorio, setVerRelatorio] = useState(false);
   const [verAReceber, setVerAReceber] = useState(false);
+  const [verDespesas, setVerDespesas] = useState(false);
+  // Muda a cada despesa lancada para o cartao de lucro recalcular.
+  const [lucroVersao, setLucroVersao] = useState(0);
   const [totalAReceber, setTotalAReceber] = useState<{ total: number; promessasVencidas: number } | null>(null);
   const [resumoAssinatura, setResumoAssinatura] = useState<{ estado: string; diasRestantes: number; aviso: string | null } | null>(null);
   const [banned, setBanned] = useState<BannedItem[]>([]);
@@ -218,9 +223,9 @@ export default function PainelPage() {
   // ── Products state ──
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", description: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", price: "", custo: "", description: "" });
   const [addingProduct, setAddingProduct] = useState(false);
-  const [editProduct, setEditProduct] = useState<{ id: string; name: string; price: string; description: string; imageUrl: string } | null>(null);
+  const [editProduct, setEditProduct] = useState<{ id: string; name: string; price: string; custo: string; description: string; imageUrl: string } | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<string | null>(null);
   const [uploadingProductImg, setUploadingProductImg] = useState(false);
@@ -438,7 +443,7 @@ export default function PainelPage() {
   // Sair da engrenagem fecha a subtela: voltar e cair na mesma tela de antes confunde
   useEffect(() => { if (token) fetchAssinatura(); }, [token, fetchAssinatura]);
   useEffect(() => { if (activeTab !== "config") setConfigView(null); }, [activeTab]);
-  useEffect(() => { if (activeTab !== "financeiro") { setVerRelatorio(false); setVerAReceber(false); } }, [activeTab]);
+  useEffect(() => { if (activeTab !== "financeiro") { setVerRelatorio(false); setVerAReceber(false); setVerDespesas(false); } }, [activeTab]);
   // O total em aberto vive no botao, para o dono ver sem entrar
   useEffect(() => {
     if (!token || activeTab !== "financeiro") return;
@@ -879,22 +884,22 @@ export default function PainelPage() {
     if (!newProduct.name.trim() || !newProduct.price) { toast.error("Preencha nome e preço"); return; }
     setAddingProduct(true);
     try {
-      const res = await fetch("/api/me/products", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newProduct.name.trim(), price: parseFloat(newProduct.price), description: newProduct.description.trim() || null }) });
+      const res = await fetch("/api/me/products", { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: newProduct.name.trim(), price: parseFloat(newProduct.price), custo: newProduct.custo.trim() || null, description: newProduct.description.trim() || null }) });
       if (res.status === 401) { handleUnauthorized(); return; }
-      if (res.ok) { setNewProduct({ name: "", price: "", description: "" }); toast.success("Produto adicionado"); fetchProducts(); }
+      if (res.ok) { setNewProduct({ name: "", price: "", custo: "", description: "" }); toast.success("Produto adicionado"); fetchProducts(); }
       else { const d = await res.json(); toast.error(d.error || "Erro ao adicionar"); }
     } catch { toast.error("Erro ao adicionar"); } finally { setAddingProduct(false); }
   };
 
   const abrirEdicaoProduto = (p: ProductItem) =>
-    setEditProduct({ id: p.id, name: p.name, price: String(p.price), description: p.description || "", imageUrl: p.imageUrl || "" });
+    setEditProduct({ id: p.id, name: p.name, price: String(p.price), custo: p.custo === null ? "" : String(p.custo), description: p.description || "", imageUrl: p.imageUrl || "" });
 
   const salvarEdicaoProduto = async () => {
     if (!editProduct) return;
     if (!editProduct.name.trim() || !editProduct.price) { toast.error("Preencha nome e preço"); return; }
     setSavingProduct(true);
     try {
-      const res = await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editProduct.id, name: editProduct.name.trim(), price: parseFloat(editProduct.price), description: editProduct.description.trim() || null }) });
+      const res = await fetch("/api/me/products", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id: editProduct.id, name: editProduct.name.trim(), price: parseFloat(editProduct.price), custo: editProduct.custo.trim() === "" ? null : editProduct.custo.trim(), description: editProduct.description.trim() || null }) });
       if (res.status === 401) { handleUnauthorized(); return; }
       if (res.ok) { toast.success("Produto atualizado"); setEditProduct(null); fetchProducts(); }
       else { const d = await res.json(); toast.error(d.error || "Erro ao salvar"); }
@@ -1386,7 +1391,12 @@ export default function PainelPage() {
         <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
           <h3 className="font-semibold text-white">Adicionar produto</h3>
           <input type="text" placeholder="Nome do produto *" value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
-          <input type="number" inputMode="decimal" placeholder="Preço *" value={newProduct.price} onChange={e => setNewProduct(p => ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" inputMode="decimal" placeholder="Preço de venda *" value={newProduct.price} onChange={e => setNewProduct(p => ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            {/* Sem o custo nao ha margem — e margem de produto costuma ser
+                a surpresa que faz o dono mudar o que compra. */}
+            <input type="number" inputMode="decimal" placeholder="Quanto custou" value={newProduct.custo} onChange={e => setNewProduct(p => ({ ...p, custo: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+          </div>
           <input type="text" placeholder="Descrição (opcional)" value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
           <p className="text-xs text-gray-500">A foto você adiciona depois, tocando no produto.</p>
           <button onClick={handleAddProduct} disabled={addingProduct} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingProduct ? "Adicionando..." : "Adicionar produto"}</button>
@@ -1421,6 +1431,19 @@ export default function PainelPage() {
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Preço (R$)</label>
                 <input type="number" inputMode="decimal" value={editProduct.price} onChange={e => setEditProduct(p => p && ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Quanto custou</label>
+                <input type="number" inputMode="decimal" value={editProduct.custo} onChange={e => setEditProduct(p => p && ({ ...p, custo: e.target.value }))} placeholder="Deixe vazio se não souber" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                {editProduct.custo.trim() !== "" && parseFloat(editProduct.price) > 0 && parseFloat(editProduct.custo) >= 0 && (
+                  <p className="mt-1.5 text-xs text-gray-500">
+                    Margem de{" "}
+                    <span className="font-semibold text-green-400">
+                      {(parseFloat(editProduct.price) - parseFloat(editProduct.custo)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>{" "}
+                    ({Math.round(((parseFloat(editProduct.price) - parseFloat(editProduct.custo)) / parseFloat(editProduct.price)) * 100)}%)
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Descrição</label>
@@ -1990,7 +2013,16 @@ export default function PainelPage() {
             )}
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}
-            {activeTab === "financeiro" && verAReceber && (
+            {activeTab === "financeiro" && verDespesas && (
+              <Despesas
+                token={token}
+                onVoltar={() => setVerDespesas(false)}
+                onUnauthorized={handleUnauthorized}
+                onMudou={() => setLucroVersao(v => v + 1)}
+              />
+            )}
+
+            {activeTab === "financeiro" && !verDespesas && verAReceber && (
               <AReceber
                 token={token}
                 onVoltar={() => setVerAReceber(false)}
@@ -1999,7 +2031,7 @@ export default function PainelPage() {
               />
             )}
 
-            {activeTab === "financeiro" && !verAReceber && verRelatorio && (
+            {activeTab === "financeiro" && !verDespesas && !verAReceber && verRelatorio && (
               <Relatorio
                 token={token}
                 ehDono={user?.role === "owner"}
@@ -2010,13 +2042,21 @@ export default function PainelPage() {
               />
             )}
 
-            {activeTab === "financeiro" && !verRelatorio && !verAReceber && user?.role === "owner" && (
+            {activeTab === "financeiro" && !verDespesas && !verRelatorio && !verAReceber && user?.role === "owner" && (
               <div className="mb-5 space-y-4">
+                {/* Antes de tudo: quanto sobrou. O resto do financeiro
+                    responde perguntas menores que esta. */}
+                <Lucro
+                  token={token}
+                  onUnauthorized={handleUnauthorized}
+                  onVerDespesas={() => setVerDespesas(true)}
+                  recarregar={lucroVersao}
+                />
                 <Ocupacao token={token} />
                 <Conversao token={token} />
               </div>
             )}
-            {activeTab === "financeiro" && !verRelatorio && !verAReceber && (
+            {activeTab === "financeiro" && !verDespesas && !verRelatorio && !verAReceber && (
               <div className="space-y-5">
                 {/* O resumo responde "como estou indo". O relatorio responde
                     "quem me deve, como entrou, quanto pago de comissao" —

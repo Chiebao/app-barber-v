@@ -10,10 +10,10 @@ datasource db {
 
 // Dono da barbearia (gerencia tudo)
 model Owner {
-  id           String   @id @default(cuid())
-  name         String
-  phone        String   @unique
-  passwordHash String
+  id               String    @id @default(cuid())
+  name             String
+  phone            String    @unique
+  passwordHash     String
   // Codigo de recuperacao (hash) para redefinir a senha sem depender do suporte
   recoveryCodeHash String?
   // Aceite dos termos.
@@ -21,52 +21,52 @@ model Owner {
   // Checkbox que ninguem registra nao prova nada: se um dia houver disputa,
   // o que vale e QUANDO a pessoa aceitou e QUAL versao estava no ar naquele
   // dia. Guardar a versao permite mostrar o texto exato que ela leu.
-  termsAcceptedAt DateTime?
-  termsVersion    String?
-  createdAt    DateTime @default(now())
+  termsAcceptedAt  DateTime?
+  termsVersion     String?
+  createdAt        DateTime  @default(now())
 
-  shops        Shop[]
+  shops Shop[]
 
   @@map("owners")
 }
 
 // A barbearia (estabelecimento)
 model Shop {
-  id              String   @id @default(cuid())
-  ownerId         String
-  name            String
-  slug            String   @unique
-  openTime        String   // "08:00"
-  closeTime       String   // "20:00"
-  workDays        Int[]    // [1,2,3,4,5,6]
-  avgServiceTime  Int      @default(30) // minutos, para calcular limite diario
+  id             String    @id @default(cuid())
+  ownerId        String
+  name           String
+  slug           String    @unique
+  openTime       String // "08:00"
+  closeTime      String // "20:00"
+  workDays       Int[] // [1,2,3,4,5,6]
+  avgServiceTime Int       @default(30) // minutos, para calcular limite diario
   /// De quanto em quanto tempo a agenda oferece horario: 15, 20, 30, 45 ou 60.
   /// Barbearia que atende 1h por cliente nao quer oferecer 08:30 — quer
   /// 08:00, 09:00, 10:00. Antes disso o passo era fixo em 30 no codigo.
-  slotInterval    Int      @default(30)
-  pixKey          String?  // chave pix manual (usada quando o Mercado Pago nao esta conectado)
+  slotInterval   Int       @default(30)
+  pixKey         String? // chave pix manual (usada quando o Mercado Pago nao esta conectado)
   // Mercado Pago: quando conectado, o Pix vira automatico — o dinheiro cai
   // direto na conta da barbearia e o sistema confirma sozinho via webhook.
-  mpAccessToken   String?
-  mpRefreshToken  String?
-  mpUserId        String?
-  mpConnectedAt   DateTime?
-  logoUrl         String?  // logo da barbearia (URL no Supabase Storage) — aparece no link do cliente
+  mpAccessToken  String?
+  mpRefreshToken String?
+  mpUserId       String?
+  mpConnectedAt  DateTime?
+  logoUrl        String? // logo da barbearia (URL no Supabase Storage) — aparece no link do cliente
   // Onde a barbearia fica e como falar com ela. Tudo opcional: as barbearias
   // que ja existem foram criadas sem esses campos e precisam continuar
   // funcionando. Aparecem no link publico para o cliente saber o endereco.
-  phone           String?  // telefone/WhatsApp publico da barbearia
-  address         String?  // rua e numero
-  neighborhood    String?  // bairro
-  city            String?
-  state           String?  // UF
-  zipCode         String?  // CEP
-  colorTheme      String   @default("midnight_gold") // paleta de cores escolhida
-  bookingMode     String   @default("steps") // "steps" (etapas) ou "agent" (agente IA chat)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  phone          String? // telefone/WhatsApp publico da barbearia
+  address        String? // rua e numero
+  neighborhood   String? // bairro
+  city           String?
+  state          String? // UF
+  zipCode        String? // CEP
+  colorTheme     String    @default("midnight_gold") // paleta de cores escolhida
+  bookingMode    String    @default("steps") // "steps" (etapas) ou "agent" (agente IA chat)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  owner        Owner          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        Owner                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   barbers      Barber[]
   services     Service[]
   appointments Appointment[]
@@ -77,38 +77,39 @@ model Shop {
   waitlist     Waitlist[]
   banned       BannedClient[]
   subscription Subscription?
+  despesas     Expense[]
 
   @@map("shops")
 }
 
 // Profissional (barbeiro)
 model Barber {
-  id           String   @id @default(cuid())
-  shopId       String
-  name         String
-  phone        String
+  id               String   @id @default(cuid())
+  shopId           String
+  name             String
+  phone            String
   // E-mail do profissional. Opcional e sem uso automatico ainda: e a base
   // para recuperar a senha sem depender do WhatsApp, quando houver envio.
-  email        String?
+  email            String?
   // Foto do profissional — aparece para o cliente na hora de escolher com
   // quem cortar. E a razao de o dono tambem ter um perfil de barbeiro.
-  imageUrl     String?
-  passwordHash String
+  imageUrl         String?
+  passwordHash     String
   // Codigo de recuperacao (hash) para redefinir a senha sem depender do dono
   recoveryCodeHash String?
-  active          Boolean  @default(true)
-  role            String   @default("barber") // "barber" | "owner"
-  isOwnerProfile  Boolean  @default(false)    // true = perfil do dono para gerenciar própria agenda
-  pushToken       String?                     // Expo Push Token para notificacoes
-  commission      Float    @default(0)       // % comissão sobre serviços (ex: 10 = 10%)
-  createdAt       DateTime @default(now())
+  active           Boolean  @default(true)
+  role             String   @default("barber") // "barber" | "owner"
+  isOwnerProfile   Boolean  @default(false) // true = perfil do dono para gerenciar própria agenda
+  pushToken        String? // Expo Push Token para notificacoes
+  commission       Float    @default(0) // % comissão sobre serviços (ex: 10 = 10%)
+  createdAt        DateTime @default(now())
 
-  shop          Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  appointments  Appointment[]
-  recurring     RecurringAppointment[]
-  blockedSlots  BlockedSlot[]
-  waitlist      Waitlist[]
-  pushSubs      PushSubscription[]
+  shop         Shop                   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  recurring    RecurringAppointment[]
+  blockedSlots BlockedSlot[]
+  waitlist     Waitlist[]
+  pushSubs     PushSubscription[]
 
   @@unique([shopId, phone])
   @@map("barbers")
@@ -137,7 +138,7 @@ model PushSubscription {
 model ShopEvent {
   id        String   @id @default(cuid())
   shopId    String
-  type      String   // "view" = abriu o link | "book" = concluiu o agendamento
+  type      String // "view" = abriu o link | "book" = concluiu o agendamento
   sessionId String
   createdAt DateTime @default(now())
 
@@ -168,11 +169,11 @@ model Service {
   name     String
   duration Int
   price    Decimal @db.Decimal(10, 2)
-  category String  // "corte","barba","sobrancelha","pezinho","luzes"
+  category String // "corte","barba","sobrancelha","pezinho","luzes"
   imageUrl String?
   active   Boolean @default(true)
 
-  shop         Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop         Shop                          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   appointments AppointmentService[]
   recurring    RecurringAppointmentService[]
 
@@ -181,14 +182,18 @@ model Service {
 
 // Produtos vendidos na barbearia
 model Product {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   shopId      String
   name        String
-  price       Decimal @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(10, 2)
+  /// Quanto a barbearia pagou por uma unidade. Opcional porque os produtos
+  /// que ja existem foram cadastrados sem ele — sem custo, a tela mostra
+  /// "falta o custo" em vez de inventar uma margem.
+  custo       Decimal? @db.Decimal(10, 2)
   description String?
   imageUrl    String?
   imageUrl2   String?
-  active      Boolean @default(true)
+  active      Boolean  @default(true)
 
   shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   comandaItems ComandaItem[]
@@ -203,49 +208,49 @@ model Client {
   phone       String   @unique
   email       String?
   noShowCount Int      @default(0)
-  notes       String?  // notas do barbeiro sobre o cliente (CRM)
+  notes       String? // notas do barbeiro sobre o cliente (CRM)
   createdAt   DateTime @default(now())
 
-  appointments  Appointment[]
-  recurring     RecurringAppointment[]
-  loyalties     LoyaltyCount[]
-  ratings       Rating[]
+  appointments Appointment[]
+  recurring    RecurringAppointment[]
+  loyalties    LoyaltyCount[]
+  ratings      Rating[]
 
   @@map("clients")
 }
 
 // Agendamento
 model Appointment {
-  id              String    @id @default(cuid())
-  shopId          String
-  barberId        String
-  clientId        String
-  date            DateTime
-  startTime       String
-  endTime         String
-  totalDuration   Int
-  totalPrice      Decimal   @db.Decimal(10, 2)
-  status          String    @default("confirmed") // confirmed, completed, cancelled, no_show
-  paymentMethod        String?   // pix, dinheiro, cartao, adiado
-  paidAt               DateTime?
-  deferredPaymentDate  DateTime?
-  reminderSentAt  DateTime?
+  id                  String    @id @default(cuid())
+  shopId              String
+  barberId            String
+  clientId            String
+  date                DateTime
+  startTime           String
+  endTime             String
+  totalDuration       Int
+  totalPrice          Decimal   @db.Decimal(10, 2)
+  status              String    @default("confirmed") // confirmed, completed, cancelled, no_show
+  paymentMethod       String? // pix, dinheiro, cartao, adiado
+  paidAt              DateTime?
+  deferredPaymentDate DateTime?
+  reminderSentAt      DateTime?
   // Pré-agendamento (Pix declarado, aguardando o barbeiro confirmar):
   // vence após 6h de barbearia aberta, nunca depois da hora do corte.
-  pendingExpiresAt DateTime?
+  pendingExpiresAt    DateTime?
   // Cobranca Pix criada no Mercado Pago (quando a barbearia esta conectada)
-  mpPaymentId     String?   @unique
-  mpQrCode        String?   // codigo copia-e-cola
-  cancelledAt     DateTime?
-  cancelledBy     String?   // "client" | "barber" | "owner"
-  pixRequested    Boolean   @default(false)
+  mpPaymentId         String?   @unique
+  mpQrCode            String? // codigo copia-e-cola
+  cancelledAt         DateTime?
+  cancelledBy         String? // "client" | "barber" | "owner"
+  pixRequested        Boolean   @default(false)
   // Ocorrencia gerada por um agendamento recorrente. Nulo = agendamento avulso.
-  recurringId     String?
-  createdAt       DateTime  @default(now())
+  recurringId         String?
+  createdAt           DateTime  @default(now())
 
-  shop         Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  barber       Barber               @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  client       Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  shop         Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  barber       Barber                @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  client       Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
   services     AppointmentService[]
   recurring    RecurringAppointment? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
   rating       Rating?
@@ -275,7 +280,7 @@ model Rating {
   clientId      String
   shopId        String
   barberId      String
-  score         Int      // 1-5
+  score         Int // 1-5
   comment       String?
   createdAt     DateTime @default(now())
 
@@ -287,11 +292,15 @@ model Rating {
 
 // Itens da comanda (produtos vendidos no atendimento)
 model ComandaItem {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   appointmentId String
   productId     String
-  quantity      Int     @default(1)
-  price         Decimal @db.Decimal(10, 2)
+  quantity      Int      @default(1)
+  price         Decimal  @db.Decimal(10, 2)
+  /// Custo no momento da venda, congelado pelo mesmo motivo do preco:
+  /// mudar o que se paga ao fornecedor hoje nao pode reescrever a margem
+  /// dos meses que ja fecharam.
+  custo         Decimal? @db.Decimal(10, 2)
 
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
   product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -309,8 +318,8 @@ model ComandaItem {
 model BannedClient {
   id        String   @id @default(cuid())
   shopId    String
-  phone     String   // so digitos
-  name      String?  // como estava salvo na hora do banimento, para a lista
+  phone     String // so digitos
+  name      String? // como estava salvo na hora do banimento, para a lista
   reason    String?
   createdAt DateTime @default(now())
 
@@ -323,11 +332,11 @@ model BannedClient {
 
 // Horarios bloqueados pelo barbeiro
 model BlockedSlot {
-  id        String   @id @default(cuid())
-  barberId  String
-  shopId    String
-  date      DateTime // date only (stored as midnight UTC)
-  time      String?  // null = dia todo bloqueado, "09:00" = horario especifico
+  id       String   @id @default(cuid())
+  barberId String
+  shopId   String
+  date     DateTime // date only (stored as midnight UTC)
+  time     String? // null = dia todo bloqueado, "09:00" = horario especifico
 
   barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
   shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -338,14 +347,14 @@ model BlockedSlot {
 
 // Lista de espera — clientes aguardando vaga
 model Waitlist {
-  id          String   @id @default(cuid())
-  shopId      String
-  clientName  String
-  clientPhone String
-  barberId    String?  // preferência de barbeiro (opcional)
-  serviceIds  String[] // serviços desejados
+  id            String   @id @default(cuid())
+  shopId        String
+  clientName    String
+  clientPhone   String
+  barberId      String? // preferência de barbeiro (opcional)
+  serviceIds    String[] // serviços desejados
   preferredDate String? // data preferida "YYYY-MM-DD"
-  createdAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
 
   shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
   barber Barber? @relation(fields: [barberId], references: [id], onDelete: SetNull)
@@ -358,7 +367,7 @@ model LoyaltyCount {
   id           String    @id @default(cuid())
   shopId       String
   clientId     String
-  barberId     String?   // ultimo barbeiro que atendeu
+  barberId     String? // ultimo barbeiro que atendeu
   count        Int       @default(0)
   lastRewardAt DateTime?
   updatedAt    DateTime  @updatedAt
@@ -393,20 +402,20 @@ model Subscription {
   metodo String? // "pix" | "cartao"
 
   /// Valor do ciclo inteiro (semestral cobra 6x o mensal com desconto).
-  valorCiclo   Decimal  @db.Decimal(10, 2) @default(79.90)
+  valorCiclo  Decimal   @default(79.90) @db.Decimal(10, 2)
   /// Fim do teste grátis. Null quando nunca houve trial.
-  trialEndsAt  DateTime?
+  trialEndsAt DateTime?
   /// Até quando o acesso está pago. É desta data que tudo é calculado.
-  periodoFim   DateTime
+  periodoFim  DateTime
   /// Cancelamento pedido pelo dono — o acesso segue até periodoFim.
-  canceladaEm  DateTime?
+  canceladaEm DateTime?
   /// Quantas cobranças do compromisso atual já foram pagas.
   ///
   /// Num plano "anual pago todo mês" o barbeiro leva o preço de anual desde
   /// o primeiro mês. Se sair no sexto, usou seis meses de desconto sem
   /// cumprir os doze — este contador é o que permite calcular a diferença.
   /// Zera quando o plano muda, porque aí o compromisso é outro.
-  ciclosPagos  Int      @default(0)
+  ciclosPagos Int       @default(0)
 
   /// Assinatura recorrente no Mercado Pago (quando metodo = "cartao").
   mpPreapprovalId String?
@@ -414,7 +423,7 @@ model Subscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  shop     Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop      Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
   cobrancas SubscriptionInvoice[]
 
   @@index([status])
@@ -428,12 +437,12 @@ model SubscriptionInvoice {
   id             String @id @default(cuid())
   subscriptionId String
 
-  valor      Decimal  @db.Decimal(10, 2)
+  valor      Decimal   @db.Decimal(10, 2)
   /// Plano que esta fatura cobra. Guardado AQUI, e nao lido da assinatura,
   /// porque o dono pode trocar de plano depois de a cobranca ser gerada — e
   /// o webhook precisa honrar o que foi efetivamente pago, nao o plano atual.
-  plano      String   @default("mensal")
-  status     String   @default("pendente") // "pendente" | "paga" | "vencida" | "cancelada"
+  plano      String    @default("mensal")
+  status     String    @default("pendente") // "pendente" | "paga" | "vencida" | "cancelada"
   vencimento DateTime
   pagaEm     DateTime?
   metodo     String?
@@ -443,9 +452,9 @@ model SubscriptionInvoice {
   /// Link de checkout que o dono abre para pagar.
   linkPagamento String?
   /// Identificador da transação no provedor — o webhook reencontra por aqui.
-  mpPaymentId  String? @unique
-  copiaECola   String?
-  qrCodeBase64 String?
+  mpPaymentId   String? @unique
+  copiaECola    String?
+  qrCodeBase64  String?
 
   createdAt DateTime @default(now())
 
@@ -487,9 +496,9 @@ model RecurringAppointment {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
-  shop         Shop                         @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  barber       Barber                       @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  client       Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  shop         Shop                          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  barber       Barber                        @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  client       Client                        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   services     RecurringAppointmentService[]
   appointments Appointment[]
 
@@ -506,4 +515,39 @@ model RecurringAppointmentService {
   service   Service              @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("recurring_appointment_services")
+}
+
+/// Despesa da barbearia.
+///
+/// O app sempre soube tudo que ENTRA e nada que SAI, entao "quanto sobrou"
+/// era impossivel de responder. Isto e o outro lado da conta.
+///
+/// Recorrencia: a despesa marcada `recorrente` e o MOLDE. Todo mes o cron
+/// cria uma copia dela com `origemId` apontando de volta. Aluguel, agua e
+/// luz sao 80% das despesas de uma barbearia e nao mudam — se dependessem
+/// de digitacao, a tela seria abandonada no segundo mes.
+model Expense {
+  id         String   @id @default(cuid())
+  shopId     String
+  descricao  String
+  valor      Decimal  @db.Decimal(10, 2)
+  /// aluguel | contas | produtos | equipe | manutencao | outros
+  /// Lista fechada de proposito: com campo livre, em dois meses existem
+  /// "produto", "produtos" e "prod." como categorias diferentes.
+  categoria  String
+  data       DateTime
+  /// Molde de repeticao mensal.
+  recorrente Boolean  @default(false)
+  /// Preenchido nas copias geradas pelo cron; aponta para o molde.
+  origemId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  shop   Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  origem Expense?  @relation("MoldeDaDespesa", fields: [origemId], references: [id], onDelete: SetNull)
+  copias Expense[] @relation("MoldeDaDespesa")
+
+  @@index([shopId, data])
+  @@index([origemId])
+  @@map("expenses")
 }

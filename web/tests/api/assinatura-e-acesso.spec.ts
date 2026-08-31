@@ -1,3 +1,6 @@
+// A versao vem do app, nao de uma constante copiada: o teste ja quebrou uma
+// vez porque os termos subiram para 2.1 e ele continuou exigindo 2.0.
+import { VERSAO_TERMOS } from "../../src/app/lib/termos";
 import { test, expect } from "@playwright/test";
 import {
   BASE, criarLoja, apagarLoja, apagarClientes, fecharDb,
@@ -208,7 +211,7 @@ test.describe("Aceite dos termos", () => {
     });
     // Checkbox sem registro não prova nada — o que vale é quando e qual versão
     expect(shop.owner.termsAcceptedAt).toBeTruthy();
-    expect(shop.owner.termsVersion).toBe("2.0");
+    expect(shop.owner.termsVersion).toBe(VERSAO_TERMOS);
     await apagarLoja(loja);
   });
 });
@@ -258,11 +261,11 @@ test.describe("Re-aceite dos termos", () => {
     const shop = await db().shop.findUniqueOrThrow({ where: { id: loja.shopId }, select: { ownerId: true } });
     await db().owner.update({ where: { id: shop.ownerId }, data: { termsAcceptedAt: null, termsVersion: null } });
 
-    const r = await request.post(`${BASE}/api/me/aceite`, { headers: loja.auth, data: { versao: "2.0" } });
+    const r = await request.post(`${BASE}/api/me/aceite`, { headers: loja.auth, data: { versao: VERSAO_TERMOS } });
     expect(r.ok()).toBeTruthy();
 
     const dono = await db().owner.findUniqueOrThrow({ where: { id: shop.ownerId } });
-    expect(dono.termsVersion).toBe("2.0");
+    expect(dono.termsVersion).toBe(VERSAO_TERMOS);
     expect(dono.termsAcceptedAt).toBeTruthy();
   });
 

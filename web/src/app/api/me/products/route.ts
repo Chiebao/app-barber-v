@@ -18,7 +18,15 @@ export async function GET(req: NextRequest) {
     });
 
     // price é Decimal no banco — devolve como número puro para o cliente
-    return NextResponse.json({ products: products.map(p => ({ ...p, price: num(p.price) })) });
+    // custo continua null quando nao foi informado, de proposito: a tela
+    // precisa distinguir "custa zero" de "nao sei o custo".
+    return NextResponse.json({
+      products: products.map(p => ({
+        ...p,
+        price: num(p.price),
+        custo: p.custo === null ? null : num(p.custo),
+      })),
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -31,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (!guarda.ok) return guarda.resposta;
     const payload = guarda.payload;
 
-    const { name, price, description, imageUrl, imageUrl2 } = await req.json();
+    const { name, price, description, imageUrl, imageUrl2, custo } = await req.json();
     if (!name || !price) return NextResponse.json({ error: "Nome e preco obrigatorios" }, { status: 400 });
 
     const product = await prisma.product.create({
@@ -39,13 +47,16 @@ export async function POST(req: NextRequest) {
         shopId: payload.shopId,
         name,
         price: parseFloat(price),
+        custo: custo === undefined || custo === null || custo === "" ? null : parseFloat(custo),
         description: description || null,
         imageUrl: imageUrl || null,
         imageUrl2: imageUrl2 || null,
       },
     });
 
-    return NextResponse.json({ product: { ...product, price: num(product.price) } });
+    return NextResponse.json({
+      product: { ...product, price: num(product.price), custo: product.custo === null ? null : num(product.custo) },
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -58,7 +69,7 @@ export async function PATCH(req: NextRequest) {
     if (!guarda.ok) return guarda.resposta;
     const payload = guarda.payload;
 
-    const { id, name, price, description, imageUrl, imageUrl2, active } = await req.json();
+    const { id, name, price, description, imageUrl, imageUrl2, active, custo } = await req.json();
     if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
 
     const existing = await prisma.product.findFirst({ where: { id, shopId: payload.shopId } });
@@ -69,13 +80,17 @@ export async function PATCH(req: NextRequest) {
       data: {
         ...(name !== undefined && { name }),
         ...(price !== undefined && { price: parseFloat(price) }),
+        // String vazia significa "apaguei o campo", nao "custa zero".
+        ...(custo !== undefined && { custo: custo === null || custo === "" ? null : parseFloat(custo) }),
         ...(description !== undefined && { description: description || null }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(imageUrl2 !== undefined && { imageUrl2: imageUrl2 || null }),
         ...(active !== undefined && { active }),
       },
     });
-    return NextResponse.json({ product: { ...product, price: num(product.price) } });
+    return NextResponse.json({
+      product: { ...product, price: num(product.price), custo: product.custo === null ? null : num(product.custo) },
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -102,7 +117,17 @@ export async function PUT(req: NextRequest) {
     if (existing) {
       await prisma.comandaItem.update({ where: { id: existing.id }, data: { quantity } });
     } else {
-      await prisma.comandaItem.create({ data: { appointmentId, productId, quantity: quantity || 1, price: product.price } });
+      // Preco E custo congelados na venda: mudar o que se paga ao
+      // fornecedor amanha nao pode reescrever a margem de hoje.
+      await prisma.comandaItem.create({
+        data: {
+          appointmentId,
+          productId,
+          quantity: quantity || 1,
+          price: product.price,
+          custo: product.custo,
+        },
+      });
     }
 
     return NextResponse.json({ ok: true });

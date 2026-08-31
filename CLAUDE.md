@@ -281,8 +281,9 @@ app_barber/
 | `AppointmentService` | Relacao N:N agendamento-servico | id, appointmentId, serviceId (FKs) |
 | `Rating` | Avaliacoes | id, score, comment, appointmentId (unique), clientId, shopId, barberId (FKs) |
 | `LoyaltyCount` | Contagem fidelidade | id, count, shopId+clientId (unique compound), barberId |
-| `Product` | Produtos da barbearia | id, name, price, description, imageUrl, imageUrl2, active, shopId (FK) |
-| `ComandaItem` | Produto vinculado a agendamento | id, quantity, price, appointmentId, productId (FKs) |
+| `Product` | Produtos da barbearia | id, name, price, **custo** (opcional), description, imageUrl, imageUrl2, active, shopId (FK) |
+| `ComandaItem` | Produto vinculado a agendamento | id, quantity, price, **custo** (congelado na venda), appointmentId, productId (FKs) |
+| `Expense` | Despesa da barbearia | id, descricao, valor, categoria, data, recorrente, origemId (auto-relacao), shopId (FK) |
 | `BlockedSlot` | Horarios bloqueados | id, date, time (nullable = dia inteiro), barberId, shopId (FKs), unique(barberId+date+time) |
 | `Waitlist` | Lista de espera | id, clientName, clientPhone, serviceIds, preferredDate, barberId, shopId (FKs) |
 
@@ -330,6 +331,25 @@ app_barber/
 ### No-Show
 - Barbeiro marca falta → `noShowCount++` no cliente
 - 2 faltas → obriga pre-pagamento Pix no proximo agendamento
+
+### Despesas e lucro
+- Lucro do mes = **entrou − comissoes − despesas**. So conta atendimento PAGO
+  (o que foi feito e nao recebido e fiado, e ja aparece em "A receber")
+- `Appointment.totalPrice` e **so servico** — produto vive em `ComandaItem`.
+  Somar so o totalPrice esconderia toda a venda de produto
+- Comissao incide **sobre servico**, nao sobre produto
+- `Product.custo` e opcional; `ComandaItem.custo` e congelado na venda, para
+  mudar o preco do fornecedor hoje nao reescrever a margem de meses fechados
+- A margem de produto e **informativa** e NAO entra na conta do lucro: a
+  compra do produto ja foi lancada como despesa, e descontar o custo de novo
+  tiraria a mesma compra duas vezes
+- Categorias sao lista fechada (`aluguel`, `contas`, `produtos`, `equipe`,
+  `manutencao`, `outros`) — com campo livre viram tres nomes para a mesma coisa
+- Despesa `recorrente` e o MOLDE; o cron diario cria a copia do mes com
+  `origemId` apontando de volta. Idempotente: a existencia da copia naquele
+  mes e a condicao de parada
+- Despesa e assunto do dono: barbeiro recebe 401 em `/api/me/despesas` e
+  `/api/me/resultado`
 
 ### Comanda
 - Barbeiro adiciona produtos durante o atendimento
@@ -380,6 +400,8 @@ app_barber/
 | `/api/me/clients/[id]` | Notas do cliente |
 | `/api/me/shop` | Config da barbearia |
 | `/api/me/loyalty` | Programa fidelidade |
+| `/api/me/despesas` | CRUD de despesas (owner only) |
+| `/api/me/resultado` | Lucro do mes: entrou − comissoes − despesas (owner only) |
 | `/api/me/blocked-slots` | Bloqueio de horarios |
 | `/api/me/waitlist` | Lista de espera |
 | `/api/me/waitlist/[id]` | Remover da fila |
@@ -444,6 +466,9 @@ app_barber/
 | 44 | Endereco e contato da barbearia (+ trocar o nome) | ✅ | — | ✅ |
 | 45 | Foto e e-mail do barbeiro (dono gerencia o proprio perfil) | ✅ | — | ✅ |
 | 46 | Sessao sobrevive ao gesto de voltar do iPhone | ✅ | — | — |
+| 47 | Mensagens por modelo aprovado do WhatsApp (lembrete, vaga, codigo, cobranca) | — | — | ✅ |
+| 48 | Confirmacoes em modal do app (fim do `confirm()` do navegador) | ✅ | — | — |
+| 49 | Despesas + lucro do mes + custo/margem de produto | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

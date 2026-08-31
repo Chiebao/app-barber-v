@@ -16,6 +16,24 @@ import type { APIRequestContext } from "@playwright/test";
 
 export const BASE = process.env.TEST_BASE_URL || "http://localhost:3000";
 
+/**
+ * O mesmo CRON_SECRET que o servidor enxerga.
+ *
+ * O Prisma carrega o `.env` sozinho, mas ninguém carrega o `.env.local` no
+ * processo do Playwright — e é lá que o segredo costuma estar. Sem isto, o
+ * teste bate na rota de cron e leva 401: falha real, motivo errado.
+ */
+export function segredoDoCron(): string {
+  if (process.env.CRON_SECRET) return process.env.CRON_SECRET;
+  const fs = require("fs") as typeof import("fs");
+  for (const arquivo of [".env.local", ".env"]) {
+    if (!fs.existsSync(arquivo)) continue;
+    const m = fs.readFileSync(arquivo, "utf8").match(/^CRON_SECRET=(.*)$/m);
+    if (m) return m[1].trim().replace(/^"|"$/g, "");
+  }
+  return "";
+}
+
 let _prisma: PrismaClient | null = null;
 export function db(): PrismaClient {
   if (!_prisma) _prisma = new PrismaClient();
@@ -123,6 +141,7 @@ export async function apagarLoja(loja: Loja | null) {
   await p.blockedSlot.deleteMany({ where: { shopId } });
   await p.waitlist.deleteMany({ where: { shopId } });
   await p.bannedClient.deleteMany({ where: { shopId } });
+  await p.expense.deleteMany({ where: { shopId } });
   await p.product.deleteMany({ where: { shopId } });
   await p.service.deleteMany({ where: { shopId } });
   await p.subscriptionInvoice.deleteMany({ where: { subscription: { shopId } } });

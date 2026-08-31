@@ -1,0 +1,37 @@
+name: Despesas que se repetem
+
+# Lança as despesas fixas do mês (aluguel, água, luz) a partir dos moldes.
+#
+# Roda todo dia, e não uma vez por mês, de propósito: se rodasse só no dia 1 e
+# aquela execução falhasse, a barbearia passaria o mês inteiro sem as despesas
+# fixas e o lucro apareceria inflado. Rodando diário, a primeira execução do
+# mês cria e as outras trinta não fazem nada — o endpoint é idempotente,
+# porque a existência da cópia daquele molde naquele mês é a condição de
+# parada.
+#
+# ~30 execuções/mês × 1 min mínimo cobrado = 30 min dos 2.000 do plano grátis.
+#
+# Às 11:00 UTC = 8h em Brasília, antes de o dono abrir o painel.
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch: {}   # permite disparar na mão pelo site do GitHub
+
+jobs:
+  lancar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Lançar despesas recorrentes
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://barberpro-mauve.vercel.app/api/cron/despesas")
+          codigo=$(echo "$resposta" | tail -n1)
+          corpo=$(echo "$resposta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$corpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Endpoint de despesas respondeu $codigo"
+            exit 1
+          fi
