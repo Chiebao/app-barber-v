@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import bcrypt from "bcryptjs";
-import { enviarWhatsApp, whatsappConfigurado } from "@/app/lib/whatsapp-send";
+import { enviarModelo, whatsappConfigurado } from "@/app/lib/whatsapp-send";
 import { z } from "zod";
 
 /**
@@ -54,13 +54,10 @@ export async function POST(req: NextRequest) {
 
     await prisma.passwordReset.create({ data: { phone: telefone, codeHash, expiresAt } });
 
-    await enviarWhatsApp(
-      telefone,
-      `*BarberPro* — recuperação de senha\n\n` +
-        `Seu código é: *${codigo}*\n\n` +
-        `Ele vale por ${VALIDADE_MINUTOS} minutos.\n` +
-        `Se não foi você quem pediu, ignore esta mensagem — sua senha continua a mesma.`,
-    );
+    // Modelo aprovado, não texto livre: quem pede recuperação de senha
+    // quase nunca escreveu para o número nas últimas 24h, então texto
+    // livre seria recusado pela Meta justo no momento mais crítico.
+    await enviarModelo(telefone, "codigo_recuperacao", [codigo, String(VALIDADE_MINUTOS)]);
 
     return respostaPadrao;
   } catch (error) {

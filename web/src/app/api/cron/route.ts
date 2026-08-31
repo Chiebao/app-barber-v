@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
+import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { ptBR } from "date-fns/locale";
 
 /**
@@ -159,25 +160,18 @@ export async function GET(req: NextRequest) {
       const phoneWithCountry = phone.startsWith("55") ? phone : `55${phone}`;
 
       try {
-        const waRes = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${WHATSAPP_API_TOKEN}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: phoneWithCountry,
-            type: "text",
-            text: {
-              body:
-                `Olá ${apt.client.name.split(" ")[0]}! 🫡\n` +
-                `Passando pra lembrar do seu horário na *${apt.shop.name}*:\n\n` +
-                `📆 ${dataFmt} às ${apt.startTime}\n` +
-                `💇‍♂️ ${serviceNames}\n\n` +
-                `Até lá! Deus abençoe 🙏`,
-            },
-          }),
-        });
+        // Modelo aprovado: o lembrete e sempre iniciado por nos, entao
+        // fora da janela de 24h a Meta so entrega desta forma.
+        // Modelo aprovado: o lembrete é sempre iniciado por nós, então fora
+        // da janela de 24h a Meta só entrega desta forma.
+        const enviado = await enviarModelo(phoneWithCountry, "lembrete_agendamento", [
+          apt.client.name.split(" ")[0],
+          apt.shop.name,
+          apt.startTime,
+          serviceNames,
+        ]);
 
-        if (waRes.ok) {
+        if (enviado) {
           // Só marca como enviado quando a API confirma — se falhar, tenta na próxima rodada
           await prisma.appointment.update({
             where: { id: apt.id },
@@ -186,8 +180,9 @@ export async function GET(req: NextRequest) {
           sent++;
         } else {
           failedSend++;
-          const detalhe = await waRes.text().catch(() => "");
-          console.error(`[CRON] Falha WhatsApp p/ ${apt.client.name}: ${waRes.status} ${detalhe.slice(0, 200)}`);
+          // O detalhe do erro já sai no log de enviarModelo, com o nome do
+          // modelo — aqui basta dizer de quem era a mensagem.
+          console.error(`[CRON] Falha WhatsApp p/ ${apt.client.name}`);
         }
       } catch (err) {
         failedSend++;

@@ -7,6 +7,8 @@
  * Nunca lança: uma falha de envio não pode derrubar o fluxo que a chamou.
  */
 
+import { MODELOS, preverTexto, type NomeModelo } from "@/app/lib/whatsapp-templates";
+
 /** Env vars já chegaram com quebra de linha colada e derrubaram tudo em silêncio. */
 function envClean(name: string): string {
   return (process.env[name] || "").trim().replace(/\\n$/, "").trim();
@@ -22,6 +24,12 @@ export function paraFormatoWhatsApp(telefone: string): string {
   return digitos.startsWith("55") ? digitos : `55${digitos}`;
 }
 
+/**
+ * Texto livre.
+ *
+ * Só chega se o destinatário tiver escrito para o número nas últimas 24h.
+ * Para mensagem que NÓS iniciamos, use `enviarModelo`.
+ */
 export async function enviarWhatsApp(telefone: string, texto: string): Promise<boolean> {
   const token = envClean("WHATSAPP_API_TOKEN");
   const phoneId = envClean("WHATSAPP_PHONE_ID");
@@ -50,6 +58,73 @@ export async function enviarWhatsApp(telefone: string, texto: string): Promise<b
     return true;
   } catch (err) {
     console.error("[WhatsApp] erro no envio:", err);
+    return false;
+  }
+}
+
+/**
+ * Envio por MODELO aprovado — o caminho de produção.
+ *
+ * Fora da janela de 24h a Meta só entrega mensagem baseada em modelo, e
+ * todas as nossas são iniciadas por nós. O texto livre continua existindo
+ * abaixo, mas só serve para responder alguém que acabou de escrever.
+ *
+ * Se o modelo ainda não estiver aprovado, a Meta responde 132000/132001 e
+ * a mensagem não sai. Registramos o texto previsto no log para o envio
+ * falho não virar um silêncio sem explicação.
+ */
+export async function enviarModelo(
+  telefone: string,
+  nome: NomeModelo,
+  variaveis: string[],
+): Promise<boolean> {
+  const token = envClean("WHATSAPP_API_TOKEN");
+  const phoneId = envClean("WHATSAPP_PHONE_ID");
+  const previsto = preverTexto(nome, variaveis);
+
+  if (!token || !phoneId) {
+    console.log("[WhatsApp] sem credenciais — modelo nao enviado:", nome, "|", previsto.slice(0, 80));
+    return false;
+  }
+
+  const modelo = MODELOS[nome];
+  if (variaveis.length !== modelo.variaveis) {
+    // Quantidade errada de variaveis e recusa certa da Meta — melhor
+    // barrar aqui, onde da para ver o nome do modelo no log.
+    console.error("[WhatsApp] modelo", nome, "espera", modelo.variaveis, "variaveis, recebeu", variaveis.length);
+    return false;
+  }
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: paraFormatoWhatsApp(telefone),
+        type: "template",
+        template: {
+          name: modelo.nome,
+          language: { code: modelo.idioma },
+          components: [
+            {
+              type: "body",
+              parameters: variaveis.map((v) => ({ type: "text", text: v })),
+            },
+          ],
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const detalhe = await res.text().catch(() => "");
+      console.error("[WhatsApp] modelo", nome, "falhou:", res.status, detalhe.slice(0, 300));
+      console.error("[WhatsApp] texto previsto:", previsto);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[WhatsApp] erro ao enviar modelo", nome, err);
     return false;
   }
 }
