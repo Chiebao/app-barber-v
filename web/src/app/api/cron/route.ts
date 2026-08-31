@@ -122,6 +122,23 @@ export async function GET(req: NextRequest) {
         waba = r.ok ? corpo : (corpo as { error?: { message?: string } })?.error?.message;
       }
 
+      // ?templates=WABA_ID — lista o que a Meta realmente guardou.
+      // Sem isto, um envio recusado vira adivinhação: não dá para saber se
+      // o problema é aprovação, idioma, nome ou formato do modelo.
+      const wabaTemplates = new URL(req.url).searchParams.get("templates");
+      let templates: unknown = null;
+      if (wabaTemplates) {
+        const r = await fetch(
+          `https://graph.facebook.com/v21.0/${wabaTemplates}/message_templates` +
+            `?fields=name,language,status,category,components&limit=50`,
+          { headers: h },
+        );
+        const corpo = await r.json().catch(() => ({}));
+        templates = r.ok
+          ? (corpo as { data?: unknown[] }).data
+          : (corpo as { error?: { message?: string } })?.error?.message;
+      }
+
       // ?send=55DDDNUMERO — envia uma mensagem de teste para validar o canal.
       // Protegido pelo CRON_SECRET, igual ao resto da rota.
       //
@@ -169,6 +186,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         envioTeste,
+        templates,
         tokenValido: meRes.ok,
         tokenPertenceA: meRes.ok ? me : me?.error?.message,
         numeroAcessivel: numRes.ok,
