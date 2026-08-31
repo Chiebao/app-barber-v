@@ -1,17 +1,22 @@
 name: Lembretes automáticos
 
-# O cron da Vercel no plano grátis roda só 1x/dia, o que deixaria quase todo
-# cliente sem lembrete. Este workflow chama o mesmo endpoint de meia em meia
-# hora. A janela de aviso é de 2h antes do corte, então essa frequência cobre
-# todo mundo com folga, e o `reminderSentAt` impede aviso repetido.
+# RESERVA. O disparo principal dos lembretes é o cron-job.org, a cada 15 min.
 #
-# Cadência escolhida pelo orçamento: repo privado gasta minutos do plano grátis
-# (2.000/mês) e o GitHub cobra 1 minuto mínimo por execução.
-#   a cada 30 min → ~1.440 min/mês (cabe)
-#   a cada 15 min → ~2.880 min/mês (estoura)
+# Este workflow já foi o principal, e não deu conta: o cron do GitHub é "melhor
+# esforço" e atrasa sob carga. Medido em 40 execuções de */30, a mediana real
+# ficou em 149 min e o pior intervalo em 776 min — 23 dos 39 intervalos foram
+# maiores que a própria janela de aviso (2h), ou seja, mais da metade dos
+# cortes podia passar sem lembrete nenhum.
+#
+# Fica de pé como rede de segurança, de hora em hora: se o cron-job.org cair,
+# a cobertura piora mas não zera. `reminderSentAt` impede aviso repetido,
+# então os dois disparando junto é inofensivo.
+#
+# De hora em hora também cabe folgado nos 2.000 min/mês do plano grátis
+# (~720 min, contra ~1.440 quando era de 30 em 30).
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch: {}   # permite disparar na mão pelo site do GitHub
 
 jobs:
