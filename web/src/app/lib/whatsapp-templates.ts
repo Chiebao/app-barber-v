@@ -78,13 +78,17 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "Confira os detalhes no seu painel.",
   },
 
+  // Tambem reprovado como Marketing na primeira versao. O gatilho aqui foi
+  // outro: nome do produto ("assinatura do BarberPro") junto com o preco
+  // ("O valor e R$ ...") le como oferta. Aviso de fatura precisa parecer
+  // fatura — sem marca, sem preco anunciado, so o dado da cobranca.
   cobranca_assinatura: {
     nome: "cobranca_assinatura",
     idioma: "pt_BR",
     variaveis: 3,
     textoAprovado:
-      "Olá, {{1}}! Sua assinatura do BarberPro vence em {{2}}. " +
-      "O valor é {{3}} e a cobrança já está pronta no seu painel, em Configurações › Minha assinatura.",
+      "Olá, {{1}}. Sua assinatura vence em {{2}}. A fatura de {{3}} já está " +
+      "disponível no seu painel, em Configurações.",
   },
 };
 
