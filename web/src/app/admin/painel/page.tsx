@@ -12,6 +12,7 @@ import RecoveryNag from "./_recovery-nag";
 import Relatorio from "./_relatorio";
 import Assinatura from "./_assinatura";
 import AReceber from "./_a-receber";
+import Agenda from "./_agenda";
 import Despesas from "./_despesas";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
@@ -968,6 +969,20 @@ export default function PainelPage() {
   const toggleService = async (id: string, active: boolean) => {
     try { await fetch("/api/me/services", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ id, active }) }); fetchServices(); }
     catch { toast.error("Erro ao atualizar serviço"); }
+  };
+
+  // O intervalo é da barbearia inteira, não do dia aberto na tela — por
+  // isso salva em /api/me/shop e não em blocked-slots.
+  const mudarIntervalo = async (min: number) => {
+    try {
+      const res = await fetch("/api/me/shop", {
+        method: "PATCH", headers: authHeaders(), body: JSON.stringify({ slotInterval: min }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (!res.ok) { toast.error("Não consegui mudar o intervalo"); return; }
+      setShopSettings(p => p ? { ...p, slotInterval: min } : p);
+      toast.success(min >= 60 ? "Agenda de 1 em 1 hora" : `Agenda de ${min} em ${min} minutos`);
+    } catch { toast.error("Erro de conexão"); }
   };
 
   const saveShopSettings = async () => {
@@ -1972,44 +1987,15 @@ export default function PainelPage() {
 
             {/* ═══════ AGENDA (Availability) TAB ═══════ */}
             {activeTab === "agenda" && (
-              <div className="space-y-5">
-                <h2 className="text-lg font-semibold text-white">📅 Minha Agenda</h2>
-                {/* Date picker */}
-                <input type="date" value={availDate} onChange={e => setAvailDate(e.target.value)} className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none transition-colors" />
-
-                <p className="text-sm text-gray-400 capitalize">{new Date(availDate + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</p>
-
-                {/* Block/Unblock all day */}
-                {slotData && !slotsLoading && (
-                  slotData.allDay || slotData.allSlots.every(t => slotData.blocked.includes(t) || slotData.booked.includes(t)) ? (
-                    <button onClick={unblockAllDay} disabled={slotsSaving} className="w-full rounded-xl border border-green-500/50 bg-green-500/10 py-3 text-sm font-semibold text-green-400 hover:bg-green-500/20 transition disabled:opacity-50">✓ Liberar dia todo</button>
-                  ) : (
-                    <button onClick={blockAllDay} disabled={slotsSaving} className="w-full rounded-xl border border-red-500/50 bg-red-500/10 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/20 transition disabled:opacity-50">✕ Bloquear dia todo</button>
-                  )
-                )}
-
-                {/* Slots grid */}
-                {slotsLoading ? <Spinner /> : !slotData ? null : slotData.allSlots.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum horário neste dia</p> : (
-                  <>
-                    <div className="grid grid-cols-4 gap-2">
-                      {slotData.allSlots.map(time => {
-                        const isBooked = slotData.booked.includes(time);
-                        const isBlocked = slotData.allDay || slotData.blocked.includes(time);
-                        return (
-                          <button key={time} onClick={() => toggleSlot(time)} disabled={isBooked || slotsSaving} className={`py-2.5 rounded-lg border text-sm font-medium transition-all ${isBooked ? "border-brand-500/50 bg-brand-500/15 text-brand-400 cursor-not-allowed" : isBlocked ? "border-red-500/40 bg-red-500/10 text-red-400" : "border-green-500/50 bg-green-500/15 text-green-400"}`}>
-                            {time} {isBooked ? "📌" : isBlocked ? "🔒" : ""}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="flex justify-center gap-6 text-xs text-gray-500">
-                      <span><span className="inline-block w-3 h-3 rounded bg-green-500/30 border border-green-500 mr-1" /> Livre</span>
-                      <span><span className="inline-block w-3 h-3 rounded bg-red-500/20 border border-red-500 mr-1" /> Bloqueado</span>
-                      <span><span className="inline-block w-3 h-3 rounded bg-brand-500/20 border border-brand-500 mr-1" /> Agendado</span>
-                    </div>
-                  </>
-                )}
-              </div>
+              <Agenda
+                token={token}
+                data={availDate}
+                onMudarData={setAvailDate}
+                barberId={user?.role === "owner" && ownerBarberId ? ownerBarberId : undefined}
+                slotInterval={shopSettings?.slotInterval || 30}
+                onMudarIntervalo={mudarIntervalo}
+                onUnauthorized={handleUnauthorized}
+              />
             )}
 
             {/* ═══════ FINANCEIRO TAB ═══════ */}

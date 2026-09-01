@@ -286,6 +286,7 @@ app_barber/
 | `Expense` | Despesa da barbearia | id, descricao, valor, categoria, data, recorrente, origemId (auto-relacao), shopId (FK) |
 | `BlockedSlot` | Horarios bloqueados | id, date, time (nullable = dia inteiro), barberId, shopId (FKs), unique(barberId+date+time) |
 | `Waitlist` | Lista de espera | id, clientName, clientPhone, serviceIds, preferredDate, barberId, shopId (FKs) |
+| `RecurringBlock` | Bloqueio semanal (almoco, folga) | id, horaInicio, horaFim, diasSemana, ativo, barberId, shopId (FKs) |
 
 ### 5.2 Convencoes
 
@@ -331,6 +332,20 @@ app_barber/
 ### No-Show
 - Barbeiro marca falta → `noShowCount++` no cliente
 - 2 faltas → obriga pre-pagamento Pix no proximo agendamento
+
+### Horarios da agenda
+- Os horarios oferecidos sao a REGUA (slotInterval) **mais** o fim de cada
+  atendimento e de cada bloqueio — o "encaixe". Sem isso, um corte de 1h15
+  as 10h com passo de 1h empurrava o proximo cliente para meio-dia e os 45
+  min entre 11:15 e 12:00 nao eram oferecidos a ninguem
+- Encaixe **sempre**, decisao do dono: prefere a agenda apertada e escolhe
+  por dia se aceita. O preco e horario quebrado (11:15, 14:40)
+- Bloqueio e **intervalo ocupado**, nao string comparada com o inicio da
+  vaga. Filtrar por igualdade deixava passar o corte que ATRAVESSA o bloqueio
+- O bloqueio vale nos TRES lugares (`lib/bloqueios.ts`): lista do cliente,
+  criacao do agendamento e painel. Ja custou caro ter isso espalhado
+- `RecurringBlock` e avaliado na hora, **nao materializado**: bloqueio nao
+  tem identidade a preservar, e gerar linhas todo dia custaria cron e limpeza
 
 ### Despesas e lucro
 - Lucro do mes = **entrou − comissoes − despesas**. So conta atendimento PAGO
@@ -403,6 +418,7 @@ app_barber/
 | `/api/me/despesas` | CRUD de despesas (owner only) |
 | `/api/me/resultado` | Lucro do mes: entrou − comissoes − despesas (owner only) |
 | `/api/me/blocked-slots` | Bloqueio de horarios |
+| `/api/me/blocked-slots/recorrentes` | Bloqueio que se repete toda semana |
 | `/api/me/waitlist` | Lista de espera |
 | `/api/me/waitlist/[id]` | Remover da fila |
 | `/api/me/upload` | Upload de imagem (Supabase Storage) |
@@ -469,6 +485,9 @@ app_barber/
 | 47 | Mensagens por modelo aprovado do WhatsApp (lembrete, vaga, codigo, cobranca) | — | — | ✅ |
 | 48 | Confirmacoes em modal do app (fim do `confirm()` do navegador) | ✅ | — | — |
 | 49 | Despesas + lucro do mes + custo/margem de produto | ✅ | — | ✅ |
+| 50 | Encaixe: horario nasce onde o corte anterior termina | ✅ | — | ✅ |
+| 51 | Bloqueio recorrente (almoco todo dia) | ✅ | — | ✅ |
+| 52 | Regua do dia na agenda (altura = tempo) + intervalo ali mesmo | ✅ | — | — |
 
 ### Pendentes / Melhorias
 

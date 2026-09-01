@@ -66,18 +66,19 @@ model Shop {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  owner        Owner                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  barbers      Barber[]
-  services     Service[]
-  appointments Appointment[]
-  recurring    RecurringAppointment[]
-  products     Product[]
-  loyalties    LoyaltyCount[]
-  blockedSlots BlockedSlot[]
-  waitlist     Waitlist[]
-  banned       BannedClient[]
-  subscription Subscription?
-  despesas     Expense[]
+  owner          Owner                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  barbers        Barber[]
+  services       Service[]
+  appointments   Appointment[]
+  recurring      RecurringAppointment[]
+  products       Product[]
+  loyalties      LoyaltyCount[]
+  blockedSlots   BlockedSlot[]
+  waitlist       Waitlist[]
+  banned         BannedClient[]
+  subscription   Subscription?
+  despesas       Expense[]
+  bloqueiosFixos RecurringBlock[]
 
   @@map("shops")
 }
@@ -104,12 +105,13 @@ model Barber {
   commission       Float    @default(0) // % comissão sobre serviços (ex: 10 = 10%)
   createdAt        DateTime @default(now())
 
-  shop         Shop                   @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
-  recurring    RecurringAppointment[]
-  blockedSlots BlockedSlot[]
-  waitlist     Waitlist[]
-  pushSubs     PushSubscription[]
+  shop           Shop                   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  recurring      RecurringAppointment[]
+  blockedSlots   BlockedSlot[]
+  waitlist       Waitlist[]
+  pushSubs       PushSubscription[]
+  bloqueiosFixos RecurringBlock[]
 
   @@unique([shopId, phone])
   @@map("barbers")
@@ -550,4 +552,31 @@ model Expense {
   @@index([shopId, data])
   @@index([origemId])
   @@map("expenses")
+}
+
+/// Bloqueio que se repete toda semana — o almoço, a folga da quarta.
+///
+/// Avaliado na hora, e NÃO materializado em BlockedSlot. Bloqueio não tem
+/// identidade a preservar como um agendamento tem: gerar linhas todo dia
+/// custaria um cron, limpeza e a chance de o barbeiro ver o almoço de um dia
+/// que ainda não foi gerado. Aqui a regra é a verdade, e o dia é derivado.
+model RecurringBlock {
+  id         String   @id @default(cuid())
+  shopId     String
+  barberId   String
+  /// "12:00"
+  horaInicio String
+  /// "13:00" — exclusivo: um bloqueio 12:00–13:00 libera as 13:00
+  horaFim    String
+  /// 0=domingo … 6=sábado, a mesma convenção de Shop.workDays
+  diasSemana Int[]
+  /// Desligar em vez de apagar: a folga de janeiro volta em julho
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, ativo])
+  @@map("recurring_blocks")
 }

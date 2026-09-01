@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { generateTimeSlots } from "@/app/lib/time-slots";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
+import { bloqueiosDoDia, emMinutos as minutosDe, emTexto as emTextoLocal } from "@/app/lib/bloqueios";
 
 // Resolve o barberId efetivo a partir do token + params
 // - Barbeiro: usa payload.userId (deve existir em barbers)
@@ -53,12 +54,32 @@ export async function GET(req: NextRequest) {
           date: { gte: dateStart, lte: dateEnd },
           status: { not: "cancelled" },
         },
-        select: { startTime: true, endTime: true },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+          client: { select: { name: true } },
+          services: { select: { service: { select: { name: true } } } },
+        },
+        orderBy: { startTime: "asc" },
       }),
     ]);
 
     const allDay = blocked.some((b) => b.time === null);
     const blockedTimes = blocked.filter((b) => b.time !== null).map((b) => b.time as string);
+
+    // O painel precisa mostrar o almoço recorrente como bloqueado, senão o
+    // barbeiro vê verde onde o cliente vê fechado.
+    const { intervalos: todosIntervalos } = await bloqueiosDoDia(
+      prisma, barberId, date, shop.slotInterval,
+    );
+    // O que veio de regra recorrente é o que NÃO corresponde a um bloqueio
+    // pontual: o barbeiro precisa saber que aquilo não foi ele que clicou.
+    const fixosIntervalos = todosIntervalos.filter(
+      (b) => !blockedTimes.includes(b.startTime),
+    );
+    const bloqueiosDoBarbeiro = todosIntervalos;
     // Na grade do painel, duração e passo são o mesmo número: o barbeiro
     // bloqueia exatamente os blocos que a agenda oferece ao cliente.
     const allSlots = generateTimeSlots(
@@ -85,9 +106,45 @@ export async function GET(req: NextRequest) {
       });
     });
 
+    // Os blocos cobertos por regra recorrente vêm separados: o barbeiro
+    // precisa saber que aquilo veio de uma regra, e não foi ele que clicou.
+    const fixos = allSlots.filter((slot) => {
+      const inicio = minutosDe(slot);
+      const fim = inicio + shop.slotInterval;
+      return bloqueiosDoBarbeiro.some((b) => {
+        const bi = minutosDe(b.startTime);
+        const bf = minutosDe(b.endTime);
+        return inicio < bf && fim > bi;
+      });
+    }).filter((slot) => !blockedTimes.includes(slot));
+
+    // A régua do painel desenha por FRONTEIRA, não pela grade: um almoço de
+    // 12:00 a 13:00 é um intervalo, e vira uma faixa só. A lista de blocos
+    // acima continua saindo porque o app mobile ainda desenha a grade.
+    const bloqueios = [
+      ...blockedTimes.map((t) => ({
+        startTime: t,
+        endTime: emTextoLocal(minutosDe(t) + shop.slotInterval),
+        tipo: "pontual" as const,
+      })),
+      ...fixosIntervalos.map((b) => ({ ...b, tipo: "fixo" as const })),
+    ];
+
     return NextResponse.json({
       allSlots,
       blocked: blockedTimes,
+      fixos,
+      bloqueios,
+      // A régua desenha o dia em escala, então precisa da duração real de
+      // cada corte — não do bloco da grade que ele começa.
+      agendamentos: appointments.map((a) => ({
+        id: a.id,
+        startTime: a.startTime,
+        endTime: a.endTime,
+        status: a.status,
+        cliente: a.client?.name || "Cliente",
+        servicos: a.services.map((s) => s.service.name),
+      })),
       allDay,
       booked: bookedTimes,
       shopHours: { openTime: shop.openTime, closeTime: shop.closeTime, slotInterval: shop.slotInterval },

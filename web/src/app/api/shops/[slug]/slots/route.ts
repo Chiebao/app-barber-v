@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { generateTimeSlots, agoraNaBarbearia } from "@/app/lib/time-slots";
 import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { materializarRecorrentes } from "@/app/lib/recurrence";
+import { bloqueiosDoDia } from "@/app/lib/bloqueios";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   try {
@@ -61,32 +62,20 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       return NextResponse.json({ slots: [], message: "Agenda cheia para este dia" });
     }
 
-    // Bloqueios entram como INTERVALO OCUPADO, junto com os agendamentos.
+    // Bloqueios entram como INTERVALO OCUPADO, junto com os agendamentos —
+    // pontuais e recorrentes, pela mesma função que a criação usa.
     //
-    // Antes eles eram descontados depois, comparando o horário do bloqueio
-    // com o começo de cada vaga. Isso deixava passar o pior caso: um corte
-    // que COMEÇA antes do bloqueio e atravessa ele. Com o almoço às 12:00,
-    // um corte de 1h marcado às 11:15 ia até 12:15 e ninguém barrava.
-    //
-    // Um bloqueio ocupa `slotInterval` minutos, que é como o painel os cria.
-    const bloqueios: { startTime: string; endTime: string }[] = [];
+    // Antes eram descontados depois, comparando o horário do bloqueio com o
+    // começo de cada vaga. Isso deixava passar o pior caso: um corte que
+    // COMEÇA antes e atravessa. Com o almoço às 12:00, um corte de 1h
+    // marcado às 11:15 ia até 12:15 e ninguém barrava.
+    let bloqueios: { startTime: string; endTime: string }[] = [];
     if (barberId) {
-      const blocked = await prisma.blockedSlot.findMany({
-        where: { barberId, date: { gte: startOfDay, lte: endOfDay } },
-      });
-      if (blocked.some((b) => b.time === null)) {
+      const b = await bloqueiosDoDia(prisma, barberId, date, shop.slotInterval);
+      if (b.diaTodo) {
         return NextResponse.json({ slots: [], message: "Barbeiro indisponivel neste dia" });
       }
-      for (const b of blocked) {
-        if (!b.time) continue;
-        const [h, m] = b.time.split(":").map(Number);
-        if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
-        const fim = h * 60 + m + shop.slotInterval;
-        bloqueios.push({
-          startTime: b.time,
-          endTime: `${String(Math.floor(fim / 60)).padStart(2, "0")}:${String(fim % 60).padStart(2, "0")}`,
-        });
-      }
+      bloqueios = b.intervalos;
     }
 
     // A duração é a soma dos serviços escolhidos; o passo é a divisão do

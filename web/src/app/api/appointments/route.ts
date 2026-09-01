@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num, sumMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
+import { bloqueiosDoDia, invadeBloqueio } from "@/app/lib/bloqueios";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercadopago";
 import { z } from "zod";
@@ -110,31 +111,11 @@ export async function POST(req: NextRequest) {
           // da lista. A lista pode estar velha na tela do cliente, e o modo
           // chat monta o pedido por conta própria — sem esta checagem, o
           // almoço de todo dia seria furado de tempos em tempos.
-          const bloqueios = await tx.blockedSlot.findMany({
-            where: {
-              barberId: data.barberId,
-              date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
-            },
-            select: { time: true },
-          });
-
-          // time nulo = dia inteiro fechado
-          if (bloqueios.some((b) => b.time === null)) throw new Error("SLOT_BLOCKED");
-
-          const emMinutos = (hhmm: string) => {
-            const [h, m] = hhmm.split(":").map(Number);
-            return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : NaN;
-          };
-          const inicioPedido = emMinutos(data.startTime);
-          const fimPedido = emMinutos(endTime);
-          const invade = bloqueios.some((b) => {
-            if (!b.time) return false;
-            const ini = emMinutos(b.time);
-            if (!Number.isFinite(ini)) return false;
-            // Um bloqueio ocupa slotInterval minutos, como o painel os cria.
-            return inicioPedido < ini + shop.slotInterval && fimPedido > ini;
-          });
-          if (invade) throw new Error("SLOT_BLOCKED");
+          const bloq = await bloqueiosDoDia(tx, data.barberId, data.date, shop.slotInterval);
+          if (bloq.diaTodo) throw new Error("SLOT_BLOCKED");
+          if (invadeBloqueio(data.startTime, endTime, bloq.intervalos)) {
+            throw new Error("SLOT_BLOCKED");
+          }
 
           const isPending = needsPix && (data.pendingPayment || !!mpToken);
 
