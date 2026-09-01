@@ -14,7 +14,8 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "smoke": "node ../scripts/smoke.mjs",
-    "test:api": "playwright test --config=playwright.api.config.ts"
+    "test:api": "playwright test --config=playwright.api.config.ts",
+    "test:unit": "playwright test --config=playwright.unit.config.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

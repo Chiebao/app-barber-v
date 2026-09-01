@@ -106,6 +106,36 @@ export async function POST(req: NextRequest) {
           const hasConflict = conflicts.some((apt) => data.startTime < apt.endTime && endTime > apt.startTime);
           if (hasConflict) throw new Error("SLOT_CONFLICT");
 
+          // O bloqueio do barbeiro também precisa barrar aqui, não só sumir
+          // da lista. A lista pode estar velha na tela do cliente, e o modo
+          // chat monta o pedido por conta própria — sem esta checagem, o
+          // almoço de todo dia seria furado de tempos em tempos.
+          const bloqueios = await tx.blockedSlot.findMany({
+            where: {
+              barberId: data.barberId,
+              date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
+            },
+            select: { time: true },
+          });
+
+          // time nulo = dia inteiro fechado
+          if (bloqueios.some((b) => b.time === null)) throw new Error("SLOT_BLOCKED");
+
+          const emMinutos = (hhmm: string) => {
+            const [h, m] = hhmm.split(":").map(Number);
+            return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : NaN;
+          };
+          const inicioPedido = emMinutos(data.startTime);
+          const fimPedido = emMinutos(endTime);
+          const invade = bloqueios.some((b) => {
+            if (!b.time) return false;
+            const ini = emMinutos(b.time);
+            if (!Number.isFinite(ini)) return false;
+            // Um bloqueio ocupa slotInterval minutos, como o painel os cria.
+            return inicioPedido < ini + shop.slotInterval && fimPedido > ini;
+          });
+          if (invade) throw new Error("SLOT_BLOCKED");
+
           const isPending = needsPix && (data.pendingPayment || !!mpToken);
 
           return tx.appointment.create({
@@ -137,6 +167,9 @@ export async function POST(req: NextRequest) {
     } catch (txError) {
       // Conflito de horario (checagem manual OU serialization failure do Postgres)
       const msg = txError instanceof Error ? txError.message : "";
+      if (msg === "SLOT_BLOCKED") {
+        return NextResponse.json({ error: "O barbeiro não atende nesse horário" }, { status: 409 });
+      }
       if (msg === "SLOT_CONFLICT" || msg.includes("could not serialize") || (txError as { code?: string })?.code === "P2034") {
         // Cliente estava pagando o Pix e o horário foi preenchido nesse meio-tempo
         if (data.pendingPayment) {
