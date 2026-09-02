@@ -341,6 +341,10 @@ export default function PainelPage() {
 
   // ─── CORTE FIXO (agendamento recorrente) ───
   const [fixos, setFixos] = useState<CorteFixo[]>([]);
+  // O formulário é o mesmo para os dois casos; o toggle decide se o
+  // agendamento acontece uma vez ou toda semana.
+  const [fixoRecorrente, setFixoRecorrente] = useState(false);
+  const [dataAvulsa, setDataAvulsa] = useState("");
   const [fixosLoading, setFixosLoading] = useState(false);
   const [novoFixo, setNovoFixo] = useState({
     clientName: "", clientPhone: "", barberId: "", serviceIds: [] as string[],
@@ -1116,7 +1120,7 @@ export default function PainelPage() {
     { icon: "👥", label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
     { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
     { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
-    { icon: "🔁", label: "Corte fixo", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
+    { icon: "➕", label: "Novo agendamento", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
     ] : []),
@@ -1504,25 +1508,44 @@ export default function PainelPage() {
       const duracao = escolhidos.reduce((soma, s) => soma + s.duration, 0);
       const valor = escolhidos.reduce((soma, s) => soma + s.price, 0);
 
-      const podeSalvar =
+      const baseOk =
         novoFixo.clientName.trim().length >= 2 &&
         novoFixo.clientPhone.replace(/\D/g, "").length >= 8 &&
         novoFixo.serviceIds.length > 0 &&
-        !!novoFixo.startDate && !!novoFixo.endDate &&
-        novoFixo.endDate >= novoFixo.startDate;
+        !!novoFixo.startTime;
+
+      const podeSalvar = fixoRecorrente
+        ? baseOk && !!novoFixo.startDate && !!novoFixo.endDate && novoFixo.endDate >= novoFixo.startDate
+        : baseOk && !!dataAvulsa;
 
       const salvarFixo = async () => {
         setSalvandoFixo(true);
         try {
-          const res = await fetch("/api/me/recurring", {
+          // Duas rotas porque são dois assuntos: a recorrência materializa
+          // ocorrências futuras, o avulso cria UM atendimento e pronto.
+          const rota = fixoRecorrente ? "/api/me/recurring" : "/api/me/agendamentos";
+          const corpo = fixoRecorrente
+            ? { ...novoFixo, barberId: novoFixo.barberId || undefined }
+            : {
+                clientName: novoFixo.clientName,
+                clientPhone: novoFixo.clientPhone,
+                serviceIds: novoFixo.serviceIds,
+                date: dataAvulsa,
+                startTime: novoFixo.startTime,
+                barberId: novoFixo.barberId || undefined,
+              };
+
+          const res = await fetch(rota, {
             method: "POST",
             headers: { ...authHeaders(), "Content-Type": "application/json" },
-            body: JSON.stringify({ ...novoFixo, barberId: novoFixo.barberId || undefined }),
+            body: JSON.stringify(corpo),
           });
           const data = await res.json();
           if (!res.ok) { toast.error(data.error || "Não consegui criar"); setSalvandoFixo(false); return; }
           toast.success(
-            data.ocorrenciasCriadas > 0
+            !fixoRecorrente
+              ? "Agendamento criado"
+              : data.ocorrenciasCriadas > 0
               ? `Corte fixo criado — ${data.ocorrenciasCriadas} já entraram na agenda`
               : "Corte fixo criado",
           );
@@ -1558,10 +1581,11 @@ export default function PainelPage() {
         <div className="space-y-6">{backBtn}
           <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
             <div>
-              <h3 className="font-semibold text-white">Novo corte fixo</h3>
+              <h3 className="font-semibold text-white">Novo agendamento</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Um agendamento que se repete toda semana. Você cria uma vez e ele
-                aparece sozinho na agenda até a data final.
+                {fixoRecorrente
+                  ? "Se repete toda semana. Você cria uma vez e ele aparece sozinho na agenda até a data final."
+                  : "Marque um cliente direto na sua agenda, sem ele precisar usar o link."}
               </p>
             </div>
 
@@ -1599,14 +1623,25 @@ export default function PainelPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
-                <select value={novoFixo.weekday}
-                  onChange={e => setNovoFixo(prev => ({ ...prev, weekday: Number(e.target.value) }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
-                  {DIAS_DA_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                </select>
-              </div>
+              {/* Sem recorrência, "dia da semana" não localiza nada — o
+                  atendimento acontece numa data. */}
+              {fixoRecorrente ? (
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
+                  <select value={novoFixo.weekday}
+                    onChange={e => setNovoFixo(prev => ({ ...prev, weekday: Number(e.target.value) }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
+                    {DIAS_DA_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Data *</label>
+                  <input type="date" value={dataAvulsa}
+                    onChange={e => setDataAvulsa(e.target.value)}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
+              )}
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Horário</label>
                 <input type="time" value={novoFixo.startTime}
@@ -1615,20 +1650,38 @@ export default function PainelPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">De</label>
-                <input type="date" value={novoFixo.startDate}
-                  onChange={e => setNovoFixo(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+            <button
+              onClick={() => setFixoRecorrente(v => !v)}
+              aria-pressed={fixoRecorrente}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-700 p-3 text-left hover:bg-white/5 transition"
+            >
+              <span className="text-sm font-semibold text-white">
+                Ativar recorrência
+                <span className="block text-xs font-normal text-gray-500 mt-0.5">
+                  Repete toda semana, no mesmo dia e horário
+                </span>
+              </span>
+              <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${fixoRecorrente ? "bg-brand-500" : "bg-gray-700"}`}>
+                <span className={`absolute top-1 h-5 w-5 rounded-full transition-all ${fixoRecorrente ? "left-6 bg-dark-900" : "left-1 bg-gray-400"}`} />
+              </span>
+            </button>
+
+            {fixoRecorrente && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">De</label>
+                  <input type="date" value={novoFixo.startDate}
+                    onChange={e => setNovoFixo(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Até</label>
+                  <input type="date" value={novoFixo.endDate} min={novoFixo.startDate || undefined}
+                    onChange={e => setNovoFixo(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Até</label>
-                <input type="date" value={novoFixo.endDate} min={novoFixo.startDate || undefined}
-                  onChange={e => setNovoFixo(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-              </div>
-            </div>
+            )}
 
             {user?.role === "owner" && barbers.length > 1 && (
               <div>
@@ -1644,7 +1697,7 @@ export default function PainelPage() {
 
             <button onClick={salvarFixo} disabled={!podeSalvar || salvandoFixo}
               className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
-              {salvandoFixo ? "Criando..." : "Criar corte fixo"}
+              {salvandoFixo ? "Criando..." : fixoRecorrente ? "Criar corte fixo" : "Agendar"}
             </button>
           </div>
 

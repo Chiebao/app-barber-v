@@ -347,6 +347,17 @@ app_barber/
 - `RecurringBlock` e avaliado na hora, **nao materializado**: bloqueio nao
   tem identidade a preservar, e gerar linhas todo dia custaria cron e limpeza
 
+### Agendamento pelo painel
+- Rota SEPARADA da publica (`/api/me/agendamentos`): a publica carrega regra
+  que existe para desconhecido na internet — pre-pagamento Pix apos 2 faltas,
+  aviso ao barbeiro, contagem de conversao. Nada disso faz sentido com o
+  cliente parado na frente dele
+- Um sinalizador na rota publica seria pior: endpoint publico que muda de
+  regra conforme campo do corpo e onde buraco de autorizacao nasce
+- O que NAO muda: conflito e bloqueio valem igual, mesma transacao
+  Serializable. O barbeiro pode furar a fila, nao a fisica
+- Barbeiro contratado so agenda para si; o dono escolhe o barbeiro
+
 ### Despesas e lucro
 - Lucro do mes = **entrou − comissoes − despesas**. So conta atendimento PAGO
   (o que foi feito e nao recebido e fiado, e ja aparece em "A receber")
@@ -419,6 +430,7 @@ app_barber/
 | `/api/me/resultado` | Lucro do mes: entrou − comissoes − despesas (owner only) |
 | `/api/me/blocked-slots` | Bloqueio de horarios |
 | `/api/me/blocked-slots/recorrentes` | Bloqueio que se repete toda semana |
+| `/api/me/agendamentos` | Agendamento criado pelo barbeiro, no balcao |
 | `/api/me/waitlist` | Lista de espera |
 | `/api/me/waitlist/[id]` | Remover da fila |
 | `/api/me/upload` | Upload de imagem (Supabase Storage) |
@@ -488,6 +500,7 @@ app_barber/
 | 50 | Encaixe: horario nasce onde o corte anterior termina | ✅ | — | ✅ |
 | 51 | Bloqueio recorrente (almoco todo dia) | ✅ | — | ✅ |
 | 52 | Regua do dia na agenda (altura = tempo) + intervalo ali mesmo | ✅ | — | — |
+| 53 | Novo agendamento pelo painel (avulso ou recorrente, por toggle) | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 
