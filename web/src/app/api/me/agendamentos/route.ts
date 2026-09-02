@@ -3,9 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
-import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
+import { occupiesSlotWhere, appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { bloqueiosDoDia, invadeBloqueio, emMinutos, emTexto } from "@/app/lib/bloqueios";
 import { num, sumMoney } from "@/app/lib/money";
+import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 /**
  * Agendamento criado pelo barbeiro, no balcão.
@@ -24,6 +27,9 @@ import { num, sumMoney } from "@/app/lib/money";
  * O que NÃO muda: conflito de horário e bloqueio continuam valendo, na mesma
  * transação Serializable. O barbeiro pode furar a fila, não a física.
  */
+
+/** A mesma janela do cron de lembretes — mudar lá sem mudar aqui abre um vão. */
+const HORAS_DO_LEMBRETE = Number(process.env.REMINDER_HOURS_BEFORE || 2);
 
 const schema = z.object({
   clientName: z.string().trim().min(2, "Nome muito curto").max(80),
@@ -122,6 +128,38 @@ export async function POST(req: NextRequest) {
         { isolationLevel: "Serializable" },
       );
 
+      // Quando o corte é DEPOIS da janela do lembrete, não fazemos nada: o
+      // cron avisa sozinho, como faz com quem agendou pelo link.
+      //
+      // Perto demais, o cron chegaria atrasado ou chamaria de "lembrete"
+      // algo que o cliente talvez nem saiba que existe. Aí avisamos na hora
+      // e carimbamos reminderSentAt, senão ele recebe duas mensagens.
+      const comeca = appointmentStartUtc(dateObj, agendamento.startTime);
+      const faltam = (comeca.getTime() - Date.now()) / 60000;
+      let avisado = false;
+      if (faltam > 0 && faltam <= HORAS_DO_LEMBRETE * 60) {
+        const quando = format(dateObj, "dd 'de' MMMM", { locale: ptBR });
+        const vars = [
+          client.name.split(" ")[0],
+          shop.name,
+          quando,
+          agendamento.startTime,
+        ];
+        // Se o modelo novo ainda não passou pela aprovação da Meta, o
+        // lembrete aprovado serve: melhor a palavra errada que o silêncio.
+        avisado =
+          (await enviarModelo(client.phone, "agendamento_marcado", vars)) ||
+          (await enviarModelo(client.phone, "lembrete_agendamento", [
+            vars[0], shop.name, agendamento.startTime, services.map((s) => s.name).join(", "),
+          ]));
+        if (avisado) {
+          await prisma.appointment.update({
+            where: { id: agendamento.id },
+            data: { reminderSentAt: new Date() },
+          });
+        }
+      }
+
       return NextResponse.json({
         agendamento: {
           id: agendamento.id,
@@ -130,6 +168,7 @@ export async function POST(req: NextRequest) {
           endTime: agendamento.endTime,
           totalPrice: num(agendamento.totalPrice),
           cliente: client.name,
+          avisado,
         },
       });
     } catch (erro) {

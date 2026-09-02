@@ -26,7 +26,8 @@ export type NomeModelo =
   | "lembrete_agendamento"
   | "vaga_disponivel"
   | "codigo_recuperacao"
-  | "cobranca_assinatura";
+  | "cobranca_assinatura"
+  | "agendamento_marcado";
 
 export interface Modelo {
   /** Nome exato cadastrado no WhatsApp Manager. */
@@ -61,7 +62,10 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     idioma: "pt_BR",
     variaveis: 4,
     textoAprovado:
-      "Olá, {{1}}! Passando para lembrar do seu horário na {{2}} hoje às {{3}} com {{4}}. " +
+      "Olá, {{1}}! 🫡\n\n" +
+      "Passando pra lembrar do seu horário na {{2}}:\n\n" +
+      "📆 Hoje às {{3}}\n" +
+      "💇 {{4}}\n\n" +
       "Se precisar remarcar, é só responder por aqui.",
     exemplo: ["João", "Barbearia do Zé", "14:30", "Corte + Barba"],
   },
@@ -75,8 +79,11 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     idioma: "pt_BR",
     variaveis: 4,
     textoAprovado:
-      "Olá, {{1}}. Sobre sua solicitação de lista de espera na {{2}}: " +
-      "abriu um horário em {{3}} às {{4}}. Acesse seu link de agendamento para confirmar.",
+      "Olá, {{1}}! 📋\n\n" +
+      "Sobre sua solicitação de lista de espera na {{2}}, abriu um horário:\n\n" +
+      "📆 {{3}}\n" +
+      "🕐 {{4}}\n\n" +
+      "Acesse seu link de agendamento para confirmar.",
     exemplo: ["Maria", "Barbearia do Zé", "12 de setembro", "09:00"],
   },
 
@@ -112,9 +119,29 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     idioma: "pt_BR",
     variaveis: 3,
     textoAprovado:
-      "Olá, {{1}}. Sua assinatura vence em {{2}}. A fatura de {{3}} já está " +
-      "disponível no seu painel, em Configurações.",
+      "Olá, {{1}}!\n\n" +
+      "Sua assinatura vence em {{2}}.\n\n" +
+      "💳 Fatura de {{3}}\n" +
+      "📍 Painel, em Configurações\n\n" +
+      "A cobrança já está pronta, é só abrir e pagar.",
     exemplo: ["Eduardo", "3 dias", "R$ 79,90"],
+  },
+
+  // Para o agendamento que o BARBEIRO cria no balcão e que acontece antes
+  // de o cron de lembrete alcançá-lo. Não é lembrete: quem recebe isto
+  // pode não saber ainda que tem horário marcado, e "passando pra lembrar"
+  // pressupõe que ele já sabia.
+  agendamento_marcado: {
+    nome: "agendamento_marcado",
+    idioma: "pt_BR",
+    variaveis: 4,
+    textoAprovado:
+      "Olá, {{1}}! ✅\n\n" +
+      "Seu horário na {{2}} ficou marcado:\n\n" +
+      "📆 {{3}}\n" +
+      "🕐 {{4}}\n\n" +
+      "Se não puder vir, é só responder por aqui.",
+    exemplo: ["João", "Barbearia do Zé", "12 de setembro", "14:30"],
   },
 };
 
