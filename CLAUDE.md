@@ -347,6 +347,23 @@ app_barber/
 - `RecurringBlock` e avaliado na hora, **nao materializado**: bloqueio nao
   tem identidade a preservar, e gerar linhas todo dia custaria cron e limpeza
 
+### Mensagem que o cliente responde
+- Numero da Cloud API **nao tem caixa de entrada** em lugar nenhum. O que
+  nao cai num webhook e DESCARTADO, nao fica "nao lido" — e os lembretes
+  pedem "e so responder por aqui"
+- A resposta automatica manda o cliente para o WhatsApp DA BARBEARIA: o
+  numero e do BarberPro, e servir de intermediario entre barbeiro e cliente
+  nao escala. A barbearia e descoberta pelo agendamento mais proximo
+- Dentro da janela de 24h texto livre e **gratuito** — a auto-resposta nao
+  custa mensagem paga nem precisa de modelo
+- `waMessageId` e unico porque a Meta REENVIA o webhook sem 200 rapido.
+  Sem a trava, o mesmo "oi" gera duas respostas
+- Assinatura (`WHATSAPP_APP_SECRET`) importa mais que num webhook comum:
+  este endpoint faz o app ENVIAR WhatsApp, entao corpo forjado vira
+  mensagem para terceiro as nossas custas
+- Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
+  a Meta so entrega modelo depois disso, e modelo nao serve para conversa
+
 ### Agendamento pelo painel
 - Rota SEPARADA da publica (`/api/me/agendamentos`): a publica carrega regra
   que existe para desconhecido na internet — pre-pagamento Pix apos 2 faltas,
@@ -411,6 +428,7 @@ app_barber/
 | POST | `/api/waitlist` | Entrar na lista de espera |
 | GET | `/api/cron` | Enviar lembretes (Vercel Cron) |
 | GET | `/api/og` | OG image dinamica |
+| GET/POST | `/api/webhooks/whatsapp` | Verificacao da Meta / mensagem recebida do cliente |
 
 ### Autenticadas (JWT obrigatorio)
 
@@ -431,6 +449,7 @@ app_barber/
 | `/api/me/blocked-slots` | Bloqueio de horarios |
 | `/api/me/blocked-slots/recorrentes` | Bloqueio que se repete toda semana |
 | `/api/me/agendamentos` | Agendamento criado pelo barbeiro, no balcao |
+| `/api/me/mensagens` | Caixa de entrada: o que o cliente respondeu |
 | `/api/me/waitlist` | Lista de espera |
 | `/api/me/waitlist/[id]` | Remover da fila |
 | `/api/me/upload` | Upload de imagem (Supabase Storage) |
@@ -501,6 +520,7 @@ app_barber/
 | 51 | Bloqueio recorrente (almoco todo dia) | ✅ | — | ✅ |
 | 52 | Regua do dia na agenda (altura = tempo) + intervalo ali mesmo | ✅ | — | — |
 | 53 | Novo agendamento pelo painel (avulso ou recorrente, por toggle) | ✅ | — | ✅ |
+| 54 | Resposta do cliente no WhatsApp: webhook, auto-resposta e caixa de entrada | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 
@@ -634,6 +654,8 @@ npx expo start         # Abre Expo Dev Tools
 | `SUPABASE_URL` | Nao | URL do projeto Supabase (para upload de imagens) |
 | `SUPABASE_SERVICE_KEY` | Nao | Service key do Supabase (para upload server-side) |
 | `CRON_SECRET` | Nao | Segredo para autenticar chamadas do Vercel Cron |
+| `WHATSAPP_VERIFY_TOKEN` | Nao | Token do aperto de mao do webhook (voce inventa, e repete na Meta) |
+| `WHATSAPP_APP_SECRET` | Nao | Segredo do app na Meta — confere a assinatura do webhook |
 | `ADMIN_SECRET` | Nao | Senha-mestra da pagina `/admin/reset` (reset de senha super-admin) |
 | `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Nao | WhatsApp do suporte (55+DDD+numero) para o fluxo "Esqueci minha senha" |
 

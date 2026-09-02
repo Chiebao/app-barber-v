@@ -14,6 +14,7 @@ import Assinatura from "./_assinatura";
 import AReceber from "./_a-receber";
 import Agenda from "./_agenda";
 import Despesas from "./_despesas";
+import Mensagens from "./_mensagens";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
 import Conversao from "./_conversao";
@@ -96,7 +97,7 @@ const ROTULO_ASSINATURA: Record<string, string> = {
 };
 interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
 
-type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos";
+type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos" | "mensagens";
 
 /** Corte que se repete toda semana. A regra, nao as ocorrencias. */
 type CorteFixo = {
@@ -344,6 +345,10 @@ export default function PainelPage() {
   // O formulário é o mesmo para os dois casos; o toggle decide se o
   // agendamento acontece uma vez ou toda semana.
   const [fixoRecorrente, setFixoRecorrente] = useState(false);
+  // Quantas respostas de cliente ainda não foram vistas. O número no menu
+  // é o que faz alguém abrir a tela — sem ele, a caixa de entrada existe
+  // e ninguém olha.
+  const [msgsNaoLidas, setMsgsNaoLidas] = useState(0);
   const [dataAvulsa, setDataAvulsa] = useState("");
   // Horários que a agenda realmente tem naquele dia, para o barbeiro tocar
   // em vez de rolar um seletor de relógio até um horário que talvez esteja
@@ -465,6 +470,16 @@ export default function PainelPage() {
   }, [token, activeTab, verAReceber, authHeaders]);
   // O filtro por barbeiro do relatorio precisa da lista carregada
   useEffect(() => { if (token && verRelatorio && barbers.length === 0) fetchBarbers(); }, [token, verRelatorio, barbers.length, fetchBarbers]);
+
+  const buscarNaoLidas = useCallback(() => {
+    if (!token) return;
+    fetch("/api/me/mensagens", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setMsgsNaoLidas(d?.naoLidas ?? 0))
+      .catch(() => {});
+  }, [token, authHeaders]);
+
+  useEffect(() => { buscarNaoLidas(); }, [buscarNaoLidas, subView]);
 
   // A lista depende da duração: trocar de serviço muda o que cabe onde, e
   // um horário válido para 30 min pode não ser para 1h15.
@@ -1157,6 +1172,7 @@ export default function PainelPage() {
     { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
     { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
     { icon: "➕", label: "Novo agendamento", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
+    { icon: "💬", label: msgsNaoLidas > 0 ? `Mensagens (${msgsNaoLidas})` : "Mensagens", onClick: () => { setSubView("mensagens"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
       { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
     ] : []),
@@ -1538,6 +1554,19 @@ export default function PainelPage() {
     // O cliente que vem toda semana no mesmo horario. O barbeiro cria UMA regra
     // e as ocorrencias nascem sozinhas conforme a agenda avanca — nao existe
     // "criar 52 agendamentos".
+    if (subView === "mensagens") {
+      return (
+        <div className="space-y-6">{backBtn}
+          <Mensagens
+            token={token}
+            onVoltar={() => setSubView(null)}
+            onUnauthorized={handleUnauthorized}
+            onMudou={buscarNaoLidas}
+          />
+        </div>
+      );
+    }
+
     if (subView === "fixos") {
       const servicosAtivos = services.filter(s => s.active);
       const escolhidos = servicosAtivos.filter(s => novoFixo.serviceIds.includes(s.id));

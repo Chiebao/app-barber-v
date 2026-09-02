@@ -79,6 +79,7 @@ model Shop {
   subscription   Subscription?
   despesas       Expense[]
   bloqueiosFixos RecurringBlock[]
+  mensagens      InboundMessage[]
 
   @@map("shops")
 }
@@ -579,4 +580,36 @@ model RecurringBlock {
 
   @@index([barberId, ativo])
   @@map("recurring_blocks")
+}
+
+/// Mensagem que o CLIENTE mandou para o número do BarberPro.
+///
+/// Existe porque os lembretes terminam com "é só responder por aqui" e, até
+/// aqui, responder não levava a lugar nenhum: número da Cloud API não tem
+/// caixa de entrada em canto nenhum — o que não cai num webhook é descartado,
+/// não fica "não lido". A mensagem que mais chega é "não vou poder ir", que é
+/// exatamente a que evitaria uma falta.
+///
+/// `waMessageId` é único porque a Meta reenvia o webhook quando não recebe
+/// 200 rápido. Sem essa trava, o mesmo "oi" gera duas respostas automáticas.
+model InboundMessage {
+  id           String    @id @default(cuid())
+  /// Id da mensagem na Meta.
+  waMessageId  String    @unique
+  /// Barbearia deduzida pelo agendamento mais próximo desse telefone.
+  /// Nulo quando não deu para saber — a mensagem é guardada assim mesmo.
+  shopId       String?
+  clientPhone  String
+  clientName   String?
+  texto        String
+  /// text | audio | image | outro — o que não é texto vira um aviso.
+  tipo         String    @default("text")
+  recebidaEm   DateTime  @default(now())
+  lida         Boolean   @default(false)
+  respondidaEm DateTime?
+
+  shop Shop? @relation(fields: [shopId], references: [id], onDelete: SetNull)
+
+  @@index([shopId, recebidaEm])
+  @@map("inbound_messages")
 }
