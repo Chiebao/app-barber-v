@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { generateTimeSlots, agoraNaBarbearia } from "@/app/lib/time-slots";
-import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
-import { materializarRecorrentes } from "@/app/lib/recurrence";
-import { bloqueiosDoDia } from "@/app/lib/bloqueios";
+import { horariosLivres } from "@/app/lib/horarios-livres";
 
+/**
+ * Horários que o cliente vê.
+ *
+ * A conta mora em `lib/horarios-livres.ts`, compartilhada com o painel: os
+ * horários oferecidos ao barbeiro quando ele marca no balcão precisam ser
+ * exatamente os mesmos que o cliente veria.
+ */
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   try {
     const { searchParams } = new URL(req.url);
@@ -17,99 +21,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     const shop = await prisma.shop.findUnique({ where: { slug: params.slug } });
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
 
-    const dayOfWeek = new Date(date + "T12:00:00").getDay();
-    if (!shop.workDays.includes(dayOfWeek)) return NextResponse.json({ slots: [], message: "Dia nao disponivel" });
-
-    // Cortes fixos viram agendamento de verdade ANTES de contar o que está
-    // ocupado. Sem isso o horário do cliente que vem toda terça apareceria
-    // livre para outra pessoa marcar por cima.
-    await materializarRecorrentes(shop.id, date, date);
-
-    const startOfDay = new Date(date + "T00:00:00");
-    const endOfDay = new Date(date + "T23:59:59");
-
-    // Pré-agendamentos vencidos não ocupam mais o horário
-    const where: Record<string, unknown> = {
-      shopId: shop.id,
-      date: { gte: startOfDay, lte: endOfDay },
-      ...occupiesSlotWhere(),
-    };
-    if (barberId) where.barberId = barberId;
-
-    const booked = await prisma.appointment.findMany({
-      where,
-      select: { startTime: true, endTime: true, totalDuration: true },
+    const { slots, motivo } = await horariosLivres(prisma, {
+      shop,
+      date,
+      duration: parseInt(duration),
+      barberId,
     });
 
-    // Capacidade do dia por TEMPO REAL ocupado (não por número de agendamentos).
-    // O contador antigo comparava a quantidade de agendamentos com uma estimativa
-    // baseada no tempo médio — o que fechava a agenda cedo quando os serviços eram
-    // mais curtos que a média (vaga ociosa) e não refletia a ocupação real.
-    const [openH, openM] = shop.openTime.split(":").map(Number);
-    const [closeH, closeM] = shop.closeTime.split(":").map(Number);
-    const totalMinutes = (closeH * 60 + closeM) - (openH * 60 + openM);
-
-    const bookedMinutes = booked.reduce((sum, apt) => {
-      if (apt.totalDuration && apt.totalDuration > 0) return sum + apt.totalDuration;
-      // Fallback: calcula pela diferença startTime/endTime
-      const [sh, sm] = apt.startTime.split(":").map(Number);
-      const [eh, em] = apt.endTime.split(":").map(Number);
-      return sum + Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
-    }, 0);
-
-    // Só declara "agenda cheia" quando não cabe mais o serviço pedido no tempo restante.
-    if (totalMinutes - bookedMinutes < parseInt(duration)) {
-      return NextResponse.json({ slots: [], message: "Agenda cheia para este dia" });
-    }
-
-    // Bloqueios entram como INTERVALO OCUPADO, junto com os agendamentos —
-    // pontuais e recorrentes, pela mesma função que a criação usa.
-    //
-    // Antes eram descontados depois, comparando o horário do bloqueio com o
-    // começo de cada vaga. Isso deixava passar o pior caso: um corte que
-    // COMEÇA antes e atravessa. Com o almoço às 12:00, um corte de 1h
-    // marcado às 11:15 ia até 12:15 e ninguém barrava.
-    let bloqueios: { startTime: string; endTime: string }[] = [];
-    if (barberId) {
-      const b = await bloqueiosDoDia(prisma, barberId, date, shop.slotInterval);
-      if (b.diaTodo) {
-        return NextResponse.json({ slots: [], message: "Barbeiro indisponivel neste dia" });
-      }
-      bloqueios = b.intervalos;
-    }
-
-    // A duração é a soma dos serviços escolhidos; o passo é a divisão do
-    // dia definida pela barbearia. São coisas diferentes de propósito.
-    let slots = generateTimeSlots(
-      shop.openTime, shop.closeTime, parseInt(duration), [...booked, ...bloqueios], shop.slotInterval,
-    );
-
-    // HOJE: tirar o que já passou. Este corte é do SERVIDOR de propósito.
-    //
-    // Antes ele vivia no navegador, comparando os horários com o relógio de
-    // quem estava olhando. Isso quebra de duas formas: o cliente pode estar em
-    // outro fuso, e cada tela (passo-a-passo, chat, mobile) precisa repetir a
-    // mesma regra — quem esquecesse mostraria horário que já passou e deixaria
-    // o cliente agendar no passado.
-    //
-    // Quem decide que horas são é a barbearia.
-    const { dia: hojeNaLoja, hora: agoraNaLoja } = agoraNaBarbearia();
-    let expedienteAcabou = false;
-    if (date === hojeNaLoja) {
-      const restantes = slots.filter((s) => s > agoraNaLoja);
-      expedienteAcabou = restantes.length === 0 && slots.length > 0;
-      slots = restantes;
-    }
-
-
-    // Mensagem própria para "o dia acabou". Sem ela a tela mostra o mesmo vazio
-    // de "agenda cheia", e o cliente não distingue barbearia lotada de
-    // expediente encerrado.
-    if (slots.length === 0 && expedienteAcabou) {
-      return NextResponse.json({ slots: [], message: "Os horários de hoje já passaram" });
-    }
-
-    return NextResponse.json({ slots });
+    return NextResponse.json(motivo ? { slots, message: motivo } : { slots });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

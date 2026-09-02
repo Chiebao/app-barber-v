@@ -345,6 +345,12 @@ export default function PainelPage() {
   // agendamento acontece uma vez ou toda semana.
   const [fixoRecorrente, setFixoRecorrente] = useState(false);
   const [dataAvulsa, setDataAvulsa] = useState("");
+  // Horários que a agenda realmente tem naquele dia, para o barbeiro tocar
+  // em vez de rolar um seletor de relógio até um horário que talvez esteja
+  // ocupado. Vêm da mesma conta que o cliente vê.
+  const [horariosLivres, setHorariosLivres] = useState<string[] | null>(null);
+  const [motivoSemHorario, setMotivoSemHorario] = useState<string | null>(null);
+  const [buscandoHorarios, setBuscandoHorarios] = useState(false);
   const [fixosLoading, setFixosLoading] = useState(false);
   const [novoFixo, setNovoFixo] = useState({
     clientName: "", clientPhone: "", barberId: "", serviceIds: [] as string[],
@@ -459,6 +465,36 @@ export default function PainelPage() {
   }, [token, activeTab, verAReceber, authHeaders]);
   // O filtro por barbeiro do relatorio precisa da lista carregada
   useEffect(() => { if (token && verRelatorio && barbers.length === 0) fetchBarbers(); }, [token, verRelatorio, barbers.length, fetchBarbers]);
+
+  // A lista depende da duração: trocar de serviço muda o que cabe onde, e
+  // um horário válido para 30 min pode não ser para 1h15.
+  useEffect(() => {
+    const duracao = services
+      .filter(x => novoFixo.serviceIds.includes(x.id))
+      .reduce((soma, x) => soma + x.duration, 0);
+
+    if (!token || fixoRecorrente || !dataAvulsa || duracao === 0) {
+      setHorariosLivres(null);
+      setMotivoSemHorario(null);
+      return;
+    }
+
+    let cancelado = false;
+    setBuscandoHorarios(true);
+    const bid = novoFixo.barberId || "";
+    fetch(`/api/me/agendamentos?date=${dataAvulsa}&duration=${duracao}${bid ? `&barberId=${bid}` : ""}`,
+      { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (cancelado) return;
+        setHorariosLivres(d?.slots ?? []);
+        setMotivoSemHorario(d?.motivo ?? null);
+      })
+      .catch(() => { if (!cancelado) setHorariosLivres([]); })
+      .finally(() => { if (!cancelado) setBuscandoHorarios(false); });
+
+    return () => { cancelado = true; };
+  }, [token, fixoRecorrente, dataAvulsa, novoFixo.serviceIds, novoFixo.barberId, services, authHeaders]);
 
   useEffect(() => { if (token && activeTab === "home") fetchAppointments(); }, [selectedDate]);
   useEffect(() => { if (token && activeTab === "agenda") fetchSlots(); }, [availDate]);
@@ -1516,7 +1552,9 @@ export default function PainelPage() {
 
       const podeSalvar = fixoRecorrente
         ? baseOk && !!novoFixo.startDate && !!novoFixo.endDate && novoFixo.endDate >= novoFixo.startDate
-        : baseOk && !!dataAvulsa;
+        // No avulso o horário sai da lista de livres, então não basta ter
+        // um valor: ele precisa ter sido escolhido depois da data.
+        : baseOk && !!dataAvulsa && (horariosLivres ?? []).includes(novoFixo.startTime);
 
       const salvarFixo = async () => {
         setSalvandoFixo(true);
@@ -1549,7 +1587,9 @@ export default function PainelPage() {
               ? `Corte fixo criado — ${data.ocorrenciasCriadas} já entraram na agenda`
               : "Corte fixo criado",
           );
-          setNovoFixo(prev => ({ ...prev, clientName: "", clientPhone: "", serviceIds: [] }));
+          // Zera tambem o horario: ele saiu da lista de livres agora que
+          // esta ocupado, e deixar o valor antigo confundiria o proximo.
+          setNovoFixo(prev => ({ ...prev, clientName: "", clientPhone: "", serviceIds: [], startTime: fixoRecorrente ? prev.startTime : "" }));
           fetchFixos();
           fetchAppointments();
         } catch { toast.error("Erro de conexão"); }
@@ -1638,17 +1678,61 @@ export default function PainelPage() {
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">Data *</label>
                   <input type="date" value={dataAvulsa}
-                    onChange={e => setDataAvulsa(e.target.value)}
+                    onChange={e => {
+                      setDataAvulsa(e.target.value);
+                      // O horário escolhido pode não existir no dia novo.
+                      setNovoFixo(prev => ({ ...prev, startTime: "" }));
+                    }}
                     className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
                 </div>
               )}
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Horário</label>
-                <input type="time" value={novoFixo.startTime}
-                  onChange={e => setNovoFixo(prev => ({ ...prev, startTime: e.target.value }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-              </div>
+              {/* No corte fixo o horário é livre: a regra é "toda terça às
+                  15h", e o dia certo pode estar ocupado hoje sem que isso
+                  invalide a regra. No avulso, oferecer o relógio inteiro é
+                  mandar o barbeiro adivinhar — ele rola até um horário e
+                  descobre no salvar que está ocupado. */}
+              {fixoRecorrente && (
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Horário</label>
+                  <input type="time" value={novoFixo.startTime}
+                    onChange={e => setNovoFixo(prev => ({ ...prev, startTime: e.target.value }))}
+                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                </div>
+              )}
             </div>
+
+            {!fixoRecorrente && (
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Horário *</label>
+                {novoFixo.serviceIds.length === 0 || !dataAvulsa ? (
+                  <p className="text-xs text-gray-500 py-2">
+                    Escolha o serviço e a data para ver os horários livres.
+                  </p>
+                ) : buscandoHorarios ? (
+                  <p className="text-xs text-gray-500 py-2">Procurando horários...</p>
+                ) : horariosLivres && horariosLivres.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {horariosLivres.map(h => (
+                      <button
+                        key={h}
+                        onClick={() => setNovoFixo(prev => ({ ...prev, startTime: h }))}
+                        className={
+                          novoFixo.startTime === h
+                            ? "rounded-lg bg-brand-500 border border-brand-500 px-3 py-2 text-sm font-bold text-dark-900 tabular-nums"
+                            : "rounded-lg border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-300 hover:border-brand-400 hover:text-brand-400 transition tabular-nums"
+                        }
+                      >
+                        {h}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-yellow-400 py-2">
+                    {motivoSemHorario || "Nenhum horário livre nesse dia"}
+                  </p>
+                )}
+              </div>
+            )}
 
             <button
               onClick={() => setFixoRecorrente(v => !v)}

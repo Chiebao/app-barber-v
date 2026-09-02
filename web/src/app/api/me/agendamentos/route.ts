@@ -7,6 +7,7 @@ import { occupiesSlotWhere, appointmentStartUtc } from "@/app/lib/pending-deadli
 import { bloqueiosDoDia, invadeBloqueio, emMinutos, emTexto } from "@/app/lib/bloqueios";
 import { num, sumMoney } from "@/app/lib/money";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { horariosLivres } from "@/app/lib/horarios-livres";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -193,9 +194,47 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** Só para o painel conferir se o token ainda vale antes de abrir o formulário. */
+/**
+ * Horários livres para o painel montar os botões.
+ *
+ * Mesma conta que o cliente vê, pela mesma função — inclusive o encaixe.
+ * O barbeiro escolhe tocando num horário que existe, em vez de rolar um
+ * seletor de relógio até achar um que talvez esteja ocupado.
+ */
 export async function GET(req: NextRequest) {
-  const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
-  if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  return NextResponse.json({ ok: true });
+  try {
+    const payload = verifyToken(req.headers.get("authorization")?.slice(7) || "");
+    if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    const sp = req.nextUrl.searchParams;
+    const date = sp.get("date");
+    const duration = Number(sp.get("duration") || 0);
+    if (!date || !duration) {
+      return NextResponse.json({ error: "date e duration obrigatorios" }, { status: 400 });
+    }
+
+    const shop = await prisma.shop.findUnique({ where: { id: payload.shopId } });
+    if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
+
+    // Barbeiro contratado só vê a própria agenda, como no resto do painel.
+    let barberId: string | null = null;
+    if (payload.role === "owner") {
+      const pedido = sp.get("barberId");
+      const alvo = pedido
+        ? await prisma.barber.findFirst({ where: { id: pedido, shopId: shop.id }, select: { id: true } })
+        : await prisma.barber.findFirst({ where: { shopId: shop.id, isOwnerProfile: true }, select: { id: true } });
+      barberId = alvo?.id ?? null;
+    } else {
+      barberId = payload.userId;
+    }
+
+    const { slots, motivo } = await horariosLivres(prisma, {
+      shop, date, duration, barberId,
+    });
+
+    return NextResponse.json({ slots, motivo: motivo ?? null });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
 }
