@@ -17,6 +17,7 @@ import Despesas from "./_despesas";
 import Mensagens from "./_mensagens";
 import Comanda from "./_comanda";
 import Expediente from "./_expediente";
+import NovoAgendamento from "./_novo-agendamento";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
 import Conversao from "./_conversao";
@@ -105,23 +106,7 @@ interface BannedItem { id: string; phone: string; name: string | null; reason: s
 type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos" | "mensagens";
 
 /** Corte que se repete toda semana. A regra, nao as ocorrencias. */
-type CorteFixo = {
-  id: string;
-  clientName: string;
-  clientPhone: string;
-  barberId: string;
-  barberName: string;
-  weekday: number;
-  startTime: string;
-  totalDuration: number;
-  totalPrice: number;
-  startDate: string;
-  endDate: string;
-  active: boolean;
-  services: { id: string; name: string }[];
-};
 
-const DIAS_DA_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 /** "faltam 3h20" / "faltam 45min" a partir de um prazo ISO. */
 function timeLeftLabel(iso?: string | null): string {
@@ -346,10 +331,6 @@ export default function PainelPage() {
   }, [token, availDate, authHeaders, ownerBarberId, user?.role]);
 
   // ─── CORTE FIXO (agendamento recorrente) ───
-  const [fixos, setFixos] = useState<CorteFixo[]>([]);
-  // O formulário é o mesmo para os dois casos; o toggle decide se o
-  // agendamento acontece uma vez ou toda semana.
-  const [fixoRecorrente, setFixoRecorrente] = useState(false);
   // Quantas respostas de cliente ainda não foram vistas. O número no menu
   // é o que faz alguém abrir a tela — sem ele, a caixa de entrada existe
   // e ninguém olha.
@@ -360,30 +341,7 @@ export default function PainelPage() {
   // Resumo da semana mostrado no lugar dos campos antigos de horário.
   const [verExpediente, setVerExpediente] = useState(false);
   const [semana, setSemana] = useState<{ dia: number; aberto: boolean; abre: string; fecha: string }[] | null>(null);
-  const [dataAvulsa, setDataAvulsa] = useState("");
-  // Horários que a agenda realmente tem naquele dia, para o barbeiro tocar
-  // em vez de rolar um seletor de relógio até um horário que talvez esteja
-  // ocupado. Vêm da mesma conta que o cliente vê.
-  const [horariosLivres, setHorariosLivres] = useState<string[] | null>(null);
-  const [motivoSemHorario, setMotivoSemHorario] = useState<string | null>(null);
-  const [buscandoHorarios, setBuscandoHorarios] = useState(false);
-  const [fixosLoading, setFixosLoading] = useState(false);
-  const [novoFixo, setNovoFixo] = useState({
-    clientName: "", clientPhone: "", barberId: "", serviceIds: [] as string[],
-    weekday: 2, startTime: "10:00", startDate: "", endDate: "",
-  });
-  const [salvandoFixo, setSalvandoFixo] = useState(false);
-  const [encerrandoFixo, setEncerrandoFixo] = useState<string | null>(null);
 
-  const fetchFixos = useCallback(async () => {
-    setFixosLoading(true);
-    try {
-      const res = await fetch("/api/me/recurring", { headers: authHeaders() });
-      const data = await res.json();
-      setFixos(data.recurring || []);
-    } catch { /* silencioso: a tela mostra a lista vazia */ }
-    setFixosLoading(false);
-  }, [authHeaders]);
 
   const fetchBarbers = useCallback(async () => {
     if (!token) return; setBarbersLoading(true);
@@ -507,35 +465,6 @@ export default function PainelPage() {
     if (activeTab === "config" && !verExpediente) buscarSemana();
   }, [activeTab, verExpediente, buscarSemana]);
 
-  // A lista depende da duração: trocar de serviço muda o que cabe onde, e
-  // um horário válido para 30 min pode não ser para 1h15.
-  useEffect(() => {
-    const duracao = services
-      .filter(x => novoFixo.serviceIds.includes(x.id))
-      .reduce((soma, x) => soma + x.duration, 0);
-
-    if (!token || fixoRecorrente || !dataAvulsa || duracao === 0) {
-      setHorariosLivres(null);
-      setMotivoSemHorario(null);
-      return;
-    }
-
-    let cancelado = false;
-    setBuscandoHorarios(true);
-    const bid = novoFixo.barberId || "";
-    fetch(`/api/me/agendamentos?date=${dataAvulsa}&duration=${duracao}${bid ? `&barberId=${bid}` : ""}`,
-      { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (cancelado) return;
-        setHorariosLivres(d?.slots ?? []);
-        setMotivoSemHorario(d?.motivo ?? null);
-      })
-      .catch(() => { if (!cancelado) setHorariosLivres([]); })
-      .finally(() => { if (!cancelado) setBuscandoHorarios(false); });
-
-    return () => { cancelado = true; };
-  }, [token, fixoRecorrente, dataAvulsa, novoFixo.serviceIds, novoFixo.barberId, services, authHeaders]);
 
   useEffect(() => { if (token && activeTab === "home") fetchAppointments(); }, [selectedDate]);
   useEffect(() => { if (token && activeTab === "agenda") fetchSlots(); }, [availDate]);
@@ -549,7 +478,7 @@ export default function PainelPage() {
     if (subView === "produtos") fetchProducts();
     // O corte fixo precisa de servicos (duracao/preco) e barbeiros (de quem
     // e a agenda) para o formulario existir.
-    if (subView === "fixos") { fetchFixos(); fetchServices(); fetchBarbers(); }
+    if (subView === "fixos") { fetchServices(); fetchBarbers(); }
   }, [token, subView]);
 
   // ── Cancel state ──
@@ -1594,287 +1523,19 @@ export default function PainelPage() {
     }
 
     if (subView === "fixos") {
-      const servicosAtivos = services.filter(s => s.active);
-      const escolhidos = servicosAtivos.filter(s => novoFixo.serviceIds.includes(s.id));
-      const duracao = escolhidos.reduce((soma, s) => soma + s.duration, 0);
-      const valor = escolhidos.reduce((soma, s) => soma + s.price, 0);
-
-      const baseOk =
-        novoFixo.clientName.trim().length >= 2 &&
-        novoFixo.clientPhone.replace(/\D/g, "").length >= 8 &&
-        novoFixo.serviceIds.length > 0 &&
-        !!novoFixo.startTime;
-
-      const podeSalvar = fixoRecorrente
-        ? baseOk && !!novoFixo.startDate && !!novoFixo.endDate && novoFixo.endDate >= novoFixo.startDate
-        // No avulso o horário sai da lista de livres, então não basta ter
-        // um valor: ele precisa ter sido escolhido depois da data.
-        : baseOk && !!dataAvulsa && (horariosLivres ?? []).includes(novoFixo.startTime);
-
-      const salvarFixo = async () => {
-        setSalvandoFixo(true);
-        try {
-          // Duas rotas porque são dois assuntos: a recorrência materializa
-          // ocorrências futuras, o avulso cria UM atendimento e pronto.
-          const rota = fixoRecorrente ? "/api/me/recurring" : "/api/me/agendamentos";
-          const corpo = fixoRecorrente
-            ? { ...novoFixo, barberId: novoFixo.barberId || undefined }
-            : {
-                clientName: novoFixo.clientName,
-                clientPhone: novoFixo.clientPhone,
-                serviceIds: novoFixo.serviceIds,
-                date: dataAvulsa,
-                startTime: novoFixo.startTime,
-                barberId: novoFixo.barberId || undefined,
-              };
-
-          const res = await fetch(rota, {
-            method: "POST",
-            headers: { ...authHeaders(), "Content-Type": "application/json" },
-            body: JSON.stringify(corpo),
-          });
-          const data = await res.json();
-          if (!res.ok) { toast.error(data.error || "Não consegui criar"); setSalvandoFixo(false); return; }
-          toast.success(
-            !fixoRecorrente
-              ? "Agendamento criado"
-              : data.ocorrenciasCriadas > 0
-              ? `Corte fixo criado — ${data.ocorrenciasCriadas} já entraram na agenda`
-              : "Corte fixo criado",
-          );
-          // Zera tambem o horario: ele saiu da lista de livres agora que
-          // esta ocupado, e deixar o valor antigo confundiria o proximo.
-          setNovoFixo(prev => ({ ...prev, clientName: "", clientPhone: "", serviceIds: [], startTime: fixoRecorrente ? prev.startTime : "" }));
-          fetchFixos();
-          fetchAppointments();
-        } catch { toast.error("Erro de conexão"); }
-        setSalvandoFixo(false);
-      };
-
-      const encerrarFixo = async (f: CorteFixo) => {
-        if (!(await confirmar({
-          titulo: `Encerrar o corte fixo de ${f.clientName}?`,
-          texto:
-            "Os cortes que já aconteceram continuam no histórico. " +
-            "Os futuros que ninguém tocou saem da agenda.",
-          acao: "Encerrar",
-          perigo: true,
-        }))) return;
-        setEncerrandoFixo(f.id);
-        try {
-          const res = await fetch("/api/me/recurring?id=" + f.id, { method: "DELETE", headers: authHeaders() });
-          const data = await res.json();
-          if (!res.ok) { toast.error(data.error || "Não consegui encerrar"); setEncerrandoFixo(null); return; }
-          toast.success(`Encerrado — ${data.ocorrenciasRemovidas} horário(s) liberado(s)`);
-          fetchFixos();
-          fetchAppointments();
-        } catch { toast.error("Erro de conexão"); }
-        setEncerrandoFixo(null);
-      };
-
       return (
         <div className="space-y-6">{backBtn}
-          <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-            <div>
-              <h3 className="font-semibold text-white">Novo agendamento</h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {fixoRecorrente
-                  ? "Se repete toda semana. Você cria uma vez e ele aparece sozinho na agenda até a data final."
-                  : "Marque um cliente direto na sua agenda, sem ele precisar usar o link."}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input type="text" placeholder="Nome do cliente *" value={novoFixo.clientName}
-                onChange={e => setNovoFixo(prev => ({ ...prev, clientName: e.target.value }))}
-                className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-              <input type="tel" placeholder="Telefone *" value={novoFixo.clientPhone}
-                onChange={e => setNovoFixo(prev => ({ ...prev, clientPhone: e.target.value }))}
-                className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Serviços *</label>
-              <div className="flex gap-2 flex-wrap">
-                {servicosAtivos.map(s => {
-                  const marcado = novoFixo.serviceIds.includes(s.id);
-                  return (
-                    <button key={s.id}
-                      onClick={() => setNovoFixo(prev => ({
-                        ...prev,
-                        serviceIds: marcado
-                          ? prev.serviceIds.filter(x => x !== s.id)
-                          : [...prev.serviceIds, s.id],
-                      }))}
-                      className={`px-3 py-2 rounded-lg text-sm border transition ${marcado ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>
-                      {s.name}
-                    </button>
-                  );
-                })}
-              </div>
-              {novoFixo.serviceIds.length > 0 && (
-                <p className="text-xs text-gray-500 mt-2">{duracao} min · R$ {valor.toFixed(2)}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Sem recorrência, "dia da semana" não localiza nada — o
-                  atendimento acontece numa data. */}
-              {fixoRecorrente ? (
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
-                  <select value={novoFixo.weekday}
-                    onChange={e => setNovoFixo(prev => ({ ...prev, weekday: Number(e.target.value) }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
-                    {DIAS_DA_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Data *</label>
-                  <input type="date" value={dataAvulsa}
-                    onChange={e => {
-                      setDataAvulsa(e.target.value);
-                      // O horário escolhido pode não existir no dia novo.
-                      setNovoFixo(prev => ({ ...prev, startTime: "" }));
-                    }}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-                </div>
-              )}
-              {/* No corte fixo o horário é livre: a regra é "toda terça às
-                  15h", e o dia certo pode estar ocupado hoje sem que isso
-                  invalide a regra. No avulso, oferecer o relógio inteiro é
-                  mandar o barbeiro adivinhar — ele rola até um horário e
-                  descobre no salvar que está ocupado. */}
-              {fixoRecorrente && (
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Horário</label>
-                  <input type="time" value={novoFixo.startTime}
-                    onChange={e => setNovoFixo(prev => ({ ...prev, startTime: e.target.value }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-                </div>
-              )}
-            </div>
-
-            {!fixoRecorrente && (
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Horário *</label>
-                {novoFixo.serviceIds.length === 0 || !dataAvulsa ? (
-                  <p className="text-xs text-gray-500 py-2">
-                    Escolha o serviço e a data para ver os horários livres.
-                  </p>
-                ) : buscandoHorarios ? (
-                  <p className="text-xs text-gray-500 py-2">Procurando horários...</p>
-                ) : horariosLivres && horariosLivres.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {horariosLivres.map(h => (
-                      <button
-                        key={h}
-                        onClick={() => setNovoFixo(prev => ({ ...prev, startTime: h }))}
-                        className={
-                          novoFixo.startTime === h
-                            ? "rounded-lg bg-brand-500 border border-brand-500 px-3 py-2 text-sm font-bold text-dark-900 tabular-nums"
-                            : "rounded-lg border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-300 hover:border-brand-400 hover:text-brand-400 transition tabular-nums"
-                        }
-                      >
-                        {h}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-yellow-400 py-2">
-                    {motivoSemHorario || "Nenhum horário livre nesse dia"}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={() => setFixoRecorrente(v => !v)}
-              aria-pressed={fixoRecorrente}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-700 p-3 text-left hover:bg-white/5 transition"
-            >
-              <span className="text-sm font-semibold text-white">
-                Ativar recorrência
-                <span className="block text-xs font-normal text-gray-500 mt-0.5">
-                  Repete toda semana, no mesmo dia e horário
-                </span>
-              </span>
-              <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${fixoRecorrente ? "bg-brand-500" : "bg-gray-700"}`}>
-                <span className={`absolute top-1 h-5 w-5 rounded-full transition-all ${fixoRecorrente ? "left-6 bg-dark-900" : "left-1 bg-gray-400"}`} />
-              </span>
-            </button>
-
-            {fixoRecorrente && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">De</label>
-                  <input type="date" value={novoFixo.startDate}
-                    onChange={e => setNovoFixo(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Até</label>
-                  <input type="date" value={novoFixo.endDate} min={novoFixo.startDate || undefined}
-                    onChange={e => setNovoFixo(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-                </div>
-              </div>
-            )}
-
-            {user?.role === "owner" && barbers.length > 1 && (
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Barbeiro</label>
-                <select value={novoFixo.barberId}
-                  onChange={e => setNovoFixo(prev => ({ ...prev, barberId: e.target.value }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none">
-                  <option value="">Eu mesmo</option>
-                  {barbers.filter(b => b.active).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-              </div>
-            )}
-
-            <button onClick={salvarFixo} disabled={!podeSalvar || salvandoFixo}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
-              {salvandoFixo ? "Criando..." : fixoRecorrente ? "Criar corte fixo" : "Agendar"}
-            </button>
-          </div>
-
-          {fixosLoading ? <Spinner /> : fixos.length === 0 ? (
-            <p className="text-center text-gray-500 py-6">Nenhum corte fixo cadastrado</p>
-          ) : (
-            <div className="space-y-3">
-              {fixos.map(f => (
-                <div key={f.id} className={`rounded-xl border bg-dark-800 p-4 ${f.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">🔁</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white">{f.clientName}</p>
-                      <p className="text-sm text-brand-400">{DIAS_DA_SEMANA[f.weekday]} às {f.startTime}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {f.services.map(s => s.name).join(", ")} · {f.totalDuration}min · R$ {f.totalPrice.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {f.startDate.split("-").reverse().join("/")} até {f.endDate.split("-").reverse().join("/")}
-                        {user?.role === "owner" ? " · " + f.barberName : ""}
-                      </p>
-                      {!f.active && <p className="text-xs text-gray-500 mt-1">encerrado</p>}
-                    </div>
-                    {f.active && (
-                      <button onClick={() => encerrarFixo(f)} disabled={encerrandoFixo === f.id}
-                        title="Encerrar" className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition">
-                        {encerrandoFixo === f.id ? "…" : "⏹"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <NovoAgendamento
+            token={token}
+            services={services}
+            barbers={barbers}
+            ehDono={user?.role === "owner"}
+            onCriado={fetchAppointments}
+            onUnauthorized={handleUnauthorized}
+          />
         </div>
       );
     }
-
     // ─── CLIENTES ───
     if (subView === "clientes") {
       const filtered = clients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.phone.includes(clientSearch));
