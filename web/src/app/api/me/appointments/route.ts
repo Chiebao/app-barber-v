@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         client: a.client,
         services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,
-        comanda: a.comandaItems.map(ci => ({ name: ci.product.name, quantity: ci.quantity, price: num(ci.price) })),
+        comanda: a.comandaItems.map(ci => ({ productId: ci.productId, name: ci.product.name, quantity: ci.quantity, price: num(ci.price) })),
         comandaTotal: money(a.comandaItems.reduce((s, ci) => s + multiplyMoney(ci.price, ci.quantity), 0)),
       })),
     });

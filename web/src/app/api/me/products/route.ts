@@ -114,6 +114,14 @@ export async function PUT(req: NextRequest) {
     if (!product || product.shopId !== payload.shopId) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
 
     const existing = await prisma.comandaItem.findFirst({ where: { appointmentId, productId } });
+
+    // Quantidade zero significa "tira da comanda". Sem isto sobrava uma
+    // linha de zero unidades, que aparecia no relatorio como venda vazia.
+    if (Number(quantity) <= 0) {
+      if (existing) await prisma.comandaItem.delete({ where: { id: existing.id } });
+      return NextResponse.json({ ok: true, removido: true });
+    }
+
     if (existing) {
       await prisma.comandaItem.update({ where: { id: existing.id }, data: { quantity } });
     } else {

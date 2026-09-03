@@ -15,6 +15,7 @@ import AReceber from "./_a-receber";
 import Agenda from "./_agenda";
 import Despesas from "./_despesas";
 import Mensagens from "./_mensagens";
+import Comanda from "./_comanda";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
 import Conversao from "./_conversao";
@@ -35,6 +36,7 @@ function applyAdminTheme(themeId: string) {
 
 /* ── Types ──────────────────────────────────────────────────────── */
 interface AppointmentService { serviceId: string; name: string; price: number; }
+interface ItemComanda { productId: string; name: string; quantity: number; price: number; }
 interface Appointment {
   id: string; startTime: string; endTime: string; date: string;
   status: string; paidAt: string | null; paymentMethod: string | null;
@@ -42,6 +44,8 @@ interface Appointment {
   pendingExpiresAt?: string | null; pendingExpired?: boolean;
   client: { id: string; name: string; phone: string; noShowCount: number; notes: string | null };
   services: AppointmentService[];
+  comanda?: ItemComanda[];
+  comandaTotal?: number;
 }
 interface Barber { id: string; name: string; phone: string; active: boolean; role: string; commission?: number; email?: string | null; imageUrl?: string | null; isOwnerProfile?: boolean; }
 interface DashboardData {
@@ -349,6 +353,9 @@ export default function PainelPage() {
   // é o que faz alguém abrir a tela — sem ele, a caixa de entrada existe
   // e ninguém olha.
   const [msgsNaoLidas, setMsgsNaoLidas] = useState(0);
+  // Menu de tres pontinhos aberto num card, e a comanda daquele atendimento.
+  const [menuAberto, setMenuAberto] = useState<string | null>(null);
+  const [comandaDe, setComandaDe] = useState<Appointment | null>(null);
   const [dataAvulsa, setDataAvulsa] = useState("");
   // Horários que a agenda realmente tem naquele dia, para o barbeiro tocar
   // em vez de rolar um seletor de relógio até um horário que talvez esteja
@@ -2065,8 +2072,52 @@ export default function PainelPage() {
                               <p className="text-sm text-gray-400">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
                               <p className="text-xs text-gray-500">{appt.client?.phone}</p>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${appt.pendingExpired ? "bg-gray-500/20 text-gray-400 border border-gray-600" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${appt.pendingExpired ? "bg-gray-500/20 text-gray-400 border border-gray-600" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>
+                              {!isCancelled && !isNoShow && (
+                                <div className="relative">
+                                  <button
+                                    onClick={() => setMenuAberto(menuAberto === appt.id ? null : appt.id)}
+                                    aria-label="Mais opções"
+                                    className="rounded-lg px-1.5 py-1 text-gray-500 hover:text-white transition"
+                                  >
+                                    ⋯
+                                  </button>
+                                  {menuAberto === appt.id && (
+                                    <>
+                                      {/* Camada invisível: tocar fora fecha, sem precisar
+                                          de listener global no documento. */}
+                                      <div className="fixed inset-0 z-30" onClick={() => setMenuAberto(null)} />
+                                      <div className="absolute right-0 top-8 z-40 w-52 rounded-xl border border-gray-700 bg-dark-900 p-1 shadow-2xl">
+                                        <button
+                                          onClick={() => { setComandaDe(appt); setMenuAberto(null); }}
+                                          className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 transition"
+                                        >
+                                          🧴 Adicionar produto
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
+
+                          {/* O que foi lançado precisa aparecer no card: produto que
+                              só existe dentro de um modal é produto esquecido. */}
+                          {(appt.comanda?.length ?? 0) > 0 && (
+                            <div className="rounded-lg bg-dark-900 border border-gray-700 px-3 py-2">
+                              <div className="flex items-baseline justify-between gap-3">
+                                <span className="text-xs font-semibold text-gray-400">Produtos</span>
+                                <span className="text-sm font-bold text-brand-400 tabular-nums">
+                                  R$ {(appt.comandaTotal ?? 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {appt.comanda!.map(i => `${i.quantity > 1 ? `${i.quantity}× ` : ""}${i.name}`).join(", ")}
+                              </p>
+                            </div>
+                          )}
 
                           {/* Pré-agendamento por Pix: dentro do prazo ou expirado */}
                           {isPendingPix && (
@@ -2121,7 +2172,14 @@ export default function PainelPage() {
                                       })}
                                     </div>
                                   )}
-                                  <div className="flex items-center gap-2"><p className="text-xs text-gray-400 shrink-0">Valor (R$):</p><input type="number" min="0" step="0.01" value={customPrice !== "" ? customPrice : appt.services.filter(s => !removedServiceIds.includes(s.serviceId)).reduce((sum, s) => sum + s.price, 0).toFixed(2)} onChange={e => setCustomPrice(e.target.value)} className="flex-1 rounded-lg bg-dark-900 border border-gray-700 px-3 py-1.5 text-sm text-white focus:border-brand-400 focus:outline-none text-right" /></div>
+                                  {(appt.comandaTotal ?? 0) > 0 && (
+                                    // O produto entra no que o cliente paga agora. Sem esta
+                                    // linha o barbeiro confirma só o serviço e a pomada some.
+                                    <p className="text-xs text-gray-400">
+                                      + R$ {(appt.comandaTotal ?? 0).toFixed(2)} em produtos
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2"><p className="text-xs text-gray-400 shrink-0">Valor (R$):</p><input type="number" min="0" step="0.01" value={customPrice !== "" ? customPrice : (appt.services.filter(s => !removedServiceIds.includes(s.serviceId)).reduce((sum, s) => sum + s.price, 0) + (appt.comandaTotal ?? 0)).toFixed(2)} onChange={e => setCustomPrice(e.target.value)} className="flex-1 rounded-lg bg-dark-900 border border-gray-700 px-3 py-1.5 text-sm text-white focus:border-brand-400 focus:outline-none text-right" /></div>
                                   <p className="text-xs text-gray-400">Forma de pagamento:</p>
                                   <div className="flex gap-2">{(["pix", "dinheiro", "cartao"] as const).map(m => (<button key={m} onClick={() => setPaymentMethod(m)} className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-all ${paymentMethod === m ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>{PAYMENT_LABELS[m]}</button>))}</div>
                                   <div className="flex gap-2">
@@ -2626,6 +2684,16 @@ export default function PainelPage() {
 
       {/* ── Cancel Confirmation Modal ── */}
       {dialogoConfirmacao}
+      <Comanda
+        aberto={!!comandaDe}
+        onFechar={() => setComandaDe(null)}
+        token={token}
+        appointmentId={comandaDe?.id ?? null}
+        clienteNome={comandaDe?.client?.name ?? ""}
+        itensAtuais={comandaDe?.comanda ?? []}
+        onSalvo={fetchAppointments}
+        onUnauthorized={handleUnauthorized}
+      />
       <CancelModal
         open={!!cancelModalId}
         appt={cancelModalId ? appointments.find(a => a.id === cancelModalId) || null : null}
