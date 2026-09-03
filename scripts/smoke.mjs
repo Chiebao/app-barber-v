@@ -102,10 +102,15 @@ async function run() {
 
   // 5. Credenciais erradas são rejeitadas (401)
   await check("Login rejeita senha errada (→ 401)", async () => {
+    // Telefone diferente a cada rodada: a trava de força bruta conta por
+    // identidade, e um número fixo acumularia falhas de um deploy para o
+    // outro até o próprio smoke levar 429 e acusar erro que não existe.
+    // O DDD 00 não existe, então nunca colide com cliente de verdade.
+    const inexistente = "00" + String(Date.now()).slice(-9);
     const res = await fetch(`${BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: "00000000000", password: "senha-invalida-xyz" }),
+      body: JSON.stringify({ phone: inexistente, password: "senha-invalida-xyz" }),
     });
     assert(res.status === 401, `esperava 401, veio ${res.status}`);
   });

@@ -283,6 +283,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Tentativa de login que já venceu não serve pra nada, e a chave é o
+    // telefone: sem varrer, a tabela guarda uma linha por número que já
+    // errou a senha uma vez, pra sempre. Roda depois dos lembretes porque
+    // é limpeza — se falhar, ninguém deixa de ser avisado.
+    let limpas = 0;
+    try {
+      const agora = new Date();
+      const r = await prisma.rateLimit.deleteMany({
+        where: {
+          janelaAte: { lt: agora },
+          OR: [{ bloqueadoAte: null }, { bloqueadoAte: { lt: agora } }],
+        },
+      });
+      limpas = r.count;
+    } catch (err) {
+      console.error("[CRON] Falha ao limpar rate_limits:", err);
+    }
+
     return NextResponse.json({
       horasAntes: HORAS_ANTES,
       canalConfigurado: temCanal,
@@ -291,6 +309,7 @@ export async function GET(req: NextRequest) {
       sent,
       failedSend,
       noChannel,
+      limpas,
     });
   } catch (error) {
     console.error(error);
