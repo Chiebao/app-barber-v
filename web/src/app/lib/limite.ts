@@ -47,6 +47,19 @@ export const CODIGO: Politica = {
   castigoMaxMs: 60 * 60_000,
 };
 
+/**
+ * Teste do canal de WhatsApp.
+ *
+ * Cada disparo manda várias mensagens PAGAS. O limite não é contra ataque —
+ * é contra o dedo pesado no botão de testar.
+ */
+export const TESTE_CANAL: Politica = {
+  max: 3,
+  janelaMs: 60 * 60_000,
+  castigoMs: 30 * 60_000,
+  castigoMaxMs: 2 * 60 * 60_000,
+};
+
 export interface Situacao {
   bloqueado: boolean;
   /** Quantos segundos faltam. Zero quando não está bloqueado. */
