@@ -645,3 +645,24 @@ model WorkDay {
   @@unique([shopId, dia])
   @@map("work_days")
 }
+
+/// Contagem de tentativas que sobrevive ao serverless.
+///
+/// O limitador do middleware e um Map em memoria, e cada instancia tem o
+/// seu: o limite de 10 logins por minuto vira 10 x o numero de instancias,
+/// que cresce com a carga que o proprio ataque provoca.
+///
+/// A chave e a IDENTIDADE (ex.: "login:5511999999999"), nao o IP — quem
+/// quer entrar numa conta especifica troca de IP de graca, mas nao troca o
+/// telefone do alvo.
+model RateLimit {
+  chave        String    @id
+  tentativas   Int       @default(0)
+  janelaAte    DateTime
+  /// Quantas vezes ja foi bloqueada: e o que faz o castigo dobrar.
+  castigos     Int       @default(0)
+  bloqueadoAte DateTime?
+
+  @@index([janelaAte])
+  @@map("rate_limits")
+}

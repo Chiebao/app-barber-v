@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyPassword, signToken } from "@/app/lib/auth";
 import { num } from "@/app/lib/money";
+import { situacao, registrarFalha, limpar, mensagemDeBloqueio, LOGIN } from "@/app/lib/limite";
 
 export async function POST(req: NextRequest) {
   try {
     const { phone, password } = await req.json();
     if (!phone || !password) return NextResponse.json({ error: "Dados obrigatorios" }, { status: 400 });
+
+    // Trava por IDENTIDADE. O limitador por IP do middleware vive em
+    // memoria e cada instancia serverless tem o seu — quem ataca uma conta
+    // especifica troca de IP de graca, mas nao troca o telefone do alvo.
+    const chave = `login:${String(phone).replace(/\D/g, "")}`;
+    const trava = await situacao(chave);
+    if (trava.bloqueado) {
+      return NextResponse.json({ error: mensagemDeBloqueio(trava.segundos) }, { status: 429 });
+    }
 
     const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
@@ -23,6 +33,7 @@ export async function POST(req: NextRequest) {
     if (owner && await verifyPassword(password, owner.passwordHash)) {
       const shop = owner.shops[0];
       if (!shop) return NextResponse.json({ error: "Nenhuma barbearia cadastrada" }, { status: 404 });
+      await limpar(chave);
       const token = signToken({ userId: owner.id, role: "owner", shopId: shop.id });
       return NextResponse.json({
         token,
@@ -46,6 +57,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (barber && await verifyPassword(password, barber.passwordHash)) {
+      await limpar(chave);
       const token = signToken({ userId: barber.id, role: barber.role as "owner" | "barber", shopId: barber.shopId });
       return NextResponse.json({
         token,
@@ -59,6 +71,14 @@ export async function POST(req: NextRequest) {
           services: barber.shop.services.map(s => ({ ...s, price: num(s.price) })),
         },
       });
+    }
+
+    // Falhou: conta a tentativa. A mensagem não muda se a conta existe ou
+    // não — dizer "esse telefone não existe" entregaria de graça a lista de
+    // quem é cliente do BarberPro.
+    const depois = await registrarFalha(chave, LOGIN);
+    if (depois.bloqueado) {
+      return NextResponse.json({ error: mensagemDeBloqueio(depois.segundos) }, { status: 429 });
     }
 
     return NextResponse.json({ error: "Credenciais invalidas" }, { status: 401 });
