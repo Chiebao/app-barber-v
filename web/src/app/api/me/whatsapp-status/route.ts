@@ -67,6 +67,33 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Vivo AGORA não é vivo em janeiro.
+    //
+    // O token temporário do painel do app vale 24h e morre em silêncio: o
+    // envio é fire-and-forget, então o sintoma é cliente parando de receber
+    // lembrete, semanas depois, sem nada na tela. `expires_at: 0` é o que
+    // distingue o token de Usuário do Sistema, que não expira.
+    let expiracao: { expira: boolean; em: string | null; tipo: string | null } | null = null;
+    try {
+      const d = await fetch(
+        `https://graph.facebook.com/v21.0/debug_token?input_token=${encodeURIComponent(token)}` +
+          `&access_token=${encodeURIComponent(token)}`,
+        { headers: h, cache: "no-store" },
+      );
+      const dc = await d.json().catch(() => ({}));
+      const dados = dc?.data;
+      if (d.ok && dados) {
+        const quando = Number(dados.expires_at ?? 0);
+        expiracao = {
+          expira: quando > 0,
+          em: quando > 0 ? new Date(quando * 1000).toISOString() : null,
+          tipo: dados.type ?? null,
+        };
+      }
+    } catch {
+      // Sem resposta aqui o canal continua funcionando; só perdemos o aviso.
+    }
+
     // Token vivo: conferir se o que a Meta aprovou bate com o que o app espera.
     let modelos: Array<{ nome: string; status: string; usadoPeloApp: boolean; variaveis: number | null }> = [];
     let avisoModelos: string | null = null;
@@ -132,6 +159,13 @@ export async function GET(req: NextRequest) {
       numero: corpo.display_phone_number ?? null,
       nomeVerificado: corpo.verified_name ?? null,
       qualidade: corpo.quality_rating ?? null,
+      expiracao,
+      avisoExpiracao:
+        expiracao === null
+          ? "Não foi possível saber se este token expira."
+          : expiracao.expira
+            ? `ATENÇÃO: este token expira em ${expiracao.em}. Troque por um de Usuário do Sistema antes disso.`
+            : null,
       problema: null,
       avisoModelos,
       modelos,
