@@ -80,6 +80,7 @@ model Shop {
   despesas       Expense[]
   bloqueiosFixos RecurringBlock[]
   mensagens      InboundMessage[]
+  expediente     WorkDay[]
 
   @@map("shops")
 }
@@ -612,4 +613,35 @@ model InboundMessage {
 
   @@index([shopId, recebidaEm])
   @@map("inbound_messages")
+}
+
+/// Horário de trabalho de UM dia da semana.
+///
+/// A barbearia tinha um horário só, herdado por todos os dias. Quem abre 13h
+/// na terça e 08h na sexta precisava escolher a janela mais larga e bloquear
+/// o resto à mão, todo dia — foi assim que este modelo apareceu.
+///
+/// É da BARBEARIA, não do barbeiro: decisão do dono. Barbeiro com horário
+/// próprio continua usando bloqueio recorrente, que já existe e resolve.
+///
+/// Ausência de linha para um dia significa "ainda não configurado", e aí
+/// vale o `openTime`/`closeTime`/`workDays` da loja. É o que mantém as
+/// barbearias antigas funcionando sem migração obrigatória.
+model WorkDay {
+  id           String  @id @default(cuid())
+  shopId       String
+  /// 0=domingo … 6=sábado, a mesma convenção de Shop.workDays
+  dia          Int
+  /// Fechado guarda os horários: reabrir não faz digitar de novo.
+  aberto       Boolean @default(true)
+  abre         String  @default("09:00")
+  fecha        String  @default("19:00")
+  /// Almoço opcional. Nulo nos dois = dia sem parada.
+  almocoInicio String?
+  almocoFim    String?
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, dia])
+  @@map("work_days")
 }

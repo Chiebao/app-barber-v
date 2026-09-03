@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { num, sumMoney, multiplyMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { bloqueiosDoDia, invadeBloqueio } from "@/app/lib/bloqueios";
+import { expedienteDoDia } from "@/app/lib/expediente";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercadopago";
 import { z } from "zod";
@@ -113,7 +114,13 @@ export async function POST(req: NextRequest) {
           // almoço de todo dia seria furado de tempos em tempos.
           const bloq = await bloqueiosDoDia(tx, data.barberId, data.date, shop.slotInterval);
           if (bloq.diaTodo) throw new Error("SLOT_BLOCKED");
-          if (invadeBloqueio(data.startTime, endTime, bloq.intervalos)) {
+
+          // O almoço do expediente barra aqui também, não só na lista: a
+          // tela do cliente pode estar velha e o modo chat monta o pedido
+          // por conta própria.
+          const exp = await expedienteDoDia(tx, shop, data.date);
+          if (!exp.aberto) throw new Error("SLOT_BLOCKED");
+          if (invadeBloqueio(data.startTime, endTime, [...bloq.intervalos, ...exp.pausas])) {
             throw new Error("SLOT_BLOCKED");
           }
 

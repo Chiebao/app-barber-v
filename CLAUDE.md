@@ -287,6 +287,8 @@ app_barber/
 | `BlockedSlot` | Horarios bloqueados | id, date, time (nullable = dia inteiro), barberId, shopId (FKs), unique(barberId+date+time) |
 | `Waitlist` | Lista de espera | id, clientName, clientPhone, serviceIds, preferredDate, barberId, shopId (FKs) |
 | `RecurringBlock` | Bloqueio semanal (almoco, folga) | id, horaInicio, horaFim, diasSemana, ativo, barberId, shopId (FKs) |
+| `WorkDay` | Horario de UM dia da semana | id, dia, aberto, abre, fecha, almocoInicio, almocoFim, shopId (FK), unique(shopId+dia) |
+| `InboundMessage` | Mensagem que o cliente respondeu no WhatsApp | id, waMessageId (unique), texto, tipo, lida, respondidaEm, shopId (FK) |
 
 ### 5.2 Convencoes
 
@@ -363,6 +365,30 @@ app_barber/
   mensagem para terceiro as nossas custas
 - Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
   a Meta so entrega modelo depois disso, e modelo nao serve para conversa
+
+### Horario de trabalho por dia
+- `WorkDay` guarda UM dia: aberto, abre, fecha, almoco (opcional). E da
+  BARBEARIA, nao do barbeiro — decisao do dono. Barbeiro com horario proprio
+  continua no bloqueio recorrente
+- **Ausencia de linha = nao configurado**, e vale o openTime/closeTime/
+  workDays da loja. Sem esse caminho de volta, migrar viraria requisito e
+  toda barbearia existente amanheceria fechada
+- O almoco sai de `lib/expediente.ts` como INTERVALO, do mesmo formato dos
+  bloqueios — daqui para baixo ninguem sabe se veio da config ou de regra
+- Almoco pela metade (so um lado) e IGNORADO: intervalo mal formado fecharia
+  a agenda em silencio
+- Fechar um dia guarda os horarios; reabrir nao faz digitar de novo
+- O bloqueio recorrente de almoco do dono foi CONVERTIDO em almoco do dia
+  (script em scratchpad, regra desligada e nao apagada)
+
+### Comanda
+- Produto entra pelo menu de 3 pontinhos do proprio atendimento. NAO e PDV:
+  abrir outra tela na hora de receber e o caminho para o barbeiro desistir
+- O que foi lancado aparece NO CARD e entra no valor a receber — produto que
+  so existe dentro do modal e produto esquecido
+- Quantidade zero REMOVE o item (linha de zero virava venda vazia no relatorio)
+- O cliente ve os produtos e o total real na tela dele e no PDF: `totalPrice`
+  e so servico, e usar aquele numero no recibo mostraria menos do que ele pagou
 
 ### Agendamento pelo painel
 - Rota SEPARADA da publica (`/api/me/agendamentos`): a publica carrega regra
@@ -450,6 +476,7 @@ app_barber/
 | `/api/me/blocked-slots/recorrentes` | Bloqueio que se repete toda semana |
 | `/api/me/agendamentos` | Agendamento criado pelo barbeiro, no balcao |
 | `/api/me/mensagens` | Caixa de entrada: o que o cliente respondeu |
+| `/api/me/expediente` | Horario de trabalho de cada dia da semana (owner only para gravar) |
 | `/api/me/waitlist` | Lista de espera |
 | `/api/me/waitlist/[id]` | Remover da fila |
 | `/api/me/upload` | Upload de imagem (Supabase Storage) |
@@ -521,6 +548,8 @@ app_barber/
 | 52 | Regua do dia na agenda (altura = tempo) + intervalo ali mesmo | ✅ | — | — |
 | 53 | Novo agendamento pelo painel (avulso ou recorrente, por toggle) | ✅ | — | ✅ |
 | 54 | Resposta do cliente no WhatsApp: webhook, auto-resposta e caixa de entrada | ✅ | — | ✅ |
+| 55 | Comanda no painel web (3 pontinhos > adicionar produto), visivel ao cliente | ✅ | ✅ | ✅ |
+| 56 | Horario de trabalho por dia da semana, com almoco | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

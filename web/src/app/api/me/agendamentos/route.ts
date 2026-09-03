@@ -5,6 +5,7 @@ import { verifyToken } from "@/app/lib/auth";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 import { occupiesSlotWhere, appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { bloqueiosDoDia, invadeBloqueio, emMinutos, emTexto } from "@/app/lib/bloqueios";
+import { expedienteDoDia } from "@/app/lib/expediente";
 import { num, sumMoney } from "@/app/lib/money";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { horariosLivres } from "@/app/lib/horarios-livres";
@@ -101,7 +102,11 @@ export async function POST(req: NextRequest) {
 
           const bloq = await bloqueiosDoDia(tx, barberId, data.date, shop.slotInterval);
           if (bloq.diaTodo) throw new Error("SLOT_BLOCKED");
-          if (invadeBloqueio(data.startTime, endTime, bloq.intervalos)) throw new Error("SLOT_BLOCKED");
+          const exp = await expedienteDoDia(tx, shop, data.date);
+          if (!exp.aberto) throw new Error("SLOT_BLOCKED");
+          if (invadeBloqueio(data.startTime, endTime, [...bloq.intervalos, ...exp.pausas])) {
+            throw new Error("SLOT_BLOCKED");
+          }
 
           return tx.appointment.create({
             data: {

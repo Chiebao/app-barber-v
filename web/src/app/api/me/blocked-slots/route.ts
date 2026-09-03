@@ -5,6 +5,7 @@ import { generateTimeSlots } from "@/app/lib/time-slots";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 import { barbeiroDoToken as resolveBarber } from "@/app/lib/barbeiro-do-token";
 import { bloqueiosDoDia, emMinutos as minutosDe, emTexto as emTextoLocal } from "@/app/lib/bloqueios";
+import { expedienteDoDia } from "@/app/lib/expediente";
 
 
 // GET /api/me/blocked-slots?date=YYYY-MM-DD[&barberId=X]
@@ -64,9 +65,11 @@ export async function GET(req: NextRequest) {
     const bloqueiosDoBarbeiro = todosIntervalos;
     // Na grade do painel, duração e passo são o mesmo número: o barbeiro
     // bloqueia exatamente os blocos que a agenda oferece ao cliente.
-    const allSlots = generateTimeSlots(
-      shop.openTime, shop.closeTime, shop.slotInterval, [], shop.slotInterval,
-    );
+    // A régua começa e termina no horário DAQUELE dia.
+    const expediente = await expedienteDoDia(prisma, shop, date);
+    const allSlots = expediente.aberto
+      ? generateTimeSlots(expediente.abre, expediente.fecha, shop.slotInterval, [], shop.slotInterval)
+      : [];
     // Um atendimento ocupa TODOS os blocos que ele atravessa, não só o de
     // início. Com passo de 30 min e um corte de 1h marcado às 08:00, o
     // barbeiro via 08:30 verde na própria agenda e podia encaixar alguém
@@ -110,6 +113,9 @@ export async function GET(req: NextRequest) {
         tipo: "pontual" as const,
       })),
       ...fixosIntervalos.map((b) => ({ ...b, tipo: "fixo" as const })),
+      // O almoço do expediente aparece como faixa fixa, igual às regras
+      // recorrentes — para o barbeiro ele é a mesma coisa na tela.
+      ...expediente.pausas.map((b) => ({ ...b, tipo: "fixo" as const })),
     ];
 
     return NextResponse.json({
@@ -129,7 +135,8 @@ export async function GET(req: NextRequest) {
       })),
       allDay,
       booked: bookedTimes,
-      shopHours: { openTime: shop.openTime, closeTime: shop.closeTime, slotInterval: shop.slotInterval },
+      shopHours: { openTime: expediente.abre, closeTime: expediente.fecha, slotInterval: shop.slotInterval },
+      diaFechado: !expediente.aberto,
     });
   } catch (error) {
     console.error(error);

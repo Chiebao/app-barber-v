@@ -16,6 +16,7 @@ import Agenda from "./_agenda";
 import Despesas from "./_despesas";
 import Mensagens from "./_mensagens";
 import Comanda from "./_comanda";
+import Expediente from "./_expediente";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
 import Conversao from "./_conversao";
@@ -356,6 +357,9 @@ export default function PainelPage() {
   // Menu de tres pontinhos aberto num card, e a comanda daquele atendimento.
   const [menuAberto, setMenuAberto] = useState<string | null>(null);
   const [comandaDe, setComandaDe] = useState<Appointment | null>(null);
+  // Resumo da semana mostrado no lugar dos campos antigos de horário.
+  const [verExpediente, setVerExpediente] = useState(false);
+  const [semana, setSemana] = useState<{ dia: number; aberto: boolean; abre: string; fecha: string }[] | null>(null);
   const [dataAvulsa, setDataAvulsa] = useState("");
   // Horários que a agenda realmente tem naquele dia, para o barbeiro tocar
   // em vez de rolar um seletor de relógio até um horário que talvez esteja
@@ -487,6 +491,21 @@ export default function PainelPage() {
   }, [token, authHeaders]);
 
   useEffect(() => { buscarNaoLidas(); }, [buscarNaoLidas, subView]);
+
+  const buscarSemana = useCallback(() => {
+    if (!token) return;
+    fetch("/api/me/expediente", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setSemana(d?.dias ?? null))
+      .catch(() => {});
+  }, [token, authHeaders]);
+
+  // Recarrega ao entrar em Config E ao fechar o modal. Depender so do
+  // callback de salvar deixava o resumo velho na tela: o dado ia para o
+  // banco, a tela continuava mostrando o horario antigo.
+  useEffect(() => {
+    if (activeTab === "config" && !verExpediente) buscarSemana();
+  }, [activeTab, verExpediente, buscarSemana]);
 
   // A lista depende da duração: trocar de serviço muda o que cabe onde, e
   // um horário válido para 30 min pode não ser para 1h15.
@@ -2521,20 +2540,35 @@ export default function PainelPage() {
                 {shopSettings && (
                   <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-5">
                     <h3 className="font-semibold text-white">🕐 Horário de funcionamento</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2">Abertura</p>
-                        <input type="time" value={shopSettings.openTime} onChange={e => setShopSettings(p => p ? {...p, openTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white text-center text-lg font-semibold focus:border-brand-400 focus:outline-none" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2">Fechamento</p>
-                        <input type="time" value={shopSettings.closeTime} onChange={e => setShopSettings(p => p ? {...p, closeTime: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white text-center text-lg font-semibold focus:border-brand-400 focus:outline-none" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-2">Dias de trabalho</p>
-                      <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map((d, i) => (<button key={i} onClick={() => setShopSettings(p => p ? {...p, workDays: p.workDays.includes(i) ? p.workDays.filter(x => x !== i) : [...p.workDays, i].sort()} : p)} className={`py-2.5 rounded-lg border text-sm font-medium transition ${shopSettings.workDays.includes(i) ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-500"}`}>{d}</button>))}</div>
-                    </div>
+
+                    {/* Os campos únicos de abertura e fechamento saíram: cada dia
+                        tem o seu. Aqui fica o resumo da semana, que abre o modal. */}
+                    <button
+                      onClick={() => setVerExpediente(true)}
+                      className="w-full rounded-xl border border-gray-700 p-3.5 text-left hover:border-brand-400/50 transition"
+                    >
+                      <span className="flex items-center justify-between gap-3 mb-2.5">
+                        <span className="text-sm font-semibold text-white">Cada dia com seu horário</span>
+                        <span className="text-brand-400 text-sm shrink-0">Editar ›</span>
+                      </span>
+                      {semana ? (
+                        <span className="grid grid-cols-7 gap-1">
+                          {semana.map(d => (
+                            <span
+                              key={d.dia}
+                              className={`rounded-lg py-1.5 text-center border ${d.aberto ? "border-gray-700 bg-dark-900" : "border-gray-800 opacity-45"}`}
+                            >
+                              <span className="block text-[11px] font-bold text-gray-300">{WEEKDAYS[d.dia]}</span>
+                              <span className="block text-[9px] text-gray-500 tabular-nums mt-0.5">
+                                {d.aberto ? d.abre.slice(0, 2) + "–" + d.fecha.slice(0, 2) : "—"}
+                              </span>
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="block text-xs text-gray-500">Toque para definir o horário de cada dia e o almoço.</span>
+                      )}
+                    </button>
                     <div>
                       <p className="text-xs text-gray-400 mb-1">De quanto em quanto tempo</p>
                       <div className="grid grid-cols-5 gap-1.5">
@@ -2684,6 +2718,13 @@ export default function PainelPage() {
 
       {/* ── Cancel Confirmation Modal ── */}
       {dialogoConfirmacao}
+      <Expediente
+        aberto={verExpediente}
+        onFechar={() => setVerExpediente(false)}
+        token={token}
+        onSalvo={() => { buscarSemana(); fetchSlots(); }}
+        onUnauthorized={handleUnauthorized}
+      />
       <Comanda
         aberto={!!comandaDe}
         onFechar={() => setComandaDe(null)}

@@ -3,6 +3,7 @@ import { generateTimeSlots, agoraNaBarbearia } from "@/app/lib/time-slots";
 import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { materializarRecorrentes } from "@/app/lib/recurrence";
 import { bloqueiosDoDia } from "@/app/lib/bloqueios";
+import { expedienteDoDia } from "@/app/lib/expediente";
 
 /**
  * Os horários que sobram num dia.
@@ -45,8 +46,10 @@ export async function horariosLivres(
 ): Promise<HorariosDoDia> {
   const { shop, date, duration, barberId } = opcoes;
 
-  const diaDaSemana = new Date(date + "T12:00:00").getDay();
-  if (!shop.workDays.includes(diaDaSemana)) {
+  // O horário vem do DIA, não da barbearia: quem abre 13h na terça e 08h
+  // na sexta tinha que escolher a janela mais larga e bloquear o resto.
+  const expediente = await expedienteDoDia(prisma, shop, date);
+  if (!expediente.aberto) {
     return { slots: [], motivo: "Dia nao disponivel" };
   }
 
@@ -72,8 +75,8 @@ export async function horariosLivres(
   // Capacidade do dia por TEMPO REAL ocupado, não por número de agendamentos.
   // O contador antigo comparava a quantidade com uma estimativa pelo tempo
   // médio, e fechava a agenda cedo quando os serviços eram mais curtos.
-  const [abreH, abreM] = shop.openTime.split(":").map(Number);
-  const [fechaH, fechaM] = shop.closeTime.split(":").map(Number);
+  const [abreH, abreM] = expediente.abre.split(":").map(Number);
+  const [fechaH, fechaM] = expediente.fecha.split(":").map(Number);
   const minutosDoDia = (fechaH * 60 + fechaM) - (abreH * 60 + abreM);
 
   const minutosOcupados = ocupados.reduce((soma, a) => {
@@ -90,17 +93,20 @@ export async function horariosLivres(
   // Bloqueios entram como INTERVALO OCUPADO, junto com os agendamentos.
   // Descontá-los depois, comparando com o começo da vaga, deixava passar o
   // corte que COMEÇA antes do bloqueio e atravessa ele.
-  let bloqueios: { startTime: string; endTime: string }[] = [];
+  // O almoço do expediente entra como bloqueio comum: daqui para baixo
+  // ninguém precisa saber se veio da configuração ou de uma regra criada
+  // pelo barbeiro.
+  let bloqueios: { startTime: string; endTime: string }[] = [...expediente.pausas];
   if (barberId) {
     const b = await bloqueiosDoDia(prisma, barberId, date, shop.slotInterval);
     if (b.diaTodo) return { slots: [], motivo: "Barbeiro indisponivel neste dia" };
-    bloqueios = b.intervalos;
+    bloqueios = [...bloqueios, ...b.intervalos];
   }
 
   // Duração é a soma dos serviços; passo é a divisão do dia. Coisas
   // diferentes de propósito.
   let slots = generateTimeSlots(
-    shop.openTime, shop.closeTime, duration, [...ocupados, ...bloqueios], shop.slotInterval,
+    expediente.abre, expediente.fecha, duration, [...ocupados, ...bloqueios], shop.slotInterval,
   );
 
   // HOJE: tirar o que já passou. O corte é do SERVIDOR de propósito — quem
