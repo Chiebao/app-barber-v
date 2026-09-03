@@ -288,6 +288,7 @@ app_barber/
 | `Waitlist` | Lista de espera | id, clientName, clientPhone, serviceIds, preferredDate, barberId, shopId (FKs) |
 | `RecurringBlock` | Bloqueio semanal (almoco, folga) | id, horaInicio, horaFim, diasSemana, ativo, barberId, shopId (FKs) |
 | `WorkDay` | Horario de UM dia da semana | id, dia, aberto, abre, fecha, almocoInicio, almocoFim, shopId (FK), unique(shopId+dia) |
+| `RateLimit` | Tentativas por identidade (login, recuperacao) | chave (PK), tentativas, janelaAte, castigos, bloqueadoAte |
 | `InboundMessage` | Mensagem que o cliente respondeu no WhatsApp | id, waMessageId (unique), texto, tipo, lida, respondidaEm, shopId (FK) |
 
 ### 5.2 Convencoes
@@ -365,6 +366,33 @@ app_barber/
   mensagem para terceiro as nossas custas
 - Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
   a Meta so entrega modelo depois disso, e modelo nao serve para conversa
+
+### Seguranca e limites
+- O limitador do `middleware.ts` e um Map EM MEMORIA: em serverless cada
+  instancia tem o seu, e o limite vira N x instancias. Ele continua como
+  primeira barreira contra enxurrada burra, mas nao segura forca bruta
+- `lib/limite.ts` conta no BANCO e por IDENTIDADE (telefone), nao por IP:
+  quem ataca uma conta troca de IP de graca, mas nao troca o telefone do
+  alvo. Castigo dobra a cada rodada, com teto — bloqueio fixo e facil de
+  esperar, bloqueio eterno vira negacao de servico contra o dono
+- Aplicado no login (5) e na recuperacao de senha (3, o premio e a conta)
+- Acertar a senha LIMPA o historico: senao o dono que errou duas vezes hoje
+  comeca amanha perto do bloqueio
+- Editar servicos de um agendamento roda as MESMAS checagens da criacao
+  quando ALONGA. So encurtar e livre — quem tira servico nao invade ninguem
+- Barbeiro contratado so marca falta de quem ele atendeu: `Client` e global,
+  entao a falta conta contra o cliente em todas as barbearias
+
+### Datas
+- Toda janela de dia usa `T00:00:00.000Z` / `T23:59:59.999Z`, EXPLICITO.
+  Sem o Z, `new Date(d + "T00:00:00")` e meia-noite LOCAL DO SERVIDOR — o
+  dado gravado dependia de onde o codigo rodava (UTC na Vercel, -03 na
+  maquina do dev)
+- `RecurringAppointment` usa meio-dia UTC (`dataDoDia`), que e ainda mais
+  seguro: sobram 12h de folga para cada lado. Ambos caem dentro da janela
+- NAO houve migracao de dados: producao sempre rodou em UTC, entao as linhas
+  ja estavam certas. Reescrever data de agendamento existente seria mais
+  risco que o problema
 
 ### Horario de trabalho por dia
 - `WorkDay` guarda UM dia: aberto, abre, fecha, almoco (opcional). E da
@@ -550,6 +578,7 @@ app_barber/
 | 54 | Resposta do cliente no WhatsApp: webhook, auto-resposta e caixa de entrada | ✅ | — | ✅ |
 | 55 | Comanda no painel web (3 pontinhos > adicionar produto), visivel ao cliente | ✅ | ✅ | ✅ |
 | 56 | Horario de trabalho por dia da semana, com almoco | ✅ | — | ✅ |
+| 57 | Trava de forca bruta por identidade, gravada no banco | — | — | ✅ |
 
 ### Pendentes / Melhorias
 
