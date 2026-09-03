@@ -153,6 +153,22 @@ export async function GET(req: NextRequest) {
         assinaturas = r.ok ? corpo : (corpo as { error?: { message?: string } })?.error?.message;
       }
 
+      // ?assinar=WABA_ID — inscreve ESTE app na conta do WhatsApp.
+      //
+      // Sem a inscricao a Meta nao entrega webhook nenhum, e marcar campos
+      // no painel nao adianta: `subscribed_apps` volta vazio e a mensagem do
+      // cliente simplesmente nao chega. Protegido pelo CRON_SECRET.
+      const wabaAssinar = new URL(req.url).searchParams.get("assinar");
+      let inscricao: unknown = null;
+      if (wabaAssinar) {
+        const r = await fetch(
+          `https://graph.facebook.com/v21.0/${wabaAssinar}/subscribed_apps`,
+          { method: "POST", headers: h },
+        );
+        const corpo = await r.json().catch(() => ({}));
+        inscricao = { ok: r.ok, resposta: corpo };
+      }
+
       // ?send=55DDDNUMERO — envia uma mensagem de teste para validar o canal.
       // Protegido pelo CRON_SECRET, igual ao resto da rota.
       //
@@ -201,6 +217,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         envioTeste,
         assinaturas,
+        inscricao,
         templates,
         tokenValido: meRes.ok,
         tokenPertenceA: meRes.ok ? me : me?.error?.message,
