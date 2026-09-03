@@ -4,6 +4,7 @@ import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 import { emMinutos } from "@/app/lib/bloqueios";
+import { barbeiroDoToken as barbeiroAlvo } from "@/app/lib/barbeiro-do-token";
 
 /**
  * Bloqueios que se repetem toda semana — o almoço, a folga da quarta.
@@ -20,33 +21,6 @@ const regraSchema = z.object({
   barberId: z.string().optional(),
 });
 
-/** Quem pode mexer na agenda de quem. */
-async function barbeiroAlvo(
-  payload: { userId: string; role: string; shopId: string },
-  pedido?: string | null,
-): Promise<string | null> {
-  if (payload.role !== "owner") {
-    // Barbeiro contratado só mexe no próprio, mesmo que mande outro id.
-    const eu = await prisma.barber.findFirst({
-      where: { id: payload.userId, shopId: payload.shopId },
-      select: { id: true },
-    });
-    return eu?.id ?? null;
-  }
-  if (!pedido) {
-    // Dono sem escolher: assume o perfil de barbeiro dele mesmo.
-    const meu = await prisma.barber.findFirst({
-      where: { shopId: payload.shopId, isOwnerProfile: true },
-      select: { id: true },
-    });
-    return meu?.id ?? null;
-  }
-  const b = await prisma.barber.findFirst({
-    where: { id: pedido, shopId: payload.shopId },
-    select: { id: true },
-  });
-  return b?.id ?? null;
-}
 
 export async function GET(req: NextRequest) {
   try {

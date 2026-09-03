@@ -5,6 +5,7 @@ import { verifyToken } from "@/app/lib/auth";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 import { agoraNaBarbearia } from "@/app/lib/time-slots";
 import { dataDoDia, materializarRecorrentes } from "@/app/lib/recurrence";
+import { barbeiroDoToken } from "@/app/lib/barbeiro-do-token";
 
 /**
  * Cortes fixos — o cliente que vem toda semana no mesmo horário.
@@ -28,24 +29,6 @@ const criarSchema = z.object({
  * De quem é a agenda: o barbeiro mexe na própria, o dono escolhe de quem.
  * Mesmo critério das outras rotas de `/api/me`.
  */
-async function resolverBarbeiro(
-  payload: { userId: string; role: string; shopId: string },
-  barberId?: string | null,
-): Promise<string | null> {
-  if (payload.role === "owner") {
-    const alvo = barberId || payload.userId;
-    const b = await prisma.barber.findFirst({
-      where: { id: alvo, shopId: payload.shopId },
-      select: { id: true },
-    });
-    return b ? b.id : null;
-  }
-  const b = await prisma.barber.findUnique({
-    where: { id: payload.userId },
-    select: { id: true },
-  });
-  return b ? b.id : null;
-}
 
 // GET /api/me/recurring — regras da barbearia (ativas primeiro)
 export async function GET(req: NextRequest) {
@@ -106,7 +89,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const barberId = await resolverBarbeiro(payload, data.barberId);
+    const barberId = await barbeiroDoToken(payload, data.barberId);
     if (!barberId) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 403 });
 
     const shop = await prisma.shop.findUnique({

@@ -3,27 +3,9 @@ import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { generateTimeSlots } from "@/app/lib/time-slots";
 import { exigirEscrita } from "@/app/lib/exigir-assinatura";
+import { barbeiroDoToken as resolveBarber } from "@/app/lib/barbeiro-do-token";
 import { bloqueiosDoDia, emMinutos as minutosDe, emTexto as emTextoLocal } from "@/app/lib/bloqueios";
 
-// Resolve o barberId efetivo a partir do token + params
-// - Barbeiro: usa payload.userId (deve existir em barbers)
-// - Dono: usa query/body param barberId (deve pertencer à shop do dono)
-async function resolveBarber(
-  payload: { userId: string; role: string; shopId: string },
-  barberId?: string | null
-): Promise<string | null> {
-  if (payload.role === "owner") {
-    if (!barberId) return null;
-    const b = await prisma.barber.findFirst({
-      where: { id: barberId, shopId: payload.shopId },
-      select: { id: true },
-    });
-    return b ? b.id : null;
-  }
-  // Barbeiro: verifica que userId existe em barbers
-  const b = await prisma.barber.findUnique({ where: { id: payload.userId }, select: { id: true } });
-  return b ? b.id : null;
-}
 
 // GET /api/me/blocked-slots?date=YYYY-MM-DD[&barberId=X]
 export async function GET(req: NextRequest) {

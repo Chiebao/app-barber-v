@@ -8,6 +8,7 @@ import { bloqueiosDoDia, invadeBloqueio, emMinutos, emTexto } from "@/app/lib/bl
 import { num, sumMoney } from "@/app/lib/money";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { horariosLivres } from "@/app/lib/horarios-livres";
+import { barbeiroDoToken } from "@/app/lib/barbeiro-do-token";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -53,16 +54,8 @@ export async function POST(req: NextRequest) {
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
 
     // Barbeiro contratado só agenda para si; o dono escolhe.
-    let barberId: string;
-    if (payload.role === "owner") {
-      const alvo = data.barberId
-        ? await prisma.barber.findFirst({ where: { id: data.barberId, shopId: shop.id }, select: { id: true } })
-        : await prisma.barber.findFirst({ where: { shopId: shop.id, isOwnerProfile: true }, select: { id: true } });
-      if (!alvo) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 404 });
-      barberId = alvo.id;
-    } else {
-      barberId = payload.userId;
-    }
+    const barberId = await barbeiroDoToken(payload, data.barberId);
+    if (!barberId) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 404 });
 
     const services = await prisma.service.findMany({
       where: { id: { in: data.serviceIds }, shopId: shop.id },
@@ -217,16 +210,7 @@ export async function GET(req: NextRequest) {
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
 
     // Barbeiro contratado só vê a própria agenda, como no resto do painel.
-    let barberId: string | null = null;
-    if (payload.role === "owner") {
-      const pedido = sp.get("barberId");
-      const alvo = pedido
-        ? await prisma.barber.findFirst({ where: { id: pedido, shopId: shop.id }, select: { id: true } })
-        : await prisma.barber.findFirst({ where: { shopId: shop.id, isOwnerProfile: true }, select: { id: true } });
-      barberId = alvo?.id ?? null;
-    } else {
-      barberId = payload.userId;
-    }
+    const barberId = await barbeiroDoToken(payload, sp.get("barberId"));
 
     const { slots, motivo } = await horariosLivres(prisma, {
       shop, date, duration, barberId,
