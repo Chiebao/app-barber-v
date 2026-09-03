@@ -17,6 +17,7 @@ import Despesas from "./_despesas";
 import Mensagens from "./_mensagens";
 import Comanda from "./_comanda";
 import Expediente from "./_expediente";
+import { salvarAgenda, lerAgenda, limparAgendas, horaDaCopia } from "@/app/lib/agenda-offline";
 import NovoAgendamento from "./_novo-agendamento";
 import Lucro from "./_lucro";
 import Aceite from "./_aceite";
@@ -157,6 +158,10 @@ export default function PainelPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [agendaLoading, setAgendaLoading] = useState(false);
+  // Quando a rede falha, a tela precisa saber que está mostrando cópia —
+  // senão dia sem internet vira dia sem cliente. `null` = veio da rede.
+  const [agendaSalvaEm, setAgendaSalvaEm] = useState<number | null>(null);
+  const [agendaSemCopia, setAgendaSemCopia] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro" | "cartao">("pix");
   const [confirmingPayId, setConfirmingPayId] = useState<string | null>(null);
@@ -298,6 +303,7 @@ export default function PainelPage() {
 
   // Sessão expirada (401): limpa token, avisa e volta ao login
   const handleUnauthorized = useCallback(() => {
+    limparAgendas();
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
     localStorage.removeItem("admin_token_renewed_at");
@@ -312,9 +318,21 @@ export default function PainelPage() {
     try {
       const res = await fetch(`/api/me/appointments?date=${selectedDate}`, { headers: authHeaders() });
       if (res.status === 401) { handleUnauthorized(); return; }
+      if (!res.ok) throw new Error(String(res.status));
       const data = await res.json();
-      setAppointments(data.appointments || []);
-    } catch { setAppointments([]); }
+      const lista = data.appointments || [];
+      setAppointments(lista);
+      setAgendaSalvaEm(null);
+      setAgendaSemCopia(false);
+      salvarAgenda(selectedDate, lista, new Date().toISOString().split("T")[0]);
+    } catch {
+      // Rede fora. Mostrar a última cópia É o objetivo; mostrar lista
+      // vazia calada era o problema.
+      const copia = lerAgenda<Appointment>(selectedDate);
+      setAppointments(copia?.agendamentos ?? []);
+      setAgendaSalvaEm(copia?.salvoEm ?? null);
+      setAgendaSemCopia(!copia);
+    }
     finally { setAgendaLoading(false); }
   }, [token, selectedDate, authHeaders, handleUnauthorized]);
 
@@ -1102,7 +1120,7 @@ export default function PainelPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(texto + " " + bookingLink)}`, "_blank");
   };
 
-  const handleLogout = () => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); localStorage.removeItem("admin_token_renewed_at"); router.push("/admin"); };
+  const handleLogout = () => { limparAgendas(); localStorage.removeItem("admin_token"); localStorage.removeItem("admin_user"); localStorage.removeItem("admin_token_renewed_at"); router.push("/admin"); };
 
   const isAppointmentPast = (dateStr: string, startTime: string) => {
     const [h, m] = startTime.split(":").map(Number);
@@ -1728,9 +1746,27 @@ export default function PainelPage() {
                 </div>
 
                 {/* Appointments */}
+                {/* Sem conexão: dizer QUE é cópia e DE QUANDO. Sem isso o
+                    barbeiro lê uma agenda velha como se fosse a de agora. */}
+                {agendaSalvaEm !== null && (
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                    <p className="font-semibold">Sem conexão — agenda salva às {horaDaCopia(agendaSalvaEm)}</p>
+                    <p className="text-amber-300/80 text-xs mt-1">
+                      Quem marcou depois disso não aparece aqui, e não dá para confirmar pagamento nem marcar horário até a internet voltar.
+                    </p>
+                  </div>
+                )}
+                {agendaSemCopia && (
+                  <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    <p className="font-semibold">Sem conexão — não há cópia salva deste dia</p>
+                    <p className="text-red-300/80 text-xs mt-1">
+                      A lista abaixo está vazia porque não deu para carregar, não porque o dia está livre.
+                    </p>
+                  </div>
+                )}
                 <p className="text-xs text-gray-500 uppercase tracking-widest">{appointments.length} agendamento{appointments.length !== 1 ? "s" : ""}</p>
                 {agendaLoading ? <Spinner /> : appointments.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500"><p className="text-4xl mb-3">📋</p><p>Nenhum agendamento neste dia</p></div>
+                  <div className="text-center py-12 text-gray-500"><p className="text-4xl mb-3">{agendaSemCopia ? "📡" : "📋"}</p><p>{agendaSemCopia ? "Não foi possível carregar" : "Nenhum agendamento neste dia"}</p></div>
                 ) : (
                   <div className="space-y-3">
                     {appointments.map(appt => {
