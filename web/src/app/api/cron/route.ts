@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
       let assinaturas: unknown = null;
       if (wabaAssin) {
         const r = await fetch(
-          ,
+          `https://graph.facebook.com/v21.0/${wabaAssin}/subscribed_apps`,
           { headers: h },
         );
         const corpo = await r.json().catch(() => ({}));
