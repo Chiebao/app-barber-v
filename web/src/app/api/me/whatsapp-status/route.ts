@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
     // Uma leitura barata contra a própria linha: se o token venceu, é aqui que
     // a Meta diz. Não manda mensagem nenhuma.
     const r = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneId}?fields=display_phone_number,verified_name,quality_rating`,
+      `https://graph.facebook.com/v21.0/${phoneId}` +
+        `?fields=display_phone_number,verified_name,quality_rating,name_status,new_name_status`,
       { headers: h, cache: "no-store" },
     );
     const corpo = await r.json().catch(() => ({}));
@@ -153,11 +154,32 @@ export async function GET(req: NextRequest) {
       avisoModelos = "Defina WHATSAPP_WABA_ID para conferir os modelos aprovados.";
     }
 
+    // Nome errado na tela do cliente costuma ser campo trocado, não atraso:
+    // o nome de exibição é do NÚMERO, e mudar o nome do app ou o da conta
+    // de negócios não mexe nele. Listar todos os números mostra de cara se
+    // o nome novo foi aprovado em outra linha.
+    let numeros: unknown = null;
+    if (wabaId) {
+      try {
+        const n = await fetch(
+          `https://graph.facebook.com/v21.0/${wabaId}/phone_numbers` +
+            `?fields=display_phone_number,verified_name,name_status,new_name_status&limit=25`,
+          { headers: h, cache: "no-store" },
+        );
+        const nc = await n.json().catch(() => ({}));
+        numeros = n.ok ? nc.data : nc?.error?.message;
+      } catch { /* o canal funciona sem isto */ }
+    }
+
     return NextResponse.json({
       configurado: true,
       tokenVivo: true,
       numero: corpo.display_phone_number ?? null,
       nomeVerificado: corpo.verified_name ?? null,
+      // PENDING_REVIEW aqui = troca de nome parada na fila da Meta.
+      situacaoDoNome: corpo.name_status ?? null,
+      situacaoDoNomeNovo: corpo.new_name_status ?? null,
+      numeros,
       qualidade: corpo.quality_rating ?? null,
       expiracao,
       avisoExpiracao:
