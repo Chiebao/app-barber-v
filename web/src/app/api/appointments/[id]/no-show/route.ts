@@ -17,6 +17,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     if (!appointment) return NextResponse.json({ error: "Agendamento não encontrado" }, { status: 404 });
     if (appointment.shopId !== payload.shopId) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    // Barbeiro contratado marca falta só de quem ele atendeu. A falta
+    // conta contra o cliente em TODAS as barbearias (`Client` é global),
+    // então marcar a de outro barbeiro mexe em coisa que não é sua.
+    if (payload.role === "barber" && appointment.barberId !== payload.userId) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
     if (appointment.status !== "confirmed") {
       return NextResponse.json({ error: "Agendamento não está confirmado" }, { status: 400 });
     }
