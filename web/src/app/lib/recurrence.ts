@@ -132,17 +132,15 @@ async function criarOcorrencias(
   de: string,
   ate: string,
 ): Promise<number> {
-  const shop = await prisma.shop.findUnique({
-    where: { id: shopId },
-    select: { workDays: true },
-  });
-  if (!shop) return 0;
-
   // O horizonte começa hoje: regra nova não gera corte que já passou.
   const { dia: hoje } = agoraNaBarbearia();
   const inicioJanela = de > hoje ? de : hoje;
   if (inicioJanela > ate) return 0;
 
+  // As regras vêm ANTES da loja de propósito. Esta função roda em todo
+  // pedido de horário — o caminho mais quente do sistema — e a esmagadora
+  // maioria das barbearias não tem corte fixo nenhum. Buscar a loja
+  // primeiro era uma consulta jogada fora em cada visita de cliente.
   const regras = await prisma.recurringAppointment.findMany({
     where: {
       shopId,
@@ -153,6 +151,12 @@ async function criarOcorrencias(
     include: { services: true },
   });
   if (regras.length === 0) return 0;
+
+  const shop = await prisma.shop.findUnique({
+    where: { id: shopId },
+    select: { workDays: true },
+  });
+  if (!shop) return 0;
 
   let criadas = 0;
 

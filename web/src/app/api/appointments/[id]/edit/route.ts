@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
                 barberId: appointment.barberId,
                 // O próprio agendamento não conta como conflito consigo mesmo.
                 id: { not: appointment.id },
-                date: { gte: new Date(dia + "T00:00:00"), lte: new Date(dia + "T23:59:59") },
+                date: { gte: new Date(dia + "T00:00:00.000Z"), lte: new Date(dia + "T23:59:59.999Z") },
                 ...occupiesSlotWhere(),
               },
               select: { startTime: true, endTime: true },

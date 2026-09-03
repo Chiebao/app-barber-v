@@ -57,8 +57,8 @@ export async function horariosLivres(
   // ocupado. Sem isso o horário de quem vem toda terça apareceria livre.
   await materializarRecorrentes(shop.id, date, date);
 
-  const inicioDoDia = new Date(date + "T00:00:00");
-  const fimDoDia = new Date(date + "T23:59:59");
+  const inicioDoDia = new Date(date + "T00:00:00.000Z");
+  const fimDoDia = new Date(date + "T23:59:59.999Z");
 
   const where: Record<string, unknown> = {
     shopId: shop.id,

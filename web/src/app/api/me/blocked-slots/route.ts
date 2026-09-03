@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
     const shop = await prisma.shop.findUnique({ where: { id: payload.shopId } });
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
 
-    const dateStart = new Date(date + "T00:00:00");
-    const dateEnd = new Date(date + "T23:59:59");
+    const dateStart = new Date(date + "T00:00:00.000Z");
+    const dateEnd = new Date(date + "T23:59:59.999Z");
 
     const [blocked, appointments] = await Promise.all([
       prisma.blockedSlot.findMany({
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
 
     if (allDay) {
       await prisma.blockedSlot.deleteMany({
-        where: { barberId, date: { gte: new Date(date + "T00:00:00"), lte: new Date(date + "T23:59:59") } },
+        where: { barberId, date: { gte: new Date(date + "T00:00:00.000Z"), lte: new Date(date + "T23:59:59.999Z") } },
       });
       await prisma.blockedSlot.create({
         data: { barberId, shopId: payload.shopId, date: dateObj, time: null },
@@ -206,7 +206,7 @@ export async function DELETE(req: NextRequest) {
       await prisma.blockedSlot.deleteMany({
         where: {
           barberId,
-          date: { gte: new Date(date + "T00:00:00"), lte: new Date(date + "T23:59:59") },
+          date: { gte: new Date(date + "T00:00:00.000Z"), lte: new Date(date + "T23:59:59.999Z") },
         },
       });
     } else if (Array.isArray(times)) {

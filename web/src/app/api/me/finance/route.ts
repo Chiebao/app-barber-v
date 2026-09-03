@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
 
     const where: Record<string, unknown> = {
       shopId: payload.shopId,
-      date: { gte: new Date(start + "T00:00:00"), lte: new Date(end + "T23:59:59") },
+      date: { gte: new Date(start + "T00:00:00.000Z"), lte: new Date(end + "T23:59:59.999Z") },
       status: { not: "cancelled" },
     };
 

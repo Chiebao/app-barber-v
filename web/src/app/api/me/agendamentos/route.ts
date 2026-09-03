@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       update: { name: data.clientName.trim() },
     });
 
-    const dateObj = new Date(data.date + "T00:00:00");
+    const dateObj = new Date(data.date + "T00:00:00.000Z");
 
     try {
       const agendamento = await prisma.$transaction(
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           const conflitos = await tx.appointment.findMany({
             where: {
               barberId,
-              date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
+              date: { gte: new Date(data.date + "T00:00:00.000Z"), lte: new Date(data.date + "T23:59:59.999Z") },
               ...occupiesSlotWhere(),
             },
             select: { startTime: true, endTime: true },

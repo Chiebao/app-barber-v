@@ -203,7 +203,7 @@ export async function semearAtendimento(loja: Loja, opcoes: {
       shopId: loja.shopId,
       barberId: opcoes.barbeiroId ?? loja.barbeiroDonoId,
       clientId: cliente.id,
-      date: new Date(diaISO(-opcoes.diasAtras) + "T00:00:00Z"),
+      date: new Date(diaISO(-opcoes.diasAtras) + "T00:00:00.000Z"),
       startTime: "10:00",
       endTime: "10:30",
       totalDuration: 30,

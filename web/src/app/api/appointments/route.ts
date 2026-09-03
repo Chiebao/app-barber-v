@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const endMinutes = startH * 60 + startM + totalDuration;
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
 
-    const dateObj = new Date(data.date + "T00:00:00");
+    const dateObj = new Date(data.date + "T00:00:00.000Z");
 
     // Cria ou encontra cliente
     let client = await prisma.client.findUnique({ where: { phone: cleanPhone } });
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
           const conflicts = await tx.appointment.findMany({
             where: {
               barberId: data.barberId,
-              date: { gte: new Date(data.date + "T00:00:00"), lte: new Date(data.date + "T23:59:59") },
+              date: { gte: new Date(data.date + "T00:00:00.000Z"), lte: new Date(data.date + "T23:59:59.999Z") },
               ...occupiesSlotWhere(),
             },
             select: { startTime: true, endTime: true },

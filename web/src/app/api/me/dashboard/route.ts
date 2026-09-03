@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
     const firstOfMonth  = new Date(now.getFullYear(), now.getMonth(), 1);
     const firstOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const firstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const todayStart = new Date(now.toISOString().split("T")[0] + "T00:00:00");
-    const todayEnd   = new Date(now.toISOString().split("T")[0] + "T23:59:59");
+    const todayStart = new Date(now.toISOString().split("T")[0] + "T00:00:00.000Z");
+    const todayEnd   = new Date(now.toISOString().split("T")[0] + "T23:59:59.999Z");
 
     const [monthApts, prevMonthApts, todayApts, barbers, ratings, totalClients, cancelledThisMonth] = await Promise.all([
       // Mês atual — todos (não cancelados)
@@ -37,7 +37,10 @@ export async function GET(req: NextRequest) {
         select: { id: true, name: true, commission: true },
       }),
       // Avaliações
-      prisma.rating.findMany({ where: { shopId: payload.shopId }, select: { score: true } }),
+      // Média no banco: trazer TODA avaliação de sempre para dividir em
+      // JavaScript cresce sem teto — a consulta fica mais lenta a cada mês
+      // de uso, e o resultado é um número só.
+      prisma.rating.aggregate({ where: { shopId: payload.shopId }, _avg: { score: true }, _count: true }),
       // Clientes reais (únicos que agendaram nesta shop)
       prisma.client.count({
         where: { appointments: { some: { shopId: payload.shopId } } },
@@ -74,8 +77,11 @@ export async function GET(req: NextRequest) {
       : null;
 
     // ── Avaliação ─────────────────────────────────────────────────────────────
-    const avgRating = ratings.length
-      ? parseFloat((ratings.reduce((s, r) => s + r.score, 0) / ratings.length).toFixed(1))
+    // A média vem pronta do banco. Antes eram todas as avaliações de sempre
+    // trazidas para dividir aqui — consulta que fica mais lenta a cada mês de
+    // uso, para produzir um número só.
+    const avgRating = ratings._count
+      ? parseFloat((ratings._avg.score ?? 0).toFixed(1))
       : null;
 
     // ── Ranking de barbeiros ──────────────────────────────────────────────────

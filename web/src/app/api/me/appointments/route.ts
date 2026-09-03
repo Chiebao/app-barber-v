@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       // que pagamento, falta, comanda e fidelidade funcionam nele sem que
       // nenhuma dessas telas precise saber o que é recorrência.
       await materializarRecorrentes(payload.shopId, date, date);
-      where.date = { gte: new Date(date + "T00:00:00"), lte: new Date(date + "T23:59:59") };
+      where.date = { gte: new Date(date + "T00:00:00.000Z"), lte: new Date(date + "T23:59:59.999Z") };
     }
 
     const appointments = await prisma.appointment.findMany({

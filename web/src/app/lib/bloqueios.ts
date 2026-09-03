@@ -60,8 +60,8 @@ export async function bloqueiosDoDia(
   dataISO: string,
   slotInterval: number,
 ): Promise<BloqueiosDoDia> {
-  const inicioDoDia = new Date(dataISO + "T00:00:00");
-  const fimDoDia = new Date(dataISO + "T23:59:59");
+  const inicioDoDia = new Date(dataISO + "T00:00:00.000Z");
+  const fimDoDia = new Date(dataISO + "T23:59:59.999Z");
 
   const [pontuais, fixos] = await Promise.all([
     prisma.blockedSlot.findMany({
