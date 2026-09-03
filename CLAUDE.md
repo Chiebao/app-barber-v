@@ -367,6 +367,30 @@ app_barber/
 - Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
   a Meta so entrega modelo depois disso, e modelo nao serve para conversa
 
+### Quando a internet cai
+- O inimigo NAO e a Vercel cair — e a internet DA BARBEARIA cair, que
+  acontece toda semana. Provedor tem 99,9%; wi-fi de barbearia nao tem
+- O painel tratava falha de rede como dia vazio (`catch { setAppointments
+  ([]) }`). O barbeiro nao via erro: via sabado livre, e descobria com a
+  fila na porta. Mentir e pior que a queda
+- A copia fica em `localStorage` (`lib/agenda-offline.ts`) e NAO no service
+  worker, de proposito: o SW devolveria a resposta velha por baixo e a tela
+  continuaria sem saber que e velha — trocaria uma mentira por outra. Na
+  camada do app a tela sabe que e copia e diz de quando e
+- Guarda nome e telefone de cliente, entao sai em TODOS os logouts
+- A poda usa data real, nao comparacao de texto: `2026-08-31` < `2026-09-01`
+  como string jogaria fora a agenda de ontem na virada do mes
+- O resumo no WhatsApp do barbeiro (`lib/agenda-do-dia.ts`) e a camada de
+  FORA do sistema: se as 10h nada carrega, a lista esta num app que nao e o
+  nosso. So entre 06:00 e 10:00 — o agendador externo bate de hora em hora e
+  sem janela o barbeiro recebe a agenda as 3 da manha
+- A lista vai numa variavel so, separada por " · ": a Meta RECUSA parametro
+  de modelo com quebra de linha. Por isso ela nao pode ser uma lista
+- `agendaEnviadaEm` so e gravado quando a Meta confirma, e dia vazio nao
+  gasta mensagem paga — nao ha agenda para proteger
+- O que o cache NAO faz: aceitar agendamento novo. Gravar precisa do
+  servidor. Ver quem vem salva o sabado; marcar, nao da
+
 ### Seguranca e limites
 - O limitador do `middleware.ts` e um Map EM MEMORIA: em serverless cada
   instancia tem o seu, e o limite vira N x instancias. Ele continua como
@@ -587,6 +611,9 @@ app_barber/
 | 55 | Comanda no painel web (3 pontinhos > adicionar produto), visivel ao cliente | ✅ | ✅ | ✅ |
 | 56 | Horario de trabalho por dia da semana, com almoco | ✅ | — | ✅ |
 | 57 | Trava de forca bruta por identidade, gravada no banco | — | — | ✅ |
+| 58 | Agenda do dia sobrevive sem internet (copia no aparelho + aviso) | ✅ | — | — |
+| 59 | Resumo da agenda no WhatsApp do barbeiro, de manha | — | — | ✅ |
+| 60 | Diagnostico do canal WhatsApp pelo login do dono | — | — | ✅ |
 
 ### Pendentes / Melhorias
 
@@ -722,6 +749,7 @@ npx expo start         # Abre Expo Dev Tools
 | `CRON_SECRET` | Nao | Segredo para autenticar chamadas do Vercel Cron |
 | `WHATSAPP_VERIFY_TOKEN` | Nao | Token do aperto de mao do webhook (voce inventa, e repete na Meta) |
 | `WHATSAPP_APP_SECRET` | Nao | Segredo do app na Meta — confere a assinatura do webhook |
+| `WHATSAPP_WABA_ID` | Nao | ID da conta do WhatsApp Business — usado para conferir os modelos aprovados em `/api/me/whatsapp-status` |
 | `ADMIN_SECRET` | Nao | Senha-mestra da pagina `/admin/reset` (reset de senha super-admin) |
 | `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Nao | WhatsApp do suporte (55+DDD+numero) para o fluxo "Esqueci minha senha" |
 

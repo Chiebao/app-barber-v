@@ -105,6 +105,12 @@ model Barber {
   isOwnerProfile   Boolean  @default(false) // true = perfil do dono para gerenciar própria agenda
   pushToken        String? // Expo Push Token para notificacoes
   commission       Float    @default(0) // % comissão sobre serviços (ex: 10 = 10%)
+  /// Quando o resumo da agenda foi mandado para o WhatsApp dele.
+  ///
+  /// O cron da Vercel roda 1x/dia, mas o agendador externo bate mais vezes —
+  /// sem esta marca o barbeiro recebe a mesma lista quatro vezes de manha, e
+  /// cada copia e uma mensagem paga.
+  agendaEnviadaEm  DateTime?
   createdAt        DateTime @default(now())
 
   shop           Shop                   @relation(fields: [shopId], references: [id], onDelete: Cascade)

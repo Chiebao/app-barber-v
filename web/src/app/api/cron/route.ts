@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { MODELOS, preverTexto, type NomeModelo } from "@/app/lib/whatsapp-templates";
 import { ptBR } from "date-fns/locale";
+import { enviarAgendaDoDia } from "@/app/lib/agenda-do-dia";
 
 /**
  * Lembrete automático ao cliente.
@@ -283,6 +284,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // A agenda do dia no WhatsApp do barbeiro: a cópia que sobrevive à
+    // queda, porque mora fora do nosso sistema. Depois dos lembretes
+    // porque o cliente esperando o corte vem antes do conforto do dono.
+    let agendaDoDia;
+    try {
+      agendaDoDia = await enviarAgendaDoDia(now);
+    } catch (err) {
+      console.error("[CRON] Falha ao mandar a agenda do dia:", err);
+    }
+
     // Tentativa de login que já venceu não serve pra nada, e a chave é o
     // telefone: sem varrer, a tabela guarda uma linha por número que já
     // errou a senha uma vez, pra sempre. Roda depois dos lembretes porque
@@ -310,6 +321,7 @@ export async function GET(req: NextRequest) {
       failedSend,
       noChannel,
       limpas,
+      agendaDoDia,
     });
   } catch (error) {
     console.error(error);

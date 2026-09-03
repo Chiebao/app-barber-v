@@ -27,7 +27,8 @@ export type NomeModelo =
   | "vaga_disponivel"
   | "codigo_recuperacao"
   | "cobranca_assinatura"
-  | "agendamento_marcado";
+  | "agendamento_marcado"
+  | "agenda_do_dia";
 
 export interface Modelo {
   /** Nome exato cadastrado no WhatsApp Manager. */
@@ -125,6 +126,31 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "📍 Painel, em Configurações\n\n" +
       "A cobrança já está pronta, é só abrir e pagar.",
     exemplo: ["Eduardo", "3 dias", "R$ 79,90"],
+  },
+
+  // A agenda do dia no WhatsApp do BARBEIRO, de manhã.
+  //
+  // Não é conveniência: é a cópia que sobrevive quando a internet da
+  // barbearia cai (o que acontece muito mais que a Vercel cair). Se às 10h
+  // nada carrega, a lista está no WhatsApp dele.
+  //
+  // A lista vai em UMA variável separada por " · " porque a Meta REJEITA
+  // parâmetro com quebra de linha. Por isso ela não pode ser uma lista de
+  // verdade, por mais que ficasse melhor.
+  agenda_do_dia: {
+    nome: "agenda_do_dia",
+    idioma: "pt_BR",
+    variaveis: 3,
+    textoAprovado:
+      "Bom dia, {{1}}! ☀️\n\n" +
+      "Sua agenda de hoje na {{2}}:\n\n" +
+      "📋 {{3}}\n\n" +
+      "Guarde esta mensagem: se ficar sem internet, sua agenda está aqui.",
+    exemplo: [
+      "Eduardo",
+      "Barbearia do Zé",
+      "09:00 João (Corte) · 10:15 Pedro (Corte + Barba) · 14:00 Lucas (Corte)",
+    ],
   },
 
   // Para o agendamento que o BARBEIRO cria no balcão e que acontece antes
