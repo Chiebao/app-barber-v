@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { num, sumMoney } from "@/app/lib/money";
+import { num, sumMoney, multiplyMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
 import { bloqueiosDoDia, invadeBloqueio } from "@/app/lib/bloqueios";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
@@ -306,6 +306,10 @@ export async function GET(req: NextRequest) {
         services: { include: { service: true } },
         barber: { select: { name: true } },
         rating: true,
+        // Sem isto o histórico do cliente discorda do que ele pagou: o
+        // barbeiro lança a pomada, o cliente paga 115 e a tela dele
+        // continua dizendo 45.
+        comandaItems: { include: { product: { select: { name: true } } } },
       },
       orderBy: { date: "desc" },
     });
@@ -345,6 +349,19 @@ export async function GET(req: NextRequest) {
         barberId: apt.barberId,
         barberName: apt.barber.name,
         services: apt.services.map((as) => ({ serviceId: as.serviceId, name: as.service.name, price: num(as.service.price) })),
+        produtos: apt.comandaItems.map((ci) => ({
+          name: ci.product.name,
+          quantity: ci.quantity,
+          price: num(ci.price),
+        })),
+        produtosTotal: sumMoney(apt.comandaItems.map((ci) => multiplyMoney(ci.price, ci.quantity))),
+        // O que ele realmente pagou. `totalPrice` é só serviço, e usar
+        // aquele número no recibo do cliente seria mostrar menos do que
+        // saiu do bolso dele.
+        totalGeral: sumMoney([
+          num(apt.totalPrice),
+          ...apt.comandaItems.map((ci) => multiplyMoney(ci.price, ci.quantity)),
+        ]),
       })) : [],
       pendingRating,
       loyaltyCount,

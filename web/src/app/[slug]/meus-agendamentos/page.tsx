@@ -38,6 +38,11 @@ interface AppointmentItem {
   startTime: string;
   endTime: string;
   totalPrice: number;
+  /** Produtos lançados pelo barbeiro durante o atendimento. */
+  produtos?: { name: string; quantity: number; price: number }[];
+  produtosTotal?: number;
+  /** Serviço + produtos: o que de fato saiu do bolso do cliente. */
+  totalGeral?: number;
   status: string;
   services: ServiceItem[];
   barberName: string;
@@ -199,7 +204,7 @@ export default function MeusAgendamentos() {
 
   const totalGasto = appointments
     .filter((a) => a.status !== "cancelled")
-    .reduce((sum, a) => sum + a.totalPrice, 0);
+    .reduce((sum, a) => sum + (a.totalGeral ?? a.totalPrice), 0);
 
   const generatePdf = async () => {
     setGeneratingPdf(true);
@@ -563,6 +568,9 @@ export default function MeusAgendamentos() {
                   </Text>
                   <Text style={[styles.colServico, styles.cellText]}>
                     {apt.services.map((s) => s.name).join(", ")}
+                    {(apt.produtos?.length ?? 0) > 0
+                      ? " + " + apt.produtos!.map((p) => `${p.quantity > 1 ? `${p.quantity}x ` : ""}${p.name}`).join(", ")
+                      : ""}
                   </Text>
                   <Text style={[styles.colBarbeiro, styles.cellGray]}>
                     {apt.barberName || "—"}
@@ -575,7 +583,7 @@ export default function MeusAgendamentos() {
                       color: apt.status === "cancelled" ? GRAY : DARK,
                     },
                   ]}>
-                    R$ {apt.totalPrice.toFixed(2)}
+                    R$ {(apt.totalGeral ?? apt.totalPrice).toFixed(2)}
                   </Text>
                   <Text style={[
                     styles.colStatus,
@@ -762,9 +770,23 @@ export default function MeusAgendamentos() {
                           {statusLabel(apt.status)}
                         </span>
                       </div>
-                      <div className="flex justify-between items-end">
-                        <p className="text-sm text-gray-400">{apt.services.map((s) => s.name).join(", ")}</p>
-                        <p className="font-semibold text-brand-400">R$ {apt.totalPrice.toFixed(2)}</p>
+                      <div className="flex justify-between items-end gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm text-gray-400">{apt.services.map((s) => s.name).join(", ")}</p>
+                          {/* O produto que o barbeiro lançou precisa aparecer aqui:
+                              sem isto o cliente paga 115 e lê 45 no próprio histórico. */}
+                          {(apt.produtos?.length ?? 0) > 0 && (
+                            <p className="text-xs text-gray-500">
+                              +{" "}
+                              {apt.produtos!
+                                .map((p) => (p.quantity > 1 ? p.quantity + "x " : "") + p.name)
+                                .join(", ")}
+                            </p>
+                          )}
+                        </div>
+                        <p className="font-semibold text-brand-400 shrink-0">
+                          R$ {(apt.totalGeral ?? apt.totalPrice).toFixed(2)}
+                        </p>
                       </div>
 
                       {/* Edição inline */}
