@@ -139,6 +139,20 @@ export async function GET(req: NextRequest) {
           : (corpo as { error?: { message?: string } })?.error?.message;
       }
 
+      // ?assinaturas=WABA_ID — quais campos de webhook a Meta esta
+      // realmente entregando. Sem isto, webhook mudo vira adivinhacao entre
+      // "nao assinou o campo" e "nao chegou".
+      const wabaAssin = new URL(req.url).searchParams.get("assinaturas");
+      let assinaturas: unknown = null;
+      if (wabaAssin) {
+        const r = await fetch(
+          ,
+          { headers: h },
+        );
+        const corpo = await r.json().catch(() => ({}));
+        assinaturas = r.ok ? corpo : (corpo as { error?: { message?: string } })?.error?.message;
+      }
+
       // ?send=55DDDNUMERO — envia uma mensagem de teste para validar o canal.
       // Protegido pelo CRON_SECRET, igual ao resto da rota.
       //
@@ -186,6 +200,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         envioTeste,
+        assinaturas,
         templates,
         tokenValido: meRes.ok,
         tokenPertenceA: meRes.ok ? me : me?.error?.message,
