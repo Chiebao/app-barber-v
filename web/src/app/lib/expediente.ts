@@ -55,7 +55,22 @@ export function expedienteDe(
   linhas: LinhaExpediente[],
   dataISO: string,
 ): ExpedienteDoDia {
-  const dia = diaDaSemana(dataISO);
+  return expedientePorDia(loja, linhas, diaDaSemana(dataISO));
+}
+
+/**
+ * O mesmo, quando o que se tem é o DIA DA SEMANA e não uma data.
+ *
+ * O corte fixo é uma regra semanal — ele não tem data, tem "toda quarta".
+ * Sem esta porta, a rota do corte fixo caía no horário único da loja e
+ * recusava as 09:00 de quem abre 09:00 na quarta, dizendo que o expediente
+ * era 10:00–17:00.
+ */
+export function expedientePorDia(
+  loja: LojaBase,
+  linhas: LinhaExpediente[],
+  dia: number,
+): ExpedienteDoDia {
   const linha = linhas.find((l) => l.dia === dia);
 
   // Sem linha configurada: vale o horário único da loja, como sempre valeu.

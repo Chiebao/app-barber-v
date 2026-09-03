@@ -406,6 +406,14 @@ app_barber/
 - Almoco pela metade (so um lado) e IGNORADO: intervalo mal formado fecharia
   a agenda em silencio
 - Fechar um dia guarda os horarios; reabrir nao faz digitar de novo
+- O corte fixo NAO tem data, tem "toda quarta" — resolve por
+  `expedientePorDia`, nao por `expedienteDe`. Era o unico caminho que ainda
+  perguntava a hora a LOJA: quem abria 09:00 na quarta e 10:00 no resto
+  levava "nao cabe no expediente (10:00-17:00)" marcando as 09:00
+- O almoco tambem vale para o corte fixo, e por INTERVALO: o corte que
+  atravessa a parada invade tanto quanto o que comeca dentro dela
+- `shop.workDays` E sincronizado pelo PUT do expediente, entao o dia da
+  semana ja estava certo — o que ninguem atualizava era a HORA
 - O bloqueio recorrente de almoco do dono foi CONVERTIDO em almoco do dia
   (script em scratchpad, regra desligada e nao apagada)
 

@@ -6,6 +6,8 @@ import { exigirEscrita } from "@/app/lib/exigir-assinatura";
 import { agoraNaBarbearia } from "@/app/lib/time-slots";
 import { dataDoDia, materializarRecorrentes } from "@/app/lib/recurrence";
 import { barbeiroDoToken } from "@/app/lib/barbeiro-do-token";
+import { expedientePorDia, linhasDoExpediente } from "@/app/lib/expediente";
+import { invadeBloqueio, emMinutos, emTexto } from "@/app/lib/bloqueios";
 
 /**
  * Cortes fixos — o cliente que vem toda semana no mesmo horário.
@@ -94,11 +96,20 @@ export async function POST(req: NextRequest) {
 
     const shop = await prisma.shop.findUnique({
       where: { id: payload.shopId },
-      select: { workDays: true, openTime: true, closeTime: true },
+      select: { id: true, workDays: true, openTime: true, closeTime: true },
     });
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
 
-    if (!shop.workDays.includes(data.weekday)) {
+    // O expediente daquele dia da semana, não o horário único da loja: quem
+    // abre 09:00 na quarta e 10:00 no resto tinha o corte das 09:00 recusado
+    // com a mensagem do horário geral.
+    const expediente = expedientePorDia(
+      shop,
+      await linhasDoExpediente(prisma, shop.id),
+      data.weekday,
+    );
+
+    if (!expediente.aberto) {
       return NextResponse.json(
         { error: "A barbearia não abre nesse dia da semana" },
         { status: 400 },
@@ -117,14 +128,21 @@ export async function POST(req: NextRequest) {
     const totalPrice = servicos.reduce((s, x) => s + Number(x.price), 0);
 
     // O corte precisa caber antes de fechar — a mesma conta da agenda normal.
-    const minutos = (hhmm: string) => {
-      const [h, m] = hhmm.split(":").map(Number);
-      return (h || 0) * 60 + (m || 0);
-    };
-    if (minutos(data.startTime) < minutos(shop.openTime)
-      || minutos(data.startTime) + totalDuration > minutos(shop.closeTime)) {
+    const fimDoCorte = emMinutos(data.startTime) + totalDuration;
+    if (emMinutos(data.startTime) < emMinutos(expediente.abre)
+      || fimDoCorte > emMinutos(expediente.fecha)) {
       return NextResponse.json(
-        { error: `O corte não cabe no expediente (${shop.openTime}–${shop.closeTime})` },
+        { error: `O corte não cabe no expediente (${expediente.abre}–${expediente.fecha})` },
+        { status: 400 },
+      );
+    }
+
+    // Almoço é intervalo ocupado, igual a bloqueio: o corte que ATRAVESSA a
+    // parada também invade, não só o que começa dentro dela.
+    if (invadeBloqueio(data.startTime, emTexto(fimDoCorte), expediente.pausas)) {
+      const p = expediente.pausas[0];
+      return NextResponse.json(
+        { error: `O corte cai no intervalo do dia (${p.startTime}–${p.endTime})` },
         { status: 400 },
       );
     }
