@@ -77,6 +77,15 @@ export async function enviarModelo(
   telefone: string,
   nome: NomeModelo,
   variaveis: string[],
+  /**
+   * Sufixo da URL do botao, para os modelos com `botaoComLink`.
+   *
+   * Fica FORA de `variaveis` de proposito: `variaveis` sao os {{n}} do
+   * corpo e vao inteiras para o componente `body`. Enfiar o link ali
+   * mandaria um parametro a mais para um texto que nao tem onde po-lo, e
+   * a Meta recusa o envio.
+   */
+  valorDoBotao?: string,
 ): Promise<boolean> {
   const token = envClean("WHATSAPP_API_TOKEN");
   const phoneId = envClean("WHATSAPP_PHONE_ID");
@@ -106,6 +115,22 @@ export async function enviarModelo(
       sub_type: "url",
       index: "0",
       parameters: [{ type: "text", text: variaveis[0] }],
+    });
+  }
+
+  // Botao com variavel propria (o link da barbearia). Sem o valor a Meta
+  // recusa por parametro faltando, entao barrar aqui poupa a viagem e
+  // deixa o nome do modelo no log.
+  if (modelo.botaoComLink) {
+    if (!valorDoBotao) {
+      console.error("[WhatsApp] modelo", nome, "precisa do valor do botao e nao recebeu");
+      return false;
+    }
+    componentes.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [{ type: "text", text: valorDoBotao }],
     });
   }
 

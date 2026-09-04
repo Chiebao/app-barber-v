@@ -389,6 +389,10 @@ app_barber/
   para o horario do colega — e chegava esperando ele
 - `take: 3` sem `orderBy` pegava tres quaisquer: quem entrou hoje passava na
   frente de quem esperava desde segunda. Fila e por ordem de chegada
+- O link da barbearia vai num BOTAO, nao no texto: a Meta recusa modelo cujo
+  corpo TERMINA em variavel, e link no meio da frase e pior de tocar no
+  celular. O valor do botao fica FORA de `variaveis` — essas vao inteiras
+  para o componente `body`, e uma a mais faz a Meta recusar o envio
 - Avisar no cancelamento PELO BARBEIRO continua manual (`wa.me` no painel),
   de proposito — e o canal confiavel, igual ao botao "Lembrar"
 

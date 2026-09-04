@@ -56,6 +56,16 @@ export interface Modelo {
    * aconteceu na primeira tentativa.
    */
   botaoComCodigo?: true;
+
+  /**
+   * O modelo tem botao de URL dinamica com variavel PROPRIA — o valor nao
+   * sai do corpo, vem de fora no envio.
+   *
+   * E o caso do link da barbearia: mandar a URL dentro do texto nao dava,
+   * porque a Meta recusa modelo cujo corpo TERMINA em variavel, e link no
+   * meio da frase fica pior de tocar no celular que um botao.
+   */
+  botaoComLink?: true;
 }
 
 export const MODELOS: Record<NomeModelo, Modelo> = {
@@ -187,8 +197,9 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
     textoAprovado:
       "Olá, {{1}}! 📋\n\n" +
       "Sobre sua solicitação de lista de espera na {{2}}: não abriu horário para {{3}}.\n\n" +
-      "Sua solicitação foi encerrada. Para escolher outro dia, é só acessar o link de agendamento.",
+      "Sua solicitação foi encerrada. Para escolher outro dia, é só tocar no botão abaixo.",
     exemplo: ["Maria", "Barbearia do Zé", "4 de setembro"],
+    botaoComLink: true,
   },
 };
 

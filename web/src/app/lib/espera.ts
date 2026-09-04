@@ -62,7 +62,7 @@ export async function limparEsperaVencida(agora = new Date()): Promise<Resultado
       clientName: true,
       clientPhone: true,
       preferredDate: true,
-      shop: { select: { name: true } },
+      shop: { select: { name: true, slug: true } },
     },
   });
 
@@ -77,11 +77,15 @@ export async function limparEsperaVencida(agora = new Date()): Promise<Resultado
       : "o período que você pediu";
 
     try {
-      const ok = await enviarModelo(e.clientPhone, "espera_sem_vaga", [
-        e.clientName.split(" ")[0],
-        e.shop.name,
-        quando,
-      ]);
+      // O botao leva o cliente direto para a pagina da barbearia. Sem o
+      // link, "escolha outro dia" e um pedido sem endereco — ele teria de
+      // achar a mensagem antiga ou perguntar para alguem.
+      const ok = await enviarModelo(
+        e.clientPhone,
+        "espera_sem_vaga",
+        [e.clientName.split(" ")[0], e.shop.name, quando],
+        e.shop.slug,
+      );
       if (ok) r.avisados++; else r.falhas++;
     } catch (err) {
       r.falhas++;
