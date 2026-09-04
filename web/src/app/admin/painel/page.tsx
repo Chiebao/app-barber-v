@@ -201,6 +201,11 @@ export default function PainelPage() {
   const [loyalties, setLoyalties] = useState<{ clientName: string; clientPhone: string; count: number; progress: number; rewardsEarned: number }[]>([]);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
 
+  // O mesmo "hoje" que o servidor usa para expirar a fila: o do fuso da
+  // barbearia, não o do relógio de quem abriu o painel.
+  const hojeISO = () =>
+    new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date());
+
   // ── Waitlist state ──
   const [waitlist, setWaitlist] = useState<{ id: string; clientName: string; clientPhone: string; serviceIds: string[]; preferredDate: string | null; createdAt: string; barber: { name: string } | null }[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
@@ -1622,11 +1627,20 @@ export default function PainelPage() {
     // ─── LISTA ESPERA ───
     if (subView === "espera") return (
       <div className="space-y-4">{backBtn}
-        <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4"><p className="text-sm text-brand-400">🔔 Clientes aguardando vaga.</p></div>
+        <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4">
+          <p className="text-sm text-brand-400">🔔 Clientes aguardando vaga.</p>
+          {/* O barbeiro não vai limpar a fila à mão, e não limpava: uma
+              cliente ficou uma semana esperando um dia que já tinha
+              passado. Agora sai sozinho — mas ele precisa SABER disso,
+              senão continua achando que a lista é problema dele. */}
+          <p className="text-xs text-gray-400 mt-1">
+            Sai da lista sozinho quando o dia passa, e o cliente é avisado.
+          </p>
+        </div>
         {waitlistLoading ? <Spinner /> : waitlist.length === 0 ? <div className="text-center py-12 text-gray-500"><p className="text-4xl mb-3">🕐</p><p>Nenhum cliente na lista</p></div> : (
           <div className="space-y-3">{waitlist.map(entry => (
             <div key={entry.id} className="rounded-xl border border-gray-700 bg-dark-800 p-4 flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0"><p className="font-semibold text-white">{entry.clientName}</p><p className="text-sm text-gray-400">{entry.clientPhone}</p>{entry.preferredDate && <p className="text-xs text-brand-400 mt-1">📅 Prefere: {new Date(entry.preferredDate + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}</p>}</div>
+              <div className="flex-1 min-w-0"><p className="font-semibold text-white">{entry.clientName}</p><p className="text-sm text-gray-400">{entry.clientPhone}</p>{entry.preferredDate && <p className="text-xs text-brand-400 mt-1">📅 Prefere: {new Date(entry.preferredDate + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}{entry.preferredDate === hojeISO() && <span className="text-amber-400"> · último dia</span>}</p>}</div>
               <button onClick={() => removeFromWaitlist(entry.id)} disabled={removingWaitId === entry.id} className="text-xs text-red-400 border border-red-500/30 rounded-lg px-3 py-1.5 hover:bg-red-500/10 disabled:opacity-50">{removingWaitId === entry.id ? "..." : "Remover"}</button>
             </div>
           ))}</div>

@@ -367,6 +367,31 @@ app_barber/
 - Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
   a Meta so entrega modelo depois disso, e modelo nao serve para conversa
 
+### Lista de espera
+- A fila NAO vencia: cliente entrou dia 28 pedindo vaga PARA o dia 28, o
+  dia passou e uma semana depois ela ainda estava la. O barbeiro e que
+  teria de limpar a mao — e ninguem faz isso, entao a lista vira lixo
+- Pior que a lista suja: o cliente pediu para ser avisado e nunca soube de
+  nada. Do lado dele, a barbearia ignorou o pedido
+- A borda e o dia de HOJE (`lt`, nao `lte`): quem pediu vaga para hoje
+  ainda pode conseguir as 17h, e apagar de manha tiraria da fila quem
+  ainda tinha chance
+- Sem data preferida nao ha dia para vencer, entao vale a IDADE (30 dias)
+- O aviso e tentado antes, mas a remocao acontece **de qualquer jeito**:
+  segurar a linha ate a mensagem sair recriaria o problema — modelo nao
+  aprovado ou numero invalido, e a fila cresce para sempre esperando um
+  envio que nunca vem
+- O dia e o da BARBEARIA (`agoraNaBarbearia`), nao o do servidor: as 21h de
+  Brasilia o servidor em UTC ja virou o dia, e a espera de hoje seria
+  apagada durante o expediente
+- Quem pediu um barbeiro especifico nao era filtrado: `barberId` era gravado
+  e IGNORADO na hora de avisar, entao quem esperava o Eduardo era chamado
+  para o horario do colega — e chegava esperando ele
+- `take: 3` sem `orderBy` pegava tres quaisquer: quem entrou hoje passava na
+  frente de quem esperava desde segunda. Fila e por ordem de chegada
+- Avisar no cancelamento PELO BARBEIRO continua manual (`wa.me` no painel),
+  de proposito — e o canal confiavel, igual ao botao "Lembrar"
+
 ### Quando a internet cai
 - O inimigo NAO e a Vercel cair — e a internet DA BARBEARIA cair, que
   acontece toda semana. Provedor tem 99,9%; wi-fi de barbearia nao tem
@@ -614,6 +639,7 @@ app_barber/
 | 58 | Agenda do dia sobrevive sem internet (copia no aparelho + aviso) | ✅ | — | — |
 | 59 | Resumo da agenda no WhatsApp do barbeiro, de manha | — | — | ✅ |
 | 60 | Diagnostico do canal WhatsApp pelo login do dono | — | — | ✅ |
+| 61 | Lista de espera expira sozinha e avisa o cliente | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

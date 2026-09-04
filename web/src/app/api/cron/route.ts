@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { limparEsperaVencida } from "@/app/lib/espera";
 import { appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
@@ -294,6 +295,17 @@ export async function GET(req: NextRequest) {
       console.error("[CRON] Falha ao mandar a agenda do dia:", err);
     }
 
+    // Fila de espera que já não pode dar certo: o dia passou e não abriu
+    // vaga. Roda todo dia porque a lista some da vista do barbeiro e ele
+    // não vai limpar à mão — foi assim que uma cliente ficou uma semana
+    // esperando um dia que já tinha passado.
+    let espera = { removidos: 0, avisados: 0, falhas: 0 };
+    try {
+      espera = await limparEsperaVencida(now);
+    } catch (err) {
+      console.error("[CRON] Falha ao limpar lista de espera:", err);
+    }
+
     // Tentativa de login que já venceu não serve pra nada, e a chave é o
     // telefone: sem varrer, a tabela guarda uma linha por número que já
     // errou a senha uma vez, pra sempre. Roda depois dos lembretes porque
@@ -320,6 +332,7 @@ export async function GET(req: NextRequest) {
       sent,
       failedSend,
       noChannel,
+      espera,
       limpas,
       agendaDoDia,
     });

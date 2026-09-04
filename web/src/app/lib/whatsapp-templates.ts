@@ -28,7 +28,8 @@ export type NomeModelo =
   | "codigo_recuperacao"
   | "cobranca_assinatura"
   | "agendamento_marcado"
-  | "agenda_do_dia";
+  | "agenda_do_dia"
+  | "espera_sem_vaga";
 
 export interface Modelo {
   /** Nome exato cadastrado no WhatsApp Manager. */
@@ -168,6 +169,26 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "🕐 {{4}}\n\n" +
       "Se não puder vir, é só responder por aqui.",
     exemplo: ["João", "Barbearia do Zé", "12 de setembro", "14:30"],
+  },
+
+  // Para quem ficou na lista de espera e o dia passou sem abrir vaga.
+  //
+  // Sem isto o cliente some sem explicação: ele pediu para ser avisado, o
+  // dia chegou, não abriu nada, e ninguém falou com ele. Do lado dele, a
+  // barbearia ignorou o pedido.
+  //
+  // Enquadrado como resposta a uma solicitação que ELE fez — mesmo
+  // enquadramento que manteve `vaga_disponivel` em Utilidade. Sem urgência
+  // e sem convite, que é o que o classificador da Meta lê como Marketing.
+  espera_sem_vaga: {
+    nome: "espera_sem_vaga",
+    idioma: "pt_BR",
+    variaveis: 3,
+    textoAprovado:
+      "Olá, {{1}}! 📋\n\n" +
+      "Sobre sua solicitação de lista de espera na {{2}}: não abriu horário para {{3}}.\n\n" +
+      "Sua solicitação foi encerrada. Para escolher outro dia, é só acessar o link de agendamento.",
+    exemplo: ["Maria", "Barbearia do Zé", "4 de setembro"],
   },
 };
 

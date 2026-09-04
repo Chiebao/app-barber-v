@@ -93,11 +93,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const waitlistEntries = await prisma.waitlist.findMany({
       where: {
         shopId: appointment.shopId,
-        OR: [
-          { preferredDate: cancelledDate },
-          { preferredDate: null },
+        // Dois filtros independentes, cada um com o seu OR — em `AND`
+        // porque duas chaves `OR` no mesmo nível se sobrescrevem e o
+        // segundo filtro sumiria em silêncio.
+        AND: [
+          { OR: [{ preferredDate: cancelledDate }, { preferredDate: null }] },
+          // Quem pediu um barbeiro específico não quer a vaga de outro. O
+          // campo era gravado e ignorado aqui, então quem esperava o Eduardo
+          // era chamado para o horário do colega — e chegava esperando ele.
+          // Sem preferência (null) serve para qualquer barbeiro.
+          { OR: [{ barberId: appointment.barberId }, { barberId: null }] },
         ],
       },
+      // Fila é por ordem de chegada. Sem `orderBy`, o `take: 3` pegava três
+      // quaisquer: quem entrou hoje passava na frente de quem esperava
+      // desde segunda, e o cliente não tinha como saber.
+      orderBy: { createdAt: "asc" },
       take: 3,
     });
 
