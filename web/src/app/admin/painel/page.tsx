@@ -151,6 +151,9 @@ export default function PainelPage() {
   const [baningClient, setBaningClient] = useState(false);
   const [novoBanido, setNovoBanido] = useState({ phone: "", reason: "" });
   const [showQR, setShowQR] = useState(false);
+  // Salva sozinho ao escolher: é um seletor de três opções, e obrigar a
+  // apertar "salvar" depois só cria o caso de escolher e não salvar.
+  const [salvandoJanela, setSalvandoJanela] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
@@ -239,7 +242,7 @@ export default function PainelPage() {
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
   // ── Config state ──
-  const [shopSettings, setShopSettings] = useState<{ name: string; openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string; phone: string; address: string; neighborhood: string; city: string; state: string; zipCode: string; slotInterval: number } | null>(null);
+  const [shopSettings, setShopSettings] = useState<{ name: string; openTime: string; closeTime: string; workDays: number[]; pixKey: string; logoUrl: string; bookingMode: string; phone: string; address: string; neighborhood: string; city: string; state: string; zipCode: string; slotInterval: number; diasAbertos: number } | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -286,6 +289,7 @@ export default function PainelPage() {
           state: data.shop.state || "",
           zipCode: data.shop.zipCode || "",
           slotInterval: data.shop.slotInterval || 30,
+          diasAbertos: data.shop.diasAbertos || 30,
           openTime: data.shop.openTime || "08:00",
           closeTime: data.shop.closeTime || "20:00",
           workDays: data.shop.workDays || [1,2,3,4,5,6],
@@ -1109,6 +1113,27 @@ export default function PainelPage() {
    * (desktop, navegador antigo), cai no WhatsApp Web, que é para onde ele
    * ia de qualquer jeito.
    */
+  const trocarJanelaDaAgenda = async (dias: number) => {
+    if (!shopSettings) return;
+    const anterior = shopSettings.diasAbertos;
+    // Otimista: o seletor mexe na hora e volta atrás se o servidor recusar.
+    setShopSettings({ ...shopSettings, diasAbertos: dias });
+    setSalvandoJanela(true);
+    try {
+      const res = await fetch("/api/me/shop", {
+        method: "PATCH", headers: authHeaders(),
+        body: JSON.stringify({ diasAbertos: dias }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`Agenda aberta por ${dias} dias`);
+    } catch {
+      setShopSettings(s => (s ? { ...s, diasAbertos: anterior } : s));
+      toast.error("Não deu para salvar. Tente de novo.");
+    } finally {
+      setSalvandoJanela(false);
+    }
+  };
+
   const compartilharLink = async () => {
     const texto = `Agende seu horário na ${user?.shopName || "barbearia"} pelo link:`;
     const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
@@ -1684,6 +1709,32 @@ export default function PainelPage() {
             <div className="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-brand-400 truncate">{bookingLink}</div>
             <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg border border-gray-700 text-gray-300 font-semibold px-3 py-2 text-sm hover:text-white transition whitespace-nowrap">{linkCopied ? "✓" : "Copiar"}</button>
           </div>
+
+          {/* O barbeiro pediu aqui, colado no link: é a tela que ele abre
+              quando vai mandar o link para alguém, e é nessa hora que ele
+              pensa em até quando quer receber marcação.
+
+              Só o dono: a janela é da BARBEARIA, e a rota recusa barbeiro
+              contratado. Mostrar para ele seria oferecer um botão que dá
+              erro. */}
+          {user?.role === "owner" && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-dark-900 px-3 py-2">
+            <div>
+              <p className="text-sm text-gray-300">Agenda aberta até:</p>
+              <p className="text-[11px] text-gray-500">Vale só para o link. No painel você marca para qualquer data.</p>
+            </div>
+            <select
+              value={shopSettings?.diasAbertos ?? 30}
+              disabled={!shopSettings || salvandoJanela}
+              onChange={(e) => trocarJanelaDaAgenda(parseInt(e.target.value))}
+              className="rounded-lg border border-gray-700 bg-dark-800 text-white text-sm px-3 py-2 disabled:opacity-50"
+            >
+              <option value={7}>7 dias</option>
+              <option value={15}>15 dias</option>
+              <option value={30}>30 dias</option>
+            </select>
+          </div>
+          )}
 
           <button
             onClick={compartilharLink}

@@ -70,6 +70,9 @@ interface Shop {
   closeTime: string;
   workDays: number[];
   avgServiceTime: number;
+  /** Até quantos dias para frente o cliente enxerga. Opcional: servidor
+   *  antigo não devolve o campo, e aí vale o 30 de sempre. */
+  diasAbertos?: number;
   pixKey: string | null;
   logoUrl: string | null;
   phone: string | null;
@@ -323,7 +326,12 @@ export default function BarberPage() {
     if (!shop) return [];
     const dates: string[] = [];
     const today = new Date();
-    for (let i = 0; i < 30; i++) {
+    // Até onde o dono abriu a agenda. O `?? 30` cobre a resposta de uma
+    // versão anterior do servidor, e 30 era o número fixo que estava aqui.
+    const janela = shop.diasAbertos ?? 30;
+    // `<=` porque a janela conta HOJE inclusive: com 7, na segunda o
+    // último dia é a segunda seguinte, que é como o barbeiro descreve.
+    for (let i = 0; i <= janela; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
       if (shop.workDays.includes(d.getDay())) {

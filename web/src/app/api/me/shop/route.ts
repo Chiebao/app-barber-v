@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { ehOpcaoValida } from "@/app/lib/janela-agenda";
 import { verifyToken } from "@/app/lib/auth";
 
 // GET /api/me/shop — retorna dados completos da barbearia
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
         workDays: true,
         avgServiceTime: true,
         slotInterval: true,
+        diasAbertos: true,
         pixKey: true,
         logoUrl: true,
         phone: true,
@@ -52,7 +54,7 @@ export async function PATCH(req: NextRequest) {
     if (!payload || payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const {
-      name, openTime, closeTime, workDays, avgServiceTime, slotInterval, pixKey, logoUrl, colorTheme, bookingMode,
+      name, openTime, closeTime, workDays, avgServiceTime, slotInterval, diasAbertos, pixKey, logoUrl, colorTheme, bookingMode,
       phone, address, neighborhood, city, state, zipCode,
     } = await req.json();
 
@@ -78,6 +80,15 @@ export async function PATCH(req: NextRequest) {
     if (pixKey !== undefined) data.pixKey = pixKey || null;
     if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
     if (colorTheme !== undefined) data.colorTheme = colorTheme;
+    // Lista fechada: numero livre aqui viraria agenda aberta por 400 dias,
+    // ou por 0, sem ninguem perceber ate o cliente nao conseguir marcar.
+    if (diasAbertos !== undefined) {
+      const n = parseInt(diasAbertos);
+      if (!ehOpcaoValida(n)) {
+        return NextResponse.json({ error: "Escolha 7, 15 ou 30 dias" }, { status: 400 });
+      }
+      data.diasAbertos = n;
+    }
     if (bookingMode !== undefined && ["steps", "agent"].includes(bookingMode)) data.bookingMode = bookingMode;
 
     // Endereço e contato — texto livre, guardado limpo ou nulo
@@ -101,6 +112,7 @@ export async function PATCH(req: NextRequest) {
         workDays: true,
         avgServiceTime: true,
         slotInterval: true,
+        diasAbertos: true,
         pixKey: true,
         logoUrl: true,
         phone: true,

@@ -8,6 +8,7 @@ import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
 import { tokenDaBarbearia, criarCobrancaPix, cobrancaOk } from "@/app/lib/mercadopago";
 import { z } from "zod";
 import { situacaoDaLoja } from "@/app/lib/assinatura";
+import { dentroDaJanela, motivoForaDaJanela } from "@/app/lib/janela-agenda";
 
 const appointmentSchema = z.object({
   shopId: z.string(),
@@ -60,6 +61,13 @@ export async function POST(req: NextRequest) {
 
     if (!shop || !barber) return NextResponse.json({ error: "Barbearia ou profissional nao encontrado" }, { status: 404 });
     if (services.length === 0) return NextResponse.json({ error: "Servicos invalidos" }, { status: 400 });
+
+    // A trava de verdade da janela da agenda. A lista de datas na tela do
+    // cliente é conveniência; quem POSTA direto passaria por cima dela e
+    // marcaria para daqui a seis meses.
+    if (!dentroDaJanela(shop.diasAbertos, data.date)) {
+      return NextResponse.json({ error: motivoForaDaJanela(shop.diasAbertos) }, { status: 400 });
+    }
 
     const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
     const totalPrice = sumMoney(services.map((s) => s.price));

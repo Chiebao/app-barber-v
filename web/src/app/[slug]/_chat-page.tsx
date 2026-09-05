@@ -12,6 +12,8 @@ interface Barber { id: string; name: string; }
 interface ChatShop {
   id: string; name: string; openTime: string; closeTime: string;
   workDays: number[]; avgServiceTime: number; pixKey: string | null;
+  /** Mesma janela do modo steps — ver o comentário lá. */
+  diasAbertos?: number;
   barbers: Barber[]; services: Service[];
   avgRating?: number | null; ratingCount?: number;
 }
@@ -236,7 +238,10 @@ export default function BarberPageChat({
     if (!shop) return [];
     const dates: string[] = [];
     const today = new Date();
-    for (let i = 0; i < 30; i++) {
+    // Mesma janela do modo steps: os dois modos são a mesma barbearia, e
+    // divergir aqui daria agenda diferente conforme o modo escolhido.
+    const janela = shop.diasAbertos ?? 30;
+    for (let i = 0; i <= janela; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
       if (shop.workDays.includes(d.getDay())) dates.push(diaLocal(d));

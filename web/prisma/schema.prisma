@@ -44,6 +44,16 @@ model Shop {
   /// Barbearia que atende 1h por cliente nao quer oferecer 08:30 — quer
   /// 08:00, 09:00, 10:00. Antes disso o passo era fixo em 30 no codigo.
   slotInterval   Int       @default(30)
+
+  /// Quantos dias para frente o CLIENTE enxerga no link publico.
+  ///
+  /// Serve para o barbeiro que nao quer o mes inteiro aberto: agenda longe
+  /// demais enche de marcacao que ninguem lembra e vira falta. Nao vale
+  /// para o painel — o barbeiro marca no balcao para quando quiser.
+  ///
+  /// 30 e o padrao porque era o numero fixo que estava no codigo: assim
+  /// nenhuma barbearia existente muda de comportamento sozinha.
+  diasAbertos    Int       @default(30)
   pixKey         String? // chave pix manual (usada quando o Mercado Pago nao esta conectado)
   // Mercado Pago: quando conectado, o Pix vira automatico — o dinheiro cai
   // direto na conta da barbearia e o sistema confirma sozinho via webhook.

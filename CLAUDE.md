@@ -273,7 +273,7 @@ app_barber/
 | Tabela | Descricao | Campos principais |
 |--------|-----------|-------------------|
 | `Owner` | Dono da barbearia | id, name, phone (unique), passwordHash |
-| `Shop` | Barbearia | id, name, slug (unique), openTime, closeTime, workDays, avgServiceTime, pixKey, logoUrl, colorTheme, bookingMode, **phone, address, neighborhood, city, state, zipCode** (todos opcionais), mpAccessToken/mpRefreshToken/mpUserId/mpConnectedAt, ownerId (FK) |
+| `Shop` | Barbearia | id, name, slug (unique), openTime, closeTime, workDays, avgServiceTime, pixKey, logoUrl, colorTheme, bookingMode, **diasAbertos** (7/15/30, janela do link publico), **phone, address, neighborhood, city, state, zipCode** (todos opcionais), mpAccessToken/mpRefreshToken/mpUserId/mpConnectedAt, ownerId (FK) |
 | `Barber` | Barbeiros da barbearia | id, name, phone, **email, imageUrl**, passwordHash, role, commission, active, isOwnerProfile, pushToken, shopId (FK) |
 | `Service` | Servicos oferecidos | id, name, duration, price, category, imageUrl, active, shopId (FK) |
 | `Client` | Clientes (por telefone) | id, name, phone (unique), notes, noShowCount |
@@ -399,8 +399,29 @@ app_barber/
   (132000), refaz SEM — a ordem de quem muda primeiro deixa de importar.
   So vale para o botao de link, e so nesse erro: token morto (401) ou modelo
   pausado nao melhoram tentando de novo
+- Entrar na fila agora AVISA o barbeiro (push web + Expo). Antes ninguem
+  era avisado: o pedido so aparecia para quem abrisse a tela de espera de
+  proposito, e pedido que ninguem ve e pedido perdido
 - Avisar no cancelamento PELO BARBEIRO continua manual (`wa.me` no painel),
   de proposito — e o canal confiavel, igual ao botao "Lembrar"
+
+### Janela da agenda (ate onde o cliente enxerga)
+- `Shop.diasAbertos` (7, 15 ou 30) e SO do link publico. No painel o
+  barbeiro marca para quando quiser: ele esta com o cliente na frente
+- Padrao 30 porque era o numero FIXO que estava no codigo — assim nenhuma
+  barbearia existente muda de comportamento sozinha
+- Conta HOJE inclusive: com 7, na segunda o limite e a segunda seguinte,
+  que e como o barbeiro descreve ("travar por uma semana")
+- A lista de datas na tela e CONVENIENCIA. A trava esta em `/slots` e no
+  POST de `/api/appointments` — quem posta direto nunca viu lista nenhuma
+- O dia e o da BARBEARIA: as 21h de Brasilia o servidor em UTC ja virou o
+  dia, e o cliente perderia o ultimo dia durante o expediente
+- Lista fechada de opcoes: 0 fecharia a agenda e 400 abriria o ano inteiro,
+  os dois em silencio ate o cliente reclamar
+- O seletor fica colado no LINK, nao em Configuracoes: e a tela que o dono
+  abre quando vai mandar o link, e e nessa hora que ele pensa nisso
+- Os DOIS modos (steps e chat) leem o mesmo campo — divergir daria agenda
+  diferente conforme o modo escolhido
 
 ### Quando a internet cai
 - O inimigo NAO e a Vercel cair — e a internet DA BARBEARIA cair, que
@@ -650,6 +671,8 @@ app_barber/
 | 59 | Resumo da agenda no WhatsApp do barbeiro, de manha | — | — | ✅ |
 | 60 | Diagnostico do canal WhatsApp pelo login do dono | — | — | ✅ |
 | 61 | Lista de espera expira sozinha e avisa o cliente | ✅ | — | ✅ |
+| 62 | Barbeiro e avisado quando alguem entra na lista de espera | — | ✅ | ✅ |
+| 63 | Janela da agenda no link publico (7, 15 ou 30 dias) | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

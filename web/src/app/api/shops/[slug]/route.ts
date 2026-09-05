@@ -10,6 +10,9 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
       select: {
         id: true, name: true, slug: true,
         openTime: true, closeTime: true, workDays: true, avgServiceTime: true, slotInterval: true,
+        // O cliente monta a lista de dias com isto; a trava de verdade
+        // fica no servidor, em /slots e no POST de agendamento.
+        diasAbertos: true,
         pixKey: true, logoUrl: true, colorTheme: true, bookingMode: true,
         // Endereco e contato: publicos de proposito — e como o cliente
         // descobre onde fica a barbearia antes de fechar o agendamento.

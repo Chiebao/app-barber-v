@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { dentroDaJanela, motivoForaDaJanela } from "@/app/lib/janela-agenda";
 import { horariosLivres } from "@/app/lib/horarios-livres";
 
 /**
@@ -20,6 +21,13 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const shop = await prisma.shop.findUnique({ where: { slug: params.slug } });
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });
+
+    // Fora da janela que o dono abriu não existe horário nenhum. Vale
+    // barrar aqui e não só na lista de datas: quem chama a API direto
+    // nunca viu lista.
+    if (!dentroDaJanela(shop.diasAbertos, date)) {
+      return NextResponse.json({ slots: [], message: motivoForaDaJanela(shop.diasAbertos) });
+    }
 
     const { slots, motivo } = await horariosLivres(prisma, {
       shop,
