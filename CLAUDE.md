@@ -393,6 +393,12 @@ app_barber/
   corpo TERMINA em variavel, e link no meio da frase e pior de tocar no
   celular. O valor do botao fica FORA de `variaveis` — essas vao inteiras
   para o componente `body`, e uma a mais faz a Meta recusar o envio
+- Editar um modelo APROVADO na Meta manda ele para revisao de novo, e ate
+  sair o que esta cadastrado la pode nao ser o que o codigo espera. Por isso
+  `enviarModelo` tenta COM o botao e, se a Meta reclamar de parametro
+  (132000), refaz SEM — a ordem de quem muda primeiro deixa de importar.
+  So vale para o botao de link, e so nesse erro: token morto (401) ou modelo
+  pausado nao melhoram tentando de novo
 - Avisar no cancelamento PELO BARBEIRO continua manual (`wa.me` no painel),
   de proposito — e o canal confiavel, igual ao botao "Lembrar"
 

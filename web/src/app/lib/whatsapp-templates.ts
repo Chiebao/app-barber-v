@@ -95,8 +95,11 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "Sobre sua solicitação de lista de espera na {{2}}, abriu um horário:\n\n" +
       "📆 {{3}}\n" +
       "🕐 {{4}}\n\n" +
-      "Acesse seu link de agendamento para confirmar.",
+      "É só tocar no botão abaixo para confirmar.",
     exemplo: ["Maria", "Barbearia do Zé", "12 de setembro", "09:00"],
+    // Aviso de vaga sem link era o pior dos dois: o cliente tem pressa e
+    // teria de ir procurar a mensagem antiga para achar o endereço.
+    botaoComLink: true,
   },
 
   // Categoria Autenticacao: a Meta escreve o corpo, nao nos. So aceita UMA

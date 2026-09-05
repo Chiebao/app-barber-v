@@ -118,12 +118,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       // Modelo aprovado: quem está na lista de espera quase nunca escreveu
       // para o número nas últimas 24h, então texto livre não sairia.
       for (const entry of waitlistEntries) {
-        enviarModelo(entry.clientPhone, "vaga_disponivel", [
-          entry.clientName.split(" ")[0],
-          appointment.shop.name,
-          formattedDate,
-          appointment.startTime,
-        ]).catch(console.error);
+        // O último argumento é o sufixo da URL do botão, não uma variável
+        // do corpo: leva o cliente direto para a página da barbearia.
+        enviarModelo(
+          entry.clientPhone,
+          "vaga_disponivel",
+          [
+            entry.clientName.split(" ")[0],
+            appointment.shop.name,
+            formattedDate,
+            appointment.startTime,
+          ],
+          appointment.shop.slug,
+        ).catch(console.error);
       }
     }
 

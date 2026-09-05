@@ -104,11 +104,15 @@ export async function enviarModelo(
     return false;
   }
 
-  // O botão de copiar código carrega o próprio código na URL, então ele
-  // entra como um segundo componente com o mesmo valor do corpo.
-  const componentes: Record<string, unknown>[] = [
+  // O corpo sozinho, guardado à parte: é para ele que o envio volta se a
+  // Meta ainda não tiver o botão cadastrado.
+  const soCorpo: Record<string, unknown>[] = [
     { type: "body", parameters: variaveis.map((v) => ({ type: "text", text: v })) },
   ];
+
+  // O botão de copiar código carrega o próprio código na URL, então ele
+  // entra como um segundo componente com o mesmo valor do corpo.
+  const componentes: Record<string, unknown>[] = [...soCorpo];
   if (modelo.botaoComCodigo) {
     componentes.push({
       type: "button",
@@ -134,7 +138,7 @@ export async function enviarModelo(
     });
   }
 
-  try {
+  const tentar = async (comps: Record<string, unknown>[]) => {
     const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -145,14 +149,36 @@ export async function enviarModelo(
         template: {
           name: modelo.nome,
           language: { code: modelo.idioma },
-          components: componentes,
+          components: comps,
         },
       }),
     });
+    if (res.ok) return { ok: true, status: res.status, detalhe: "" };
+    return { ok: false, status: res.status, detalhe: await res.text().catch(() => "") };
+  };
 
-    if (!res.ok) {
-      const detalhe = await res.text().catch(() => "");
-      console.error("[WhatsApp] modelo", nome, "falhou:", res.status, detalhe.slice(0, 300));
+  try {
+    let r = await tentar(componentes);
+
+    // Editar um modelo APROVADO na Meta manda ele para revisão de novo, e
+    // enquanto ela não sai o que está cadastrado lá pode não ser o que
+    // este código espera. Sem esta volta, o aviso de vaga simplesmente
+    // não sai — justo enquanto a vaga está aberta e o cliente esperando.
+    //
+    // Só vale para o botão de link: é o único componente que a gente
+    // adiciona a um modelo que já existia sem ele. Depois da aprovação a
+    // primeira tentativa passa e esta nunca roda.
+    if (!r.ok && modelo.botaoComLink && pareceParametroDemais(r.detalhe)) {
+      const semBotao = await tentar(soCorpo);
+      if (semBotao.ok) {
+        console.warn("[WhatsApp] modelo", nome, "enviado SEM o botão: a Meta ainda não tem o botão cadastrado");
+        return true;
+      }
+      r = semBotao;
+    }
+
+    if (!r.ok) {
+      console.error("[WhatsApp] modelo", nome, "falhou:", r.status, r.detalhe.slice(0, 300));
       console.error("[WhatsApp] texto previsto:", previsto);
       return false;
     }
@@ -161,4 +187,15 @@ export async function enviarModelo(
     console.error("[WhatsApp] erro ao enviar modelo", nome, err);
     return false;
   }
+}
+
+/**
+ * A Meta reclamou de parâmetro a mais, e não de outra coisa.
+ *
+ * Restringir a isto importa: token morto (401) ou modelo pausado não
+ * melhoram tentando de novo, e repetir só gastaria a segunda chamada.
+ */
+function pareceParametroDemais(detalhe: string): boolean {
+  const t = detalhe.toLowerCase();
+  return t.includes("132000") || t.includes("number of parameters") || t.includes("param");
 }
