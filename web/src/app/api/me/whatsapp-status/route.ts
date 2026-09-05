@@ -96,7 +96,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Token vivo: conferir se o que a Meta aprovou bate com o que o app espera.
-    let modelos: Array<{ nome: string; status: string; usadoPeloApp: boolean; variaveis: number | null }> = [];
+    let modelos: Array<{
+      nome: string; status: string; usadoPeloApp: boolean;
+      variaveis: number | null; botao: string | null;
+    }> = [];
     let avisoModelos: string | null = null;
 
     const wabaId = envClean("WHATSAPP_WABA_ID");
@@ -121,10 +124,23 @@ export async function GET(req: NextRequest) {
           }
           return max;
         };
+        // O botão não muda a contagem de variáveis (o {{1}} dele é
+        // numeração própria e cabe abaixo do maior do corpo), então sem
+        // olhar o componente não dá para saber se a edição já passou.
+        const temBotaoUrl = (comps: unknown[]) =>
+          ((comps || []) as Array<Record<string, unknown>>).some((c) =>
+            ((c.buttons || []) as Array<Record<string, unknown>>).some(
+              (b) => b.type === "URL" || !!b.url,
+            ),
+          );
         const naMeta = new Map(
           (tc.data as Array<Record<string, unknown>>).map((t) => [
             String(t.name),
-            { status: String(t.status), vars: contarVars(t.components as unknown[]) },
+            {
+              status: String(t.status),
+              vars: contarVars(t.components as unknown[]),
+              botao: temBotaoUrl(t.components as unknown[]),
+            },
           ]),
         );
         modelos = Object.values(MODELOS).map((m) => {
@@ -134,6 +150,15 @@ export async function GET(req: NextRequest) {
             status: achado?.status ?? "NÃO CADASTRADO",
             usadoPeloApp: true,
             variaveis: achado ? achado.vars : null,
+            // O que a Meta tem × o que o app manda. Só aparece quando
+            // discordam: linha igual é ruído.
+            botao: !achado
+              ? null
+              : achado.botao === !!m.botaoComLink
+                ? null
+                : achado.botao
+                  ? "a Meta tem botão, o app não manda"
+                  : "o app manda botão, a Meta não tem",
           };
         });
         // Variável a mais ou a menos é envio recusado em silêncio, então vale
@@ -142,11 +167,23 @@ export async function GET(req: NextRequest) {
           const esperado = MODELOS[m.nome as keyof typeof MODELOS]?.variaveis;
           return m.variaveis !== null && esperado !== undefined && m.variaveis !== esperado;
         });
+        const avisos: string[] = [];
         if (divergentes.length) {
-          avisoModelos =
-            "Modelos com número de variáveis diferente do que o app envia: " +
-            divergentes.map((d) => d.nome).join(", ");
+          avisos.push(
+            "Número de variáveis diferente do que o app envia: " +
+              divergentes.map((d) => d.nome).join(", "),
+          );
         }
+        // Enquanto a edição de um modelo aprovado está em revisão, o envio
+        // se vira sozinho (tenta com botão, refaz sem). Este aviso serve
+        // para saber QUANDO a revisão saiu e a volta atrás parou de rodar.
+        const semBotao = modelos.filter((m) => m.botao);
+        if (semBotao.length) {
+          avisos.push(
+            semBotao.map((m) => `${m.nome}: ${m.botao}`).join(" | "),
+          );
+        }
+        avisoModelos = avisos.length ? avisos.join(" — ") : null;
       } else {
         avisoModelos = tc?.error?.message || "Não foi possível ler os modelos.";
       }
