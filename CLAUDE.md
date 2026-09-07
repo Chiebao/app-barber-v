@@ -84,8 +84,8 @@ app_barber/
 │   ├── public/
 │   │   └── manifest.json              # PWA manifest
 │   └── src/app/
-│       ├── layout.tsx                 # Root layout (fonts Inter + Playfair)
-│       ├── page.tsx                   # Landing page BarberPro
+│       ├── layout.tsx                 # Root layout (fontes Manrope + Marcellus)
+│       ├── page.tsx                   # Landing page de venda (era um redirect p/ /admin)
 │       ├── globals.css                # Estilos globais + Tailwind
 │       ├── lib/
 │       │   ├── prisma.ts              # Singleton PrismaClient
@@ -405,6 +405,29 @@ app_barber/
 - Avisar no cancelamento PELO BARBEIRO continua manual (`wa.me` no painel),
   de proposito — e o canal confiavel, igual ao botao "Lembrar"
 
+### Landing page (a raiz do site)
+- A raiz era `redirect("/admin")`: quem ouvia falar do app e ia olhar caia
+  numa TELA DE SENHA, sem saber o que e nem quanto custa
+- O botao vai para o WHATSAPP, nao para o cadastro: enquanto nao existir
+  cobranca (B14), um "comece gratis" criaria conta que ninguem tem como
+  cobrar nem desligar. Troca quando o billing existir; a pagina nao muda
+- Abre pela folha de caderno rasurada porque quem le ainda nao esta
+  comprando software — esta reconhecendo o proprio sabado. O produto so
+  aparece depois disso
+- A marca do BarberPro e o AMBAR do Tailwind (`brand-400/500`), nao o
+  `#c9a96e` do `globals.css`: aquele e a paleta que cada barbearia escolhe
+  (midnight_gold), e o `/admin` usa so as classes Tailwind
+- Titulos em `font-display` (Marcellus). NAO e Playfair: o `layout.tsx`
+  registra que o traco da Playfair some no escuro
+- A Caveat (letra a mao) e carregada NA PAGINA, nao no layout — senao
+  pesaria no painel e na tela de agendamento, que abrem toda hora
+- Tem `openGraph` proprio apontando para `/api/og`: sem isso o link colado
+  no WhatsApp aparece como URL crua, e o cartao e a primeira impressao de
+  quem recebe a indicacao
+- O "Entrar" no topo existe porque a raiz era o atalho de quem ja e
+  cliente. Tirar sem deixar porta seria trocar um problema por outro
+- Precos: R$ 79,90 mensal / R$ 59,90 semestral / R$ 49,90 anual
+
 ### Janela da agenda (ate onde o cliente enxerga)
 - `Shop.diasAbertos` (7, 15 ou 30) e SO do link publico. No painel o
   barbeiro marca para quando quiser: ele esta com o cliente na frente
@@ -673,6 +696,7 @@ app_barber/
 | 61 | Lista de espera expira sozinha e avisa o cliente | ✅ | — | ✅ |
 | 62 | Barbeiro e avisado quando alguem entra na lista de espera | — | ✅ | ✅ |
 | 63 | Janela da agenda no link publico (7, 15 ou 30 dias) | ✅ | — | ✅ |
+| 64 | Landing page de venda na raiz do site | ✅ | — | — |
 
 ### Pendentes / Melhorias
 
