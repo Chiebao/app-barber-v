@@ -28,6 +28,12 @@ export async function GET(req: NextRequest) {
   const nome = p.get("shop") || "BarberPro";
   const logo = p.get("logo");
   const cidade = p.get("cidade");
+  // O cartao nasceu para a pagina de uma BARBEARIA, onde quem ve e cliente
+  // marcando corte. Na landing page quem ve e barbeiro decidindo comprar, e
+  // "Agendar horario" convida ele para a coisa errada.
+  const chamada = p.get("cta") || "Agendar horário";
+  // A assinatura embaixo vira ruido quando o titulo JA e BarberPro.
+  const assinatura = p.get("assinatura") ?? "BARBERPRO";
   const tema = PALETAS[p.get("tema") || "midnight_gold"] || PALETAS.midnight_gold;
 
   // Fundo claro pede texto escuro — senão o nome some no cartão do WhatsApp
@@ -127,21 +133,23 @@ export async function GET(req: NextRequest) {
             display: "flex",
           }}
         >
-          Agendar horário
+          {chamada}
         </div>
 
-        <div
-          style={{
-            position: "absolute",
-            bottom: 34,
-            fontSize: 20,
-            color: corSuave,
-            letterSpacing: 3,
-            display: "flex",
-          }}
-        >
-          BARBERPRO
-        </div>
+        {assinatura && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 34,
+              fontSize: 20,
+              color: corSuave,
+              letterSpacing: 3,
+              display: "flex",
+            }}
+          >
+            {assinatura}
+          </div>
+        )}
       </div>
     ),
     { width: 1200, height: 630 },

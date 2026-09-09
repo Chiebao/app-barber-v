@@ -48,7 +48,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "BarberPro",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "BarberPro" }],
+    images: [{
+      // `cta` e `assinatura` existem por causa daqui: o cartão padrão diz
+      // "Agendar horário", que é o convite para o CLIENTE de uma barbearia.
+      // Quem recebe este link é dono de barbearia, não cliente.
+      url: "/api/og?cta=Ver+planos+e+preços&assinatura=",
+      width: 1200, height: 630, alt: "BarberPro",
+    }],
   },
   twitter: { card: "summary_large_image", title: TITULO, description: RESUMO },
 };
