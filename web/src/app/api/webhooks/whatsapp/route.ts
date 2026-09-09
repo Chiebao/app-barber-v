@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
   const temSegredo = !!(process.env.WHATSAPP_APP_SECRET || "").trim();
   if (temSegredo && !assinaturaConfere(cru, req.headers.get("x-hub-signature-256"))) {
-    return NextResponse.json({ error: "assinatura invalida" }, { status: 401 });
+    return NextResponse.json({ error: "assinatura inválida" }, { status: 401 });
   }
   if (!temSegredo) {
     console.warn("[WhatsApp] WHATSAPP_APP_SECRET ausente — webhook aceito sem conferir assinatura");

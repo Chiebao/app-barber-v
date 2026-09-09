@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const assinatura = await situacaoDaLoja(data.shopId);
     if (!assinatura.aceitaAgendamento) {
       return NextResponse.json(
-        { error: "Esta barbearia nao esta aceitando agendamentos online no momento." },
+        { error: "Esta barbearia não esta aceitando agendamentos online no momento." },
         { status: 503 },
       );
     }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     });
     if (barrado) {
       return NextResponse.json(
-        { error: "Nao foi possivel concluir o agendamento. Entre em contato com a barbearia." },
+        { error: "Não foi possível concluir o agendamento. Entre em contato com a barbearia." },
         { status: 403 },
       );
     }
@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
       prisma.service.findMany({ where: { id: { in: data.serviceIds }, shopId: data.shopId } }),
     ]);
 
-    if (!shop || !barber) return NextResponse.json({ error: "Barbearia ou profissional nao encontrado" }, { status: 404 });
-    if (services.length === 0) return NextResponse.json({ error: "Servicos invalidos" }, { status: 400 });
+    if (!shop || !barber) return NextResponse.json({ error: "Barbearia ou profissional não encontrado" }, { status: 404 });
+    if (services.length === 0) return NextResponse.json({ error: "Serviços inválidos" }, { status: 400 });
 
     // A trava de verdade da janela da agenda. A lista de datas na tela do
     // cliente é conveniência; quem POSTA direto passaria por cima dela e
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     // Fluxo manual: avisa o cliente que precisa pagar antes de criar qualquer coisa.
     // Com o Mercado Pago seguimos direto — criamos o agendamento e a cobranca juntos.
     if (needsPix && !data.pendingPayment && !mpToken) {
-      return NextResponse.json({ error: "Pre-pagamento necessario", pixKey: shop.pixKey }, { status: 402 });
+      return NextResponse.json({ error: "Pre-pagamento necessário", pixKey: shop.pixKey }, { status: 402 });
     }
 
     const clientId = client.id;
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
             slotTaken: true,
           }, { status: 409 });
         }
-        return NextResponse.json({ error: "Horario ja ocupado" }, { status: 409 });
+        return NextResponse.json({ error: "Horário já ocupado" }, { status: 409 });
       }
       throw txError;
     }
@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
         await prisma.appointment.delete({ where: { id: appointment.id } }).catch(() => {});
         return NextResponse.json(
           {
-            error: "Nao foi possivel gerar a cobranca Pix agora. Tente novamente em instantes.",
+            error: "Não foi possível gerar a cobranca Pix agora. Tente novamente em instantes.",
             detalhe: resultado.erro,
           },
           { status: 503 },
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Dados invalidos", details: error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Dados inválidos", details: error.errors }, { status: 400 });
     }
     console.error("Appointment POST error:", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
@@ -301,7 +301,7 @@ export async function GET(req: NextRequest) {
     const nameParam = searchParams.get("name");
 
     if (!phone || !shopId) {
-      return NextResponse.json({ error: "Parametros phone e shopId obrigatorios" }, { status: 400 });
+      return NextResponse.json({ error: "Parâmetros phone e shopId obrigatórios" }, { status: 400 });
     }
 
     const cleanPhone = phone.replace(/\D/g, "");

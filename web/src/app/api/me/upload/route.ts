@@ -14,17 +14,17 @@ export async function POST(req: NextRequest) {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: "Storage nao configurado" }, { status: 500 });
+      return NextResponse.json({ error: "Storage não configurado" }, { status: 500 });
     }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    if (!file) return NextResponse.json({ error: "Arquivo obrigatorio" }, { status: 400 });
+    if (!file) return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
 
     // Valida tipo
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
-      return NextResponse.json({ error: "Tipo de arquivo invalido (jpeg/png/webp)" }, { status: 400 });
+      return NextResponse.json({ error: "Tipo de arquivo inválido (jpeg/png/webp)" }, { status: 400 });
     }
 
     // Valida tamanho (max 3MB)

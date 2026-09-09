@@ -62,7 +62,7 @@ export default function AdminPage() {
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [recovering, setRecovering] = useState(false);
   // Fluxo por codigo no WhatsApp: "telefone" -> pede o codigo, "codigo" -> troca a senha
-  const [forgotEtapa, setForgotEtapa] = useState<"telefone" | "codigo">("telefone");
+  const [forgotEtapa, setForgotEtapa] = useState<"telefone" | "código">("telefone");
   const [forgotOtp, setForgotOtp] = useState("");
   const [enviandoCodigo, setEnviandoCodigo] = useState(false);
   const [usarCodigoRecuperacao, setUsarCodigoRecuperacao] = useState(false);
@@ -131,16 +131,16 @@ export default function AdminPage() {
         body: JSON.stringify({ phone: tel }),
       });
       const d = await res.json();
-      if (!res.ok) { toast.error(d.error || "Nao foi possivel enviar"); return; }
+      if (!res.ok) { toast.error(d.error || "Não foi possível enviar"); return; }
       if (d.canal === "indisponivel") {
-        toast.error("Envio por WhatsApp indisponivel. Use o codigo de recuperacao.");
+        toast.error("Envio por WhatsApp indisponivel. Use o código de recuperacao.");
         setUsarCodigoRecuperacao(true);
         return;
       }
-      toast.success("Se houver conta com esse telefone, o codigo chegou no WhatsApp");
-      setForgotEtapa("codigo");
+      toast.success("Se houver conta com esse telefone, o código chegou no WhatsApp");
+      setForgotEtapa("código");
     } catch {
-      toast.error("Erro de conexao. Tente novamente.");
+      toast.error("Erro de conexão. Tente novamente.");
     } finally {
       setEnviandoCodigo(false);
     }
@@ -149,8 +149,8 @@ export default function AdminPage() {
   /** Passo 2: confere o codigo do WhatsApp e grava a senha nova. */
   const trocarSenhaComCodigo = async () => {
     const tel = forgotPhone.replace(/\D/g, "");
-    if (forgotOtp.trim().length < 4) { toast.error("Digite o codigo recebido"); return; }
-    if (forgotNewPassword.length < 6) { toast.error("A nova senha precisa ter no minimo 6 caracteres"); return; }
+    if (forgotOtp.trim().length < 4) { toast.error("Digite o código recebido"); return; }
+    if (forgotNewPassword.length < 6) { toast.error("A nova senha precisa ter no mínimo 6 caracteres"); return; }
     setRecovering(true);
     try {
       const res = await fetch("/api/auth/reset", {
@@ -164,10 +164,10 @@ export default function AdminPage() {
         setLoginPhone(tel); setLoginPassword("");
         closeForgot();
       } else {
-        toast.error(d.error || "Nao foi possivel redefinir");
+        toast.error(d.error || "Não foi possível redefinir");
       }
     } catch {
-      toast.error("Erro de conexao. Tente novamente.");
+      toast.error("Erro de conexão. Tente novamente.");
     } finally {
       setRecovering(false);
     }
@@ -421,7 +421,7 @@ export default function AdminPage() {
                 </>
               )}
 
-              {!usarCodigoRecuperacao && forgotEtapa === "codigo" && (
+              {!usarCodigoRecuperacao && forgotEtapa === "código" && (
                 <>
                   <div>
                     <h3 className="text-lg font-semibold text-white">Digite o código</h3>
@@ -540,7 +540,7 @@ export default function AdminPage() {
 
             {/* Horario */}
             <div>
-              <p className="text-sm text-gray-400 mb-2">Horario de funcionamento</p>
+              <p className="text-sm text-gray-400 mb-2">Horário de funcionamento</p>
               <div className="flex gap-3">
                 <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)}
                   className="flex-1 rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
@@ -566,7 +566,7 @@ export default function AdminPage() {
 
             {/* Cortes */}
             <div>
-              <p className="text-sm text-gray-400 mb-2">Cortes disponiveis</p>
+              <p className="text-sm text-gray-400 mb-2">Cortes disponíveis</p>
               <div className="grid grid-cols-2 gap-2">
                 {CORTES.map((c) => (
                   <button key={c.name} onClick={() => toggleCut(c.name)}
@@ -582,7 +582,7 @@ export default function AdminPage() {
 
             {/* Extras */}
             <div className="space-y-3">
-              <p className="text-sm text-gray-400">Servicos extras</p>
+              <p className="text-sm text-gray-400">Serviços extras</p>
 
               <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-3">
                 <span className="text-white">Faz barba?</span>

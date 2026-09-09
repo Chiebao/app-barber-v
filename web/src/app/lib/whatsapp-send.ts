@@ -92,7 +92,7 @@ export async function enviarModelo(
   const previsto = preverTexto(nome, variaveis);
 
   if (!token || !phoneId) {
-    console.log("[WhatsApp] sem credenciais — modelo nao enviado:", nome, "|", previsto.slice(0, 80));
+    console.log("[WhatsApp] sem credenciais — modelo não enviado:", nome, "|", previsto.slice(0, 80));
     return false;
   }
 
@@ -127,7 +127,7 @@ export async function enviarModelo(
   // deixa o nome do modelo no log.
   if (modelo.botaoComLink) {
     if (!valorDoBotao) {
-      console.error("[WhatsApp] modelo", nome, "precisa do valor do botao e nao recebeu");
+      console.error("[WhatsApp] modelo", nome, "precisa do valor do botao e não recebeu");
       return false;
     }
     componentes.push({

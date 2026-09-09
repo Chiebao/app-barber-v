@@ -50,12 +50,12 @@ export async function POST(req: NextRequest) {
 
     if (!conferido) {
       // Não conseguimos confirmar agora — 400 pede retentativa
-      console.error("[InfinitePay] nao foi possivel conferir:", orderNsu);
+      console.error("[InfinitePay] não foi possível conferir:", orderNsu);
       return NextResponse.json({ error: "conferencia indisponivel" }, { status: 400 });
     }
 
     if (!conferido.pago) {
-      console.warn("[InfinitePay] webhook dizia pago, consulta diz que nao:", orderNsu);
+      console.warn("[InfinitePay] webhook dizia pago, consulta diz que não:", orderNsu);
       return NextResponse.json({ ok: true, pago: false });
     }
 
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    console.log("[InfinitePay] assinatura renovada:", fatura.subscriptionId, "ate", proximoVencimento(base, plano));
+    console.log("[InfinitePay] assinatura renovada:", fatura.subscriptionId, "até", proximoVencimento(base, plano));
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[InfinitePay] erro no webhook:", error);

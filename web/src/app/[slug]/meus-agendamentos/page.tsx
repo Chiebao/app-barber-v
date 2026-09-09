@@ -499,7 +499,7 @@ export default function MeusAgendamentos() {
                 <View style={styles.brandAccent} />
               </View>
               <View style={styles.headerRight}>
-                <Text style={styles.headerLabel}>RELATORIO DE AGENDAMENTOS</Text>
+                <Text style={styles.headerLabel}>RELATÓRIO DE AGENDAMENTOS</Text>
                 <Text style={styles.headerValue}>{genDate}</Text>
               </View>
             </View>
@@ -531,23 +531,23 @@ export default function MeusAgendamentos() {
                 </View>
                 <View style={styles.statCard}>
                   <Text style={styles.statValue}>{activeCount}</Text>
-                  <Text style={styles.statLabel}>SERVICOS REALIZADOS</Text>
+                  <Text style={styles.statLabel}>SERVIÇOS REALIZADOS</Text>
                 </View>
                 <View style={styles.statCard}>
                   <Text style={styles.statValue}>
                     R$ {avgPrice.toFixed(2)}
                   </Text>
-                  <Text style={styles.statLabel}>TICKET MEDIO</Text>
+                  <Text style={styles.statLabel}>TICKET MÉDIO</Text>
                 </View>
               </View>
 
               {/* ═══ TABELA DE AGENDAMENTOS ═══ */}
-              <Text style={styles.sectionTitle}>Historico Detalhado</Text>
+              <Text style={styles.sectionTitle}>Histórico Detalhado</Text>
 
               <View style={styles.tableHeaderRow}>
                 <Text style={[styles.colData, styles.headerCell]}>DATA</Text>
-                <Text style={[styles.colHorario, styles.headerCell]}>HORARIO</Text>
-                <Text style={[styles.colServico, styles.headerCell]}>SERVICO</Text>
+                <Text style={[styles.colHorario, styles.headerCell]}>HORÁRIO</Text>
+                <Text style={[styles.colServico, styles.headerCell]}>SERVIÇO</Text>
                 <Text style={[styles.colBarbeiro, styles.headerCell]}>PROFISSIONAL</Text>
                 <Text style={[styles.colPreco, styles.headerCell]}>VALOR</Text>
                 <Text style={[styles.colStatus, styles.headerCell]}>STATUS</Text>

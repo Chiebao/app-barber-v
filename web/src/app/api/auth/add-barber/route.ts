@@ -10,7 +10,7 @@ const schema = z.object({
   password: z.string().min(6),
   role: z.enum(["barber", "owner"]).optional().default("barber"),
   commission: z.number().min(0).max(100).optional().default(0),
-  email: z.string().email("E-mail invalido").optional().or(z.literal("")),
+  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const data = schema.parse(await req.json());
     const exists = await prisma.barber.findFirst({ where: { shopId: payload.shopId, phone: data.phone } });
-    if (exists) return NextResponse.json({ error: "Telefone ja cadastrado nesta barbearia" }, { status: 400 });
+    if (exists) return NextResponse.json({ error: "Telefone já cadastrado nesta barbearia" }, { status: 400 });
 
     const barber = await prisma.barber.create({
       data: {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ barber: { id: barber.id, name: barber.name, phone: barber.phone, role: barber.role, commission: barber.commission, email: barber.email, imageUrl: barber.imageUrl } });
   } catch (error) {
-    if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados invalidos" }, { status: 400 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

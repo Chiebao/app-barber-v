@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "BarberPro - Agendamento Online",
-  description: "Agende seu corte de cabelo online de forma rapida e facil",
+  description: "Agende seu corte de cabelo online de forma rápida e fácil",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

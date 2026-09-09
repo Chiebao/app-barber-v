@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   try {
     const { serviceIds, phone } = await req.json();
     if (!phone || !Array.isArray(serviceIds) || serviceIds.length === 0) {
-      return NextResponse.json({ error: "Dados invalidos" }, { status: 400 });
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
     const cleanPhone = phone.replace(/\D/g, "");
@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
 
     if (!appointment) {
-      return NextResponse.json({ error: "Agendamento não encontrado ou ja realizado" }, { status: 404 });
+      return NextResponse.json({ error: "Agendamento não encontrado ou já realizado" }, { status: 404 });
     }
 
     // Atendimento que já começou não se edita. Sem isto, dava para trocar os
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const shopServiceIds = appointment.shop.services.map((s) => s.id);
     const invalid = serviceIds.filter((id: string) => !shopServiceIds.includes(id));
     if (invalid.length > 0) {
-      return NextResponse.json({ error: "Servico invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Serviço inválido" }, { status: 400 });
     }
 
     // Busca os serviços selecionados
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Recalcula endTime
     const inicio = emMinutos(appointment.startTime);
     if (!Number.isFinite(inicio)) {
-      return NextResponse.json({ error: "Horario invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Horário inválido" }, { status: 400 });
     }
     const endTime = emTexto(inicio + totalDuration);
 

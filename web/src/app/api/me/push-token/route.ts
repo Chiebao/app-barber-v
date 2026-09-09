@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
     if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const { token } = await req.json();
-    if (!token) return NextResponse.json({ error: "Token obrigatorio" }, { status: 400 });
+    if (!token) return NextResponse.json({ error: "Token obrigatório" }, { status: 400 });
 
     // Só barbeiros têm registro na tabela barbers
     const barber = await prisma.barber.findUnique({ where: { id: payload.userId } });

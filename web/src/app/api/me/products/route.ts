@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const payload = guarda.payload;
 
     const { name, price, description, imageUrl, imageUrl2, custo } = await req.json();
-    if (!name || !price) return NextResponse.json({ error: "Nome e preco obrigatorios" }, { status: 400 });
+    if (!name || !price) return NextResponse.json({ error: "Nome e preço obrigatórios" }, { status: 400 });
 
     const product = await prisma.product.create({
       data: {

@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 
 /**
- * Instrucoes de exclusao de dados.
+ * Instruções de exclusão de dados.
  *
- * Pagina separada da Politica de Privacidade de proposito: a Meta exige uma
- * URL dedicada a isso e recusa quando ela repete a da politica. E ela tem
- * razao — quem quer apagar os proprios dados nao deveria precisar caçar a
- * informacao dentro de um documento de onze secoes.
+ * Página separada da Política de Privacidade de propósito: a Meta exige uma
+ * URL dedicada a isso e recusa quando ela repete a da política. E ela tem
+ * razão — quem quer apagar os próprios dados não deveria precisar caçar a
+ * informação dentro de um documento de onze seções.
  */
 
 export const metadata: Metadata = {
-  title: "Exclusao de dados — BarberPro",
-  description: "Como pedir a exclusao dos seus dados do BarberPro.",
+  title: "Exclusão de dados — BarberPro",
+  description: "Como pedir a exclusão dos seus dados do BarberPro.",
 };
 
 const SUPORTE = "5515997767794";
@@ -22,7 +22,7 @@ export default function ExclusaoDeDadosPage() {
       <article className="mx-auto max-w-3xl space-y-8">
         <header>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Exclusao de dados
+            Exclusão de dados
           </h1>
           <p className="text-sm text-gray-500">
             Como apagar seus dados do BarberPro
@@ -31,43 +31,43 @@ export default function ExclusaoDeDadosPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            Se voce e cliente de uma barbearia
+            Se você e cliente de uma barbearia
           </h2>
           <p>
-            Seus dados no BarberPro sao o seu nome, telefone e o historico dos
-            atendimentos que voce marcou. Quem responde por eles e a barbearia
-            onde voce se atende.
+            Seus dados no BarberPro são o seu nome, telefone e o histórico dos
+            atendimentos que você marcou. Quem responde por eles e a barbearia
+            onde você se atende.
           </p>
           <p>Ha dois caminhos, e os dois funcionam:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-white">Peca a barbearia.</strong> Ela
-              apaga na hora, pelo painel dela. E o caminho mais rapido.
+              <strong className="text-white">Peça à barbearia.</strong> Ela
+              apaga na hora, pelo painel dela. É o caminho mais rápido.
             </li>
             <li>
               <strong className="text-white">Peca direto a nos</strong> pelo
-              WhatsApp abaixo, informando o telefone que voce usa para agendar.
-              Confirmamos a identidade e apagamos em ate 15 dias.
+              WhatsApp abaixo, informando o telefone que você usa para agendar.
+              Confirmamos a identidade e apagamos em até 15 dias.
             </li>
           </ul>
           <p>
-            Apagamos nome, telefone, historico de agendamentos, avaliacoes e
+            Apagamos nome, telefone, histórico de agendamentos, avaliações e
             pontos de fidelidade.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            Se voce e dono de barbearia
+            Se você e dono de barbearia
           </h2>
           <p>
-            Peca a exclusao da conta pelo WhatsApp abaixo, com o telefone
-            cadastrado. Apagamos a barbearia, os barbeiros, os servicos, os
+            Peca a exclusão da conta pelo WhatsApp abaixo, com o telefone
+            cadastrado. Apagamos a barbearia, os barbeiros, os serviços, os
             produtos e os agendamentos ligados a ela.
           </p>
           <p>
-            A exclusao vale para todos: os clientes da sua barbearia deixam de
-            ter historico conosco.
+            A exclusão vale para todos: os clientes da sua barbearia deixam de
+            ter histórico conosco.
           </p>
         </section>
 
@@ -76,9 +76,9 @@ export default function ExclusaoDeDadosPage() {
             O que fica, e por que
           </h2>
           <p>
-            Registros fiscais e financeiros de atendimentos ja pagos podem
+            Registros fiscais e financeiros de atendimentos já pagos podem
             precisar ser mantidos pelo prazo que a lei exige, mesmo depois do
-            pedido. Nesse caso eles ficam desvinculados de voce: sem nome, sem
+            pedido. Nesse caso eles ficam desvinculados de você: sem nome, sem
             telefone, apenas o valor e a data.
           </p>
         </section>
@@ -103,9 +103,9 @@ export default function ExclusaoDeDadosPage() {
 
         <footer className="border-t border-gray-800 pt-6 text-sm text-gray-500">
           <p>
-            Detalhes sobre quais dados coletamos e por quanto tempo estao na{" "}
+            Detalhes sobre quais dados coletamos e por quanto tempo estão na{" "}
             <a href="/privacidade" className="text-brand-400 underline">
-              Politica de Privacidade
+              Política de Privacidade
             </a>
             .
           </p>

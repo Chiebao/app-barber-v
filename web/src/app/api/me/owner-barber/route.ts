@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     if (linked) return NextResponse.json({ barber: { id: linked.id, name: linked.name } });
 
     const { name, phone, password } = await req.json();
-    if (!name || !phone || !password) return NextResponse.json({ error: "Dados obrigatorios" }, { status: 400 });
+    if (!name || !phone || !password) return NextResponse.json({ error: "Dados obrigatórios" }, { status: 400 });
 
     const phoneDigits = phone.replace(/\D/g, "");
 

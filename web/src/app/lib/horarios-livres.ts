@@ -50,7 +50,7 @@ export async function horariosLivres(
   // na sexta tinha que escolher a janela mais larga e bloquear o resto.
   const expediente = await expedienteDoDia(prisma, shop, date);
   if (!expediente.aberto) {
-    return { slots: [], motivo: "Dia nao disponivel" };
+    return { slots: [], motivo: "Dia não disponível" };
   }
 
   // Cortes fixos viram agendamento de verdade ANTES de contar o que está

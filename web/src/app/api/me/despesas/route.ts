@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     if (payload.role !== "owner") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { ano, mes } = mesDeTexto(req.nextUrl.searchParams.get("mes"));
+    const { ano, mes } = mesDeTexto(req.nextUrl.searchParams.get("mês"));
     const { inicio, fim } = limitesDoMes(ano, mes);
 
     const despesas = await prisma.expense.findMany({

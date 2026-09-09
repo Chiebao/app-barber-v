@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Politica de Privacidade — BarberPro",
+  title: "Política de Privacidade — BarberPro",
   description: "Saiba como o BarberPro coleta, usa e protege seus dados pessoais.",
 };
 
@@ -11,10 +11,10 @@ export default function PrivacidadePage() {
       <article className="mx-auto max-w-3xl space-y-8">
         <header>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Politica de Privacidade
+            Política de Privacidade
           </h1>
           <p className="text-sm text-gray-500">
-            Versao 2.0 — em vigor desde 27 de agosto de 2026</p>
+            Versão 2.0 — em vigor desde 27 de agosto de 2026</p>
         </header>
 
         <section className="space-y-4">
@@ -22,11 +22,11 @@ export default function PrivacidadePage() {
             1. Quem somos
           </h2>
           <p>
-            O <strong className="text-white">BarberPro</strong> e uma plataforma
-            de agendamento online para barbearias, disponivel como site (web) e
+            O <strong className="text-white">BarberPro</strong> é uma plataforma
+            de agendamento online para barbearias, disponível como site (web) e
             aplicativo mobile. A plataforma e desenvolvida e operada por Elias
             Henrique Dias Godoy, que se identifica ao titular mediante
-            solicitacao pelos canais da secao 11.
+            solicitação pelos canais da seção 11.
           </p>
         </section>
 
@@ -39,30 +39,30 @@ export default function PrivacidadePage() {
           </p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-gray-200">A barbearia e a controladora</strong>{" "}
-              dos dados dos clientes dela. E a barbearia que decide atender aquele
-              cliente, quais anotacoes registra e por quanto tempo mantem o
-              historico.
+              <strong className="text-gray-200">A barbearia é a controladora</strong>{" "}
+              dos dados dos clientes dela. É a barbearia que decide atender aquele
+              cliente, quais anotações registra e por quanto tempo mantém o
+              histórico.
             </li>
             <li>
-              <strong className="text-gray-200">O BarberPro e o operador:</strong>{" "}
+              <strong className="text-gray-200">O BarberPro é o operador:</strong>{" "}
               tratamos esses dados em nome da barbearia, apenas para fazer a
-              plataforma funcionar (agendar, notificar, gerar relatorio). Nao
+              plataforma funcionar (agendar, notificar, gerar relatório). Não
               usamos os dados dos clientes de uma barbearia para nenhuma outra
               finalidade.
             </li>
             <li>
               <strong className="text-gray-200">
-                Quanto aos dados da propria conta
+                Quanto aos dados da própria conta
               </strong>{" "}
               do dono ou barbeiro (nome, telefone, senha), o BarberPro atua como
               controlador.
             </li>
           </ul>
           <p>
-            Na pratica: se voce e cliente de uma barbearia e quer apagar seus
+            Na prática: se você e cliente de uma barbearia e quer apagar seus
             dados, pode falar diretamente com a barbearia (que consegue excluir
-            pelo painel) ou conosco pelos canais da secao 11.
+            pelo painel) ou conosco pelos canais da seção 11.
           </p>
         </section>
 
@@ -72,18 +72,18 @@ export default function PrivacidadePage() {
           </h2>
 
           <h3 className="text-lg font-medium text-gray-200">
-            3.1 Dados do barbeiro/dono (usuario cadastrado)
+            3.1 Dados do barbeiro/dono (usuário cadastrado)
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Nome completo</li>
-            <li>Numero de telefone (usado como login)</li>
+            <li>Número de telefone (usado como login)</li>
             <li>Senha (armazenada com hash bcrypt, nunca em texto plano)</li>
             <li>Chave Pix (opcional, para recebimento de pagamentos)</li>
-            <li>Expo Push Token e inscricoes de notificacao do navegador (Web Push)</li>
-            <li>E-mail e foto do profissional (opcionais, informados por voce)</li>
-            <li>Endereco, bairro, cidade, estado, CEP e telefone da barbearia (opcionais, exibidos publicamente no seu link de agendamento)</li>
-            <li>Dados da assinatura: plano, datas de vigencia e historico de cobrancas</li>
-            <li>Data e versao do aceite dos Termos de Uso</li>
+            <li>Expo Push Token e inscrições de notificação do navegador (Web Push)</li>
+            <li>E-mail e foto do profissional (opcionais, informados por você)</li>
+            <li>Endereço, bairro, cidade, estado, CEP e telefone da barbearia (opcionais, exibidos publicamente no seu link de agendamento)</li>
+            <li>Dados da assinatura: plano, datas de vigência e histórico de cobrancas</li>
+            <li>Data e versão do aceite dos Termos de Uso</li>
           </ul>
 
           <h3 className="text-lg font-medium text-gray-200">
@@ -91,14 +91,14 @@ export default function PrivacidadePage() {
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Nome</li>
-            <li>Numero de telefone</li>
-            <li>Historico de agendamentos (data, servico, barbeiro)</li>
-            <li>Avaliacoes (nota e comentario, opcionais)</li>
+            <li>Número de telefone</li>
+            <li>Histórico de agendamentos (data, serviço, barbeiro)</li>
+            <li>Avaliações (nota e comentário, opcionais)</li>
             <li>Contagem de faltas (no-show)</li>
             <li>
               Registro de bloqueio, quando a barbearia impede aquele telefone de
-              agendar — inclui o telefone, o nome e uma anotacao interna de motivo,
-              escrita pela barbearia e visivel apenas para ela
+              agendar — inclui o telefone, o nome e uma anotação interna de motivo,
+              escrita pela barbearia e visível apenas para ela
             </li>
           </ul>
 
@@ -106,7 +106,7 @@ export default function PrivacidadePage() {
             3.3 Dados coletados automaticamente
           </h3>
           <ul className="list-disc pl-6 space-y-1">
-            <li>Endereco IP (logs do servidor)</li>
+            <li>Endereço IP (logs do servidor)</li>
             <li>User-Agent do navegador/app</li>
             <li>Data e hora de acesso</li>
           </ul>
@@ -118,21 +118,21 @@ export default function PrivacidadePage() {
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              <strong className="text-gray-200">Prestacao do servico:</strong>{" "}
-              agendamentos, notificacoes, programa de fidelidade, relatorios
+              <strong className="text-gray-200">Prestação do serviço:</strong>{" "}
+              agendamentos, notificações, programa de fidelidade, relatórios
               financeiros.
             </li>
             <li>
-              <strong className="text-gray-200">Comunicacao:</strong>{" "}
-              lembretes de agendamento via WhatsApp, notificacoes push.
+              <strong className="text-gray-200">Comunicação:</strong>{" "}
+              lembretes de agendamento via WhatsApp, notificações push.
             </li>
             <li>
-              <strong className="text-gray-200">Seguranca:</strong>{" "}
-              autenticacao, prevencao de fraude, controle de no-show.
+              <strong className="text-gray-200">Segurança:</strong>{" "}
+              autenticação, prevenção de fraude, controle de no-show.
             </li>
             <li>
-              <strong className="text-gray-200">Melhoria do servico:</strong>{" "}
-              analise agregada de uso (sem identificacao individual).
+              <strong className="text-gray-200">Melhoria do serviço:</strong>{" "}
+              análise agregada de uso (sem identificação individual).
             </li>
           </ul>
         </section>
@@ -148,21 +148,21 @@ export default function PrivacidadePage() {
           <ul className="list-disc pl-6 space-y-1">
             <li>
               <strong className="text-gray-200">
-                Execucao de contrato (Art. 7, V):
+                Execução de contrato (Art. 7, V):
               </strong>{" "}
-              dados necessarios para prestar o servico de agendamento.
+              dados necessários para prestar o serviço de agendamento.
             </li>
             <li>
               <strong className="text-gray-200">
                 Consentimento (Art. 7, I):
               </strong>{" "}
-              envio de notificacoes WhatsApp e push.
+              envio de notificações WhatsApp e push.
             </li>
             <li>
               <strong className="text-gray-200">
                 Interesse legitimo (Art. 7, IX):
               </strong>{" "}
-              prevencao de fraude e seguranca da plataforma.
+              prevenção de fraude e segurança da plataforma.
             </li>
           </ul>
         </section>
@@ -179,31 +179,31 @@ export default function PrivacidadePage() {
             </li>
             <li>
               <strong className="text-gray-200">Vercel:</strong> hospedagem da
-              aplicacao web e API.
+              aplicação web e API.
             </li>
             <li>
               <strong className="text-gray-200">Meta (WhatsApp Cloud API):</strong>{" "}
-              envio de notificacoes ao telefone cadastrado.
+              envio de notificações ao telefone cadastrado.
             </li>
             <li>
               <strong className="text-gray-200">Expo (Push Notifications):</strong>{" "}
-              envio de notificacoes ao app mobile.
+              envio de notificações ao app mobile.
             </li>
             <li>
               <strong className="text-gray-200">Mercado Pago:</strong> quando a
-              barbearia ativa o Pix automatico, geramos a cobranca na conta dela
-              atraves do Mercado Pago. Para isso, enviamos o{" "}
+              barbearia ativa o Pix automático, geramos a cobranca na conta dela
+              através do Mercado Pago. Para isso, enviamos o{" "}
               <strong className="text-gray-200">nome do cliente</strong> e um
-              identificador de e-mail tecnico gerado pela plataforma, junto do valor
-              e da referencia do agendamento. O dinheiro vai direto para a conta da
-              barbearia — o BarberPro nao recebe nem retem o valor pago pelo cliente.
-              O tratamento desses dados pelo Mercado Pago segue a politica de
-              privacidade da propria empresa.
+              identificador de e-mail técnico gerado pela plataforma, junto do valor
+              e da referência do agendamento. O dinheiro vai direto para a conta da
+              barbearia — o BarberPro não recebe nem retém o valor pago pelo cliente.
+              O tratamento desses dados pelo Mercado Pago segue a política de
+              privacidade da própria empresa.
             </li>
           </ul>
           <p>
             <strong className="text-gray-200">
-              Nao vendemos, alugamos ou compartilhamos seus dados com terceiros
+              Não vendemos, alugamos ou compartilhamos seus dados com terceiros
               para fins de marketing.
             </strong>
           </p>
@@ -211,12 +211,12 @@ export default function PrivacidadePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            7. Retencao dos dados
+            7. Retenção dos dados
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
               <strong className="text-gray-200">Dados de conta:</strong> mantidos
-              enquanto a conta estiver ativa. Ao excluir a conta, os dados sao
+              enquanto a conta estiver ativa. Ao excluir a conta, os dados são
               removidos <strong className="text-gray-200">imediatamente</strong> do
               banco de dados.
             </li>
@@ -224,19 +224,19 @@ export default function PrivacidadePage() {
               <strong className="text-gray-200">Dados de cliente da barbearia:</strong>{" "}
               mantidos enquanto a barbearia mantiver o relacionamento. A barbearia
               pode excluir os dados de um cliente a qualquer momento pelo painel, e
-              a remocao e imediata.
+              a remoção e imediata.
             </li>
             <li>
-              <strong className="text-gray-200">Copias de seguranca (backup):</strong>{" "}
-              o banco de dados possui backup automatico do provedor de hospedagem.
-              Um dado excluido pode permanecer em backup por ate 7 dias ate o ciclo
-              ser sobrescrito. Backups sao usados apenas para recuperacao de
+              <strong className="text-gray-200">Cópias de segurança (backup):</strong>{" "}
+              o banco de dados possui backup automático do provedor de hospedagem.
+              Um dado excluido pode permanecer em backup por até 7 dias até o ciclo
+              ser sobrescrito. Backups são usados apenas para recuperação de
               desastre, nunca para consulta.
             </li>
             <li>
               <strong className="text-gray-200">Registros de acesso:</strong>{" "}
-              mantidos pelo periodo de retencao dos nossos provedores de
-              infraestrutura, utilizados apenas para seguranca e diagnostico.
+              mantidos pelo período de retenção dos nossos provedores de
+              infraestrutura, utilizados apenas para segurança e diagnóstico.
             </li>
           </ul>
         </section>
@@ -245,12 +245,12 @@ export default function PrivacidadePage() {
           <h2 className="text-xl font-semibold text-white">
             8. Seus direitos (LGPD Art. 18)
           </h2>
-          <p>Voce tem direito a:</p>
+          <p>Você tem direito a:</p>
           <ul className="list-disc pl-6 space-y-1">
-            <li>Confirmar a existencia de tratamento dos seus dados</li>
+            <li>Confirmar a existência de tratamento dos seus dados</li>
             <li>Acessar seus dados pessoais</li>
             <li>Corrigir dados incompletos ou desatualizados</li>
-            <li>Solicitar a anonimizacao ou eliminacao de dados desnecessarios</li>
+            <li>Solicitar a anonimização ou eliminação de dados desnecessários</li>
             <li>Solicitar a portabilidade dos dados</li>
             <li>Revogar o consentimento a qualquer momento</li>
             <li>
@@ -267,35 +267,35 @@ export default function PrivacidadePage() {
           <ul className="list-disc pl-6 space-y-2">
             <li>
               <strong className="text-gray-200">
-                Se voce e dono de barbearia ou barbeiro:
+                Se você e dono de barbearia ou barbeiro:
               </strong>{" "}
-              use a opcao de excluir conta no painel, ou fale conosco pelos canais
-              da secao 12.
+              use a opção de excluir conta no painel, ou fale conosco pelos canais
+              da seção 12.
             </li>
             <li>
               <strong className="text-gray-200">
-                Se voce e cliente de uma barbearia:
+                Se você e cliente de uma barbearia:
               </strong>{" "}
-              peca diretamente a barbearia onde voce se atende — ela consegue
+              peca diretamente a barbearia onde você se atende — ela consegue
               excluir seus dados pelo painel dela na hora. Se preferir, fale
               conosco e encaminhamos o pedido.
             </li>
           </ul>
           <p className="text-sm text-gray-400">
-            Respondemos as solicitacoes em ate 15 dias.
+            Respondemos as solicitações em até 15 dias.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            9. Seguranca
+            9. Segurança
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>Senhas armazenadas com bcrypt (12 rounds de salt)</li>
-            <li>Autenticacao via JWT com expiracao</li>
-            <li>Comunicacao via HTTPS (TLS 1.3)</li>
+            <li>Autenticação via JWT com expiração</li>
+            <li>Comunicação via HTTPS (TLS 1.3)</li>
             <li>Banco de dados com acesso restrito por credenciais</li>
-            <li>Validacao de entrada com Zod para prevenir injecao</li>
+            <li>Validação de entrada com Zod para prevenir injeção</li>
             <li>Token JWT armazenado com criptografia no dispositivo (expo-secure-store)</li>
           </ul>
         </section>
@@ -305,20 +305,20 @@ export default function PrivacidadePage() {
             10. Cookies
           </h2>
           <p>
-            O BarberPro nao utiliza cookies de rastreamento. Utilizamos apenas
+            O BarberPro não utiliza cookies de rastreamento. Utilizamos apenas
             armazenamento local (localStorage) para preferencias de interface e
-            tokens de sessao.
+            tokens de sessão.
           </p>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-white">
-            11. Alteracoes nesta politica
+            11. Alterações nesta política
           </h2>
           <p>
-            Esta politica pode ser atualizada periodicamente. Alteracoes
-            significativas serao comunicadas por meio do app ou do site. A data
-            de ultima atualizacao sera sempre indicada no topo desta pagina.
+            Esta política pode ser atualizada periodicamente. Alterações
+            significativas serão comunicadas por meio do app ou do site. A data
+            de última atualização será sempre indicada no topo desta página.
           </p>
         </section>
 
@@ -327,7 +327,7 @@ export default function PrivacidadePage() {
             12. Contato
           </h2>
           <p>
-            Para duvidas, solicitacoes ou reclamacoes relacionadas a privacidade,
+            Para dúvidas, solicitações ou reclamações relacionadas a privacidade,
             fale com o encarregado pelo tratamento de dados:
           </p>
           <ul className="list-disc pl-6 space-y-1">
@@ -349,7 +349,7 @@ export default function PrivacidadePage() {
 
         <footer className="border-t border-gray-800 pt-6 text-sm text-gray-500">
           <p>
-            Se nao concordar com esta politica, voce pode solicitar a exclusao
+            Se não concordar com esta política, você pode solicitar a exclusão
             da sua conta a qualquer momento pelo app ou pelo painel web.
           </p>
         </footer>

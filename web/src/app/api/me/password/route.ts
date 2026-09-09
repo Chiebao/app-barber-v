@@ -11,7 +11,7 @@ export async function PATCH(req: NextRequest) {
 
     const { currentPassword, newPassword } = await req.json();
     if (!currentPassword || !newPassword) {
-      return NextResponse.json({ error: "Campos obrigatorios" }, { status: 400 });
+      return NextResponse.json({ error: "Campos obrigatórios" }, { status: 400 });
     }
     if (newPassword.length < 6) {
       return NextResponse.json({ error: "Nova senha deve ter ao menos 6 caracteres" }, { status: 400 });

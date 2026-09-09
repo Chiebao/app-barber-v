@@ -92,7 +92,7 @@ function periodoDe(chave: string): { start: string; end: string } {
 const PERIODOS = [
   { id: "hoje", label: "Hoje" },
   { id: "semana", label: "7 dias" },
-  { id: "mes", label: "Este mês" },
+  { id: "mês", label: "Este mês" },
   { id: "passado", label: "Mês passado" },
 ];
 
@@ -111,7 +111,7 @@ export default function Relatorio({
   onVoltar: () => void;
   onUnauthorized: () => void;
 }) {
-  const [periodo, setPeriodo] = useState("mes");
+  const [periodo, setPeriodo] = useState("mês");
   const [custom, setCustom] = useState<{ start: string; end: string } | null>(null);
   const [barbeiroId, setBarbeiroId] = useState("");
   const [resumo, setResumo] = useState<Resumo | null>(null);

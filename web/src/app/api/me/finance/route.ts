@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
     if (!payload) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const { appointmentId, paymentMethod, removedServiceIds, customPrice, deferredPaymentDate } = await req.json();
-    if (!["pix", "dinheiro", "cartao", "adiado"].includes(paymentMethod)) return NextResponse.json({ error: "Forma de pagamento invalida" }, { status: 400 });
+    if (!["pix", "dinheiro", "cartao", "adiado"].includes(paymentMethod)) return NextResponse.json({ error: "Forma de pagamento inválida" }, { status: 400 });
 
     const appointment = await prisma.appointment.findFirst({
       where: { id: appointmentId, shopId: payload.shopId },
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     const end = searchParams.get("end");
     const barberId = searchParams.get("barberId");
 
-    if (!start || !end) return NextResponse.json({ error: "start e end obrigatorios" }, { status: 400 });
+    if (!start || !end) return NextResponse.json({ error: "start e end obrigatórios" }, { status: 400 });
 
     const where: Record<string, unknown> = {
       shopId: payload.shopId,

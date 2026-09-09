@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const existingOwner = await prisma.owner.findUnique({ where: { phone: data.phone } });
     if (existingOwner) {
-      return NextResponse.json({ error: "Telefone ja cadastrado" }, { status: 400 });
+      return NextResponse.json({ error: "Telefone já cadastrado" }, { status: 400 });
     }
 
     let slug = slugify(data.shopName, { lower: true, strict: true });
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       recoveryCode,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados invalidos", details: error.errors }, { status: 400 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: "Dados inválidos", details: error.errors }, { status: 400 });
     console.error("Register error:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

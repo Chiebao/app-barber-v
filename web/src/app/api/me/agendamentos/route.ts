@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
     const date = sp.get("date");
     const duration = Number(sp.get("duration") || 0);
     if (!date || !duration) {
-      return NextResponse.json({ error: "date e duration obrigatorios" }, { status: 400 });
+      return NextResponse.json({ error: "date e duration obrigatórios" }, { status: 400 });
     }
 
     const shop = await prisma.shop.findUnique({ where: { id: payload.shopId } });

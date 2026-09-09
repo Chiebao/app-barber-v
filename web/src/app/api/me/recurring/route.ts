@@ -192,7 +192,7 @@ export async function DELETE(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "id obrigatorio" }, { status: 400 });
+    if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 });
 
     const regra = await prisma.recurringAppointment.findFirst({
       where: {

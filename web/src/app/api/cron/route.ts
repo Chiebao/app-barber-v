@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     if (new URL(req.url).searchParams.get("check") === "1") {
       if (!temCanal) {
         return NextResponse.json({
-          canal: "nao configurado",
+          canal: "não configurado",
           temToken: !!WHATSAPP_API_TOKEN,
           temPhoneId: !!WHATSAPP_PHONE_ID,
         });
@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
       const expiraEm = dbg?.data?.expires_at as number | undefined;
       const validade =
         expiraEm === undefined
-          ? "nao foi possivel consultar"
+          ? "não foi possível consultar"
           : expiraEm === 0
           ? "nunca expira"
           : `expira em ${new Date(expiraEm * 1000).toISOString()}`;
@@ -197,7 +197,7 @@ export async function GET(req: NextRequest) {
             ok,
             modelo: nome,
             textoEsperado: preverTexto(nome, vars),
-            dica: ok ? undefined : "modelo nao aprovado em pt_BR, nome diferente, ou variaveis a mais/menos",
+            dica: ok ? undefined : "modelo não aprovado em pt_BR, nome diferente, ou variaveis a mais/menos",
           };
         }
       } else if (destino) {
@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
             messaging_product: "whatsapp",
             to: tel.startsWith("55") ? tel : `55${tel}`,
             type: "text",
-            text: { body: "BarberPro: teste de canal ✅ Se voce recebeu isso, os lembretes automaticos estao prontos para funcionar." },
+            text: { body: "BarberPro: teste de canal ✅ Se você recebeu isso, os lembretes automaticos estão prontos para funcionar." },
           }),
         });
         const corpo = await r.json().catch(() => ({}));
@@ -231,9 +231,9 @@ export async function GET(req: NextRequest) {
         tokenTamanho: WHATSAPP_API_TOKEN.length,
         phoneIdConfigurado: WHATSAPP_PHONE_ID,
         diagnostico: meRes.ok && !numRes.ok
-          ? "Token OK, mas o PHONE_ID esta errado ou o System User nao tem acesso a esse numero"
+          ? "Token OK, mas o PHONE_ID esta errado ou o System User não tem acesso a esse número"
           : !meRes.ok
-          ? "Token invalido"
+          ? "Token inválido"
           : "Tudo certo",
       });
     }

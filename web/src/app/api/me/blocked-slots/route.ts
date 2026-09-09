@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
-    if (!date) return NextResponse.json({ error: "date obrigatorio" }, { status: 400 });
+    if (!date) return NextResponse.json({ error: "date obrigatório" }, { status: 400 });
 
     const barberId = await resolveBarber(payload, searchParams.get("barberId"));
     if (!barberId) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 403 });
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { date, times, allDay } = body;
-    if (!date) return NextResponse.json({ error: "date obrigatorio" }, { status: 400 });
+    if (!date) return NextResponse.json({ error: "date obrigatório" }, { status: 400 });
 
     const barberId = await resolveBarber(payload, body.barberId);
     if (!barberId) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 403 });
@@ -197,7 +197,7 @@ export async function DELETE(req: NextRequest) {
 
     const body = await req.json();
     const { date, times, allDay } = body;
-    if (!date) return NextResponse.json({ error: "date obrigatorio" }, { status: 400 });
+    if (!date) return NextResponse.json({ error: "date obrigatório" }, { status: 400 });
 
     const barberId = await resolveBarber(payload, body.barberId);
     if (!barberId) return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 403 });

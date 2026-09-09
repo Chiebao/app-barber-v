@@ -7,7 +7,7 @@ import { situacao, registrarFalha, limpar, mensagemDeBloqueio, LOGIN } from "@/a
 export async function POST(req: NextRequest) {
   try {
     const { phone, password } = await req.json();
-    if (!phone || !password) return NextResponse.json({ error: "Dados obrigatorios" }, { status: 400 });
+    if (!phone || !password) return NextResponse.json({ error: "Dados obrigatórios" }, { status: 400 });
 
     // Trava por IDENTIDADE. O limitador por IP do middleware vive em
     // memoria e cada instancia serverless tem o seu — quem ataca uma conta
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: mensagemDeBloqueio(depois.segundos) }, { status: 429 });
     }
 
-    return NextResponse.json({ error: "Credenciais invalidas" }, { status: 401 });
+    return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

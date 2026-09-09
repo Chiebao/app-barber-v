@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     const duration = searchParams.get("duration");
     const barberId = searchParams.get("barberId");
 
-    if (!date || !duration) return NextResponse.json({ error: "date e duration obrigatorios" }, { status: 400 });
+    if (!date || !duration) return NextResponse.json({ error: "date e duration obrigatórios" }, { status: 400 });
 
     const shop = await prisma.shop.findUnique({ where: { slug: params.slug } });
     if (!shop) return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 });

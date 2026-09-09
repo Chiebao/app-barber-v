@@ -63,7 +63,7 @@ interface ProductItem { id: string; name: string; price: number; custo: number |
 interface ClientItem { id: string; name: string; phone: string; notes: string | null; noShowCount: number; firstDate: string; totalAppointments: number; }
 interface SlotData { allSlots: string[]; blocked: string[]; allDay: boolean; booked: string[]; }
 
-const STATUS_LABELS: Record<string, string> = { confirmed: "Confirmado", cancelled: "Cancelado", completed: "Concluido", pending: "Pendente", pending_payment: "Aguardando Pix", no_show: "Nao compareceu" };
+const STATUS_LABELS: Record<string, string> = { confirmed: "Confirmado", cancelled: "Cancelado", completed: "Concluido", pending: "Pendente", pending_payment: "Aguardando Pix", no_show: "Não compareceu" };
 const STATUS_COLORS: Record<string, string> = {
   confirmed: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   cancelled: "bg-red-500/20 text-red-400 border border-red-500/30",
@@ -80,7 +80,7 @@ const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒",
 const WEEKDAYS = ["Do", "Se", "Te", "Qa", "Qi", "Sx", "Sa"];
 
 type Tab = "home" | "agenda" | "financeiro" | "config";
-type ConfigView = null | "dados" | "horario" | "pagamento" | "aparencia" | "notificacoes" | "senha" | "banidos" | "assinatura";
+type ConfigView = null | "dados" | "horário" | "pagamento" | "aparencia" | "notificações" | "senha" | "banidos" | "assinatura";
 const CONFIG_TITULOS: Record<string, string> = {
   dados: "🏠 Dados da barbearia",
   horario: "🕐 Horário e dias",
@@ -104,7 +104,7 @@ const ROTULO_ASSINATURA: Record<string, string> = {
 };
 interface BannedItem { id: string; phone: string; name: string | null; reason: string | null; }
 
-type SubView = null | "barbeiros" | "servicos" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos" | "mensagens";
+type SubView = null | "barbeiros" | "serviços" | "clientes" | "fidelidade" | "espera" | "produtos" | "sumidos" | "fixos" | "mensagens";
 
 /** Corte que se repete toda semana. A regra, nao as ocorrencias. */
 
@@ -500,7 +500,7 @@ export default function PainelPage() {
     if (subView === "barbeiros") fetchBarbers();
     if (subView === "fidelidade") fetchLoyalty();
     if (subView === "espera") fetchWaitlist();
-    if (subView === "servicos") fetchServices();
+    if (subView === "serviços") fetchServices();
     if (subView === "clientes") { fetchClients(); fetchBanned(); }
     if (subView === "produtos") fetchProducts();
     // O corte fixo precisa de servicos (duracao/preco) e barbeiros (de quem
@@ -1207,7 +1207,7 @@ export default function PainelPage() {
   };
 
   const cartoesCadastro: Cartao[] = user?.role === "owner" ? [
-    { view: null, sub: "servicos", icon: "\u{1F527}", label: "Serviços",
+    { view: null, sub: "serviços", icon: "\u{1F527}", label: "Serviços",
       valor: resumo ? (resumo.servicos === 0 ? "nenhum" : `${resumo.servicos} ativo${resumo.servicos > 1 ? "s" : ""}`) : "—",
       pendente: !!resumo && resumo.servicos === 0 },
     { view: null, sub: "produtos", icon: "\u{1F6CD}\u{FE0F}", label: "Produtos",
@@ -1233,7 +1233,7 @@ export default function PainelPage() {
   ] : [];
 
   const cartoesConta: Cartao[] = [
-    { view: "notificacoes", icon: "\u{1F514}", label: "Notificações",
+    { view: "notificações", icon: "\u{1F514}", label: "Notificações",
       valor: resumo ? (resumo.notificacoes > 0 ? `${resumo.notificacoes} aparelho${resumo.notificacoes > 1 ? "s" : ""}` : "desligadas") : "—",
       pendente: !!resumo && resumo.notificacoes === 0 },
     { view: "senha", icon: "\u{1F512}", label: "Senha", valor: "trocar e recuperar" },
@@ -1345,7 +1345,7 @@ export default function PainelPage() {
     );
 
     // ─── SERVICOS ───
-    if (subView === "servicos") return (
+    if (subView === "serviços") return (
       <div className="space-y-6">{backBtn}
         <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
           <h3 className="font-semibold text-white">Adicionar serviço</h3>
@@ -1359,7 +1359,7 @@ export default function PainelPage() {
               <button key={key} onClick={() => setNewService(p => ({...p, category: key}))} className={`px-3 py-2 rounded-lg text-sm border transition ${newService.category === key ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>{CATEGORY_ICONS[key]} {label}</button>
             ))}
           </div>
-          <button onClick={handleAddService} disabled={addingService} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingService ? "Adicionando..." : "Adicionar Servico"}</button>
+          <button onClick={handleAddService} disabled={addingService} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingService ? "Adicionando..." : "Adicionar Serviço"}</button>
         </div>
         {servicesLoading ? <Spinner /> : services.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum serviço cadastrado</p> : (
           <div className="space-y-3">
@@ -2160,7 +2160,7 @@ export default function PainelPage() {
                         mostrando o valor antigo denuncia na hora que a alteração
                         não salvou. */}
                     <button
-                      onClick={() => setConfigView("horario")}
+                      onClick={() => setConfigView("horário")}
                       className="w-full rounded-2xl border border-gray-700 bg-dark-800 p-4 text-left hover:border-brand-400 transition-all press-scale"
                     >
                       <p className="text-xs text-gray-500">🕐 Horário e dias</p>
@@ -2296,7 +2296,7 @@ export default function PainelPage() {
                 )}
 
                 {/* ─── Horário e dias ─── */}
-                {configView === "horario" && (
+                {configView === "horário" && (
                   <>
                     {/* Shop settings */}
                 {shopSettings && (
@@ -2407,7 +2407,7 @@ export default function PainelPage() {
                 )}
 
                 {/* ─── Notificações ─── */}
-                {configView === "notificacoes" && <PushToggle token={token} />}
+                {configView === "notificações" && <PushToggle token={token} />}
 
                 {/* ─── Senha e recuperação ─── */}
                 {configView === "senha" && (
@@ -2511,7 +2511,7 @@ export default function PainelPage() {
       {/* ── Bottom Navigation (mobile-like) ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-dark-800 border-t border-gray-700 flex z-30 safe-bottom">
         {([
-          { tab: "home" as Tab, icon: "🏠", label: "Inicio" },
+          { tab: "home" as Tab, icon: "🏠", label: "Início" },
           { tab: "agenda" as Tab, icon: "📅", label: "Agenda" },
           { tab: "financeiro" as Tab, icon: "💰", label: "Financeiro" },
           { tab: "config" as Tab, icon: "⚙️", label: "Config" },
@@ -2617,7 +2617,7 @@ function CancelModal({ open, appt, waitlistCount, notifyWaitlist, onToggleNotify
               </button>
             </div>
             {notifyWaitlist && (
-              <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para voce avisar os clientes da lista de espera.</p>
+              <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para você avisar os clientes da lista de espera.</p>
             )}
           </div>
         )}

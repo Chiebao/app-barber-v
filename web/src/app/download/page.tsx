@@ -49,7 +49,7 @@ export default function DownloadPage() {
               <span>
                 Role a lista e toque em{" "}
                 <strong className="text-white">
-                  Adicionar a Tela de Inicio
+                  Adicionar à Tela de Início
                 </strong>{" "}
                 <span className="inline-block bg-dark-700 px-2 py-0.5 rounded text-xs">
                   ➕
@@ -90,7 +90,7 @@ export default function DownloadPage() {
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-500/20 text-brand-400 text-sm font-bold flex items-center justify-center">2</span>
               <span>
                 Toque nos{" "}
-                <strong className="text-white">tres pontinhos</strong>{" "}
+                <strong className="text-white">três pontinhos</strong>{" "}
                 <span className="inline-block bg-dark-700 px-2 py-0.5 rounded text-xs">
                   ⋮
                 </span>{" "}
@@ -113,7 +113,7 @@ export default function DownloadPage() {
           </ol>
 
           <div className="bg-brand-500/10 border border-brand-500/20 rounded-xl p-3 text-sm text-brand-200">
-            O Chrome pode mostrar um banner automatico &quot;Instalar
+            O Chrome pode mostrar um banner automático &quot;Instalar
             BarberPro&quot; — basta tocar nele!
           </div>
         </div>

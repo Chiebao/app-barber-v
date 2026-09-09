@@ -17,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("erro nao tratado:", error);
+    console.error("erro não tratado:", error);
   }, [error]);
 
   return (
