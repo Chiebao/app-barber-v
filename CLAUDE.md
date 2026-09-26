@@ -446,6 +446,27 @@ app_barber/
 - Os DOIS modos (steps e chat) leem o mesmo campo — divergir daria agenda
   diferente conforme o modo escolhido
 
+### Agenda do barbeiro x janela do cliente
+- Sao coisas DIFERENTES e viviam confundidas: `diasAbertos` limita o que o
+  CLIENTE ve. A agenda do barbeiro nunca teve limite de proposito — tinha
+  limite por descuido, numa tira de 7 dias escrita a mao em `_agenda.tsx`
+- O estrago: com a janela em 7 dias, o barbeiro com compromisso no dia 3 nao
+  conseguia FECHAR o dia 3. Esperava a agenda alcancar a data e, quando
+  alcancava, ja tinha cliente marcado para desmarcar na mao
+- Agora tem seletor de data (`input type=date`) + botao Hoje. A tira passou a
+  nascer no dia ABERTO, nao em hoje: quem pula para 12/10 precisa da
+  vizinhanca de 12/10, senao volta para setembro sozinho
+- `/api/me/blocked-slots` nunca teve limite de data, entao o seletor bastou
+
+### Rastro de auditoria
+- NAO existe tabela de log. O que da para reconstruir sai do proprio
+  `Appointment`: `createdAt` (quando foi marcado), `status`, `cancelledAt` +
+  `cancelledBy` (quem cancelou), `paidAt`, `reminderSentAt`, `recurringId`
+- Falta o que um log daria: quem EDITOU servicos, o horario ANTERIOR de um
+  remarcado, e qualquer acao que nao mude uma dessas colunas
+- Sobreposicao de horario e impedida por transacao Serializable na criacao.
+  Varredura em producao (95 agendamentos) achou ZERO sobreposicao
+
 ### Quando a internet cai
 - O inimigo NAO e a Vercel cair — e a internet DA BARBEARIA cair, que
   acontece toda semana. Provedor tem 99,9%; wi-fi de barbearia nao tem

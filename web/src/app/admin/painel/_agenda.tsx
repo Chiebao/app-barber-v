@@ -315,10 +315,11 @@ export default function Agenda({
   const faixas = d ? montarFaixas(d) : [];
   const livreTotal = faixas.filter((f) => f.tipo === "livre").reduce((s, f) => s + (f.fim - f.inicio), 0);
 
-  // Seis dias a partir de hoje, como tira de datas.
-  const hoje = new Date();
+  // A tira comeca no dia ABERTO, nao em hoje: quem pulou para 12/10 pelo
+  // seletor precisa da vizinhanca de 12/10, senao volta para setembro sozinho.
+  const base = new Date(data + "T12:00:00");
   const diasTira = Array.from({ length: 7 }, (_, i) => {
-    const dt = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
+    const dt = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
     const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
     return { iso, dia: dt.getDate(), semana: DIAS[dt.getDay()].nome.slice(0, 3) };
   });
@@ -329,7 +330,32 @@ export default function Agenda({
 
       <h2 className="text-lg font-semibold text-white">📅 Minha Agenda</h2>
 
-      {/* Tira de datas */}
+      {/* Tira de datas + salto para qualquer dia.
+
+          A tira sozinha cobria 7 dias a partir de hoje e mais nada. O
+          barbeiro que tinha compromisso no dia 3 nao conseguia FECHAR o dia
+          3 — esperava a agenda alcancar a data e, quando alcancava, ja tinha
+          cliente marcado para desmarcar na mao.
+
+          Isto nao tem relacao com `diasAbertos`: aquilo limita o que o
+          CLIENTE ve. A agenda do barbeiro nunca teve limite de proposito,
+          tinha limite por descuido. */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onMudarData(new Date().toISOString().split("T")[0])}
+          className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-xs font-semibold text-gray-300 transition hover:border-gray-500 hover:text-white"
+        >
+          Hoje
+        </button>
+        <input
+          type="date"
+          value={data}
+          onChange={(e) => e.target.value && onMudarData(e.target.value)}
+          aria-label="Ir para uma data"
+          className="flex-1 min-w-0 rounded-lg border border-gray-700 bg-dark-800 px-2.5 py-2 text-sm text-white"
+        />
+      </div>
+
       {/* scrollbar escondida: o globals.css pinta a barra de dourado e ela
           apareceria como um risco atravessado embaixo das datas */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
