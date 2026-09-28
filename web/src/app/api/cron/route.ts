@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { nomeDoCliente } from "@/app/lib/nome-do-cliente";
 import { prisma } from "@/app/lib/prisma";
 import { limparEsperaVencida } from "@/app/lib/espera";
 import { appointmentStartUtc } from "@/app/lib/pending-deadline";
@@ -260,7 +261,7 @@ export async function GET(req: NextRequest) {
         // Modelo aprovado: o lembrete é sempre iniciado por nós, então fora
         // da janela de 24h a Meta só entrega desta forma.
         const enviado = await enviarModelo(phoneWithCountry, "lembrete_agendamento", [
-          apt.client.name.split(" ")[0],
+          nomeDoCliente(apt).split(" ")[0],
           apt.shop.name,
           apt.startTime,
           serviceNames,

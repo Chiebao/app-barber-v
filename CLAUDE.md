@@ -458,6 +458,24 @@ app_barber/
   vizinhanca de 12/10, senao volta para setembro sozinho
 - `/api/me/blocked-slots` nunca teve limite de data, entao o seletor bastou
 
+### Nome do cliente no agendamento
+- `Client` e GLOBAL e a chave e o TELEFONE. Num salao, telefone repetido nao
+  e erro: pai marca para o filho, marido para a esposa. Sao a MESMA linha
+- A rota do painel fazia `client.upsert({ update: { name } })`. Marcar o
+  segundo RENOMEAVA o primeiro — em todos os agendamentos passados daquele
+  telefone, de todas as lojas. Foi a queixa "o app troca os nomes"
+- A rota PUBLICA nunca teve esse bug: ela so cria se nao existir
+- Conserto: `Appointment.clientName` guarda o nome digitado NA HORA, mesmo
+  principio do `ComandaItem.custo`. O `Client` continua sendo a identidade
+  (telefone, faltas, fidelidade); o agendamento carrega quem era
+- `nomeDoCliente()` (lib) devolve `clientName` e cai no `client.name` so
+  para linha antiga. Usado na agenda, no a-receber, no lembrete e no resumo
+- 109 linhas existentes foram congeladas com o nome que tinham. Quem JA
+  tinha sido renomeado congelou com o nome errado — nao da para recuperar,
+  porque o valor antigo foi sobrescrito e nunca houve log
+- Fidelidade e faltas continuam por TELEFONE, entao pai e filho dividem os
+  dois. Isso NAO foi resolvido: separar exigiria identidade por pessoa
+
 ### Rastro de auditoria
 - NAO existe tabela de log. O que da para reconstruir sai do proprio
   `Appointment`: `createdAt` (quando foi marcado), `status`, `cancelledAt` +

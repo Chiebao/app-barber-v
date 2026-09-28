@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { nomeDoCliente } from "@/app/lib/nome-do-cliente";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { agoraNaBarbearia } from "@/app/lib/time-slots";
 
@@ -108,6 +109,7 @@ export async function enviarAgendaDoDia(agora = new Date()): Promise<ResultadoAg
       orderBy: { startTime: "asc" },
       select: {
         startTime: true,
+        clientName: true,
         client: { select: { name: true } },
         services: { select: { service: { select: { name: true } } } },
       },
@@ -119,7 +121,7 @@ export async function enviarAgendaDoDia(agora = new Date()): Promise<ResultadoAg
     const lista = resumirAgenda(
       agenda.map((a) => ({
         startTime: a.startTime,
-        cliente: a.client?.name ?? "Cliente",
+        cliente: nomeDoCliente(a),
         servicos: a.services.map((s) => s.service.name),
       })),
     );

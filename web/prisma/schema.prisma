@@ -266,6 +266,15 @@ model Appointment {
   pixRequested        Boolean   @default(false)
   // Ocorrencia gerada por um agendamento recorrente. Nulo = agendamento avulso.
   recurringId         String?
+
+  /// Nome digitado NA HORA de marcar.
+  ///
+  /// `Client` e global e a chave e o telefone, entao pai e filho que usam o
+  /// mesmo numero sao o MESMO cliente. Sem congelar aqui, marcar o segundo
+  /// renomeava o agendamento do primeiro — e o de todas as lojas.
+  ///
+  /// Nulo = linha antiga; nesse caso vale o nome do `Client`.
+  clientName          String?
   createdAt           DateTime  @default(now())
 
   shop         Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)

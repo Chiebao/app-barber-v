@@ -77,10 +77,14 @@ export async function POST(req: NextRequest) {
     // Telefone sempre só dígitos: é assim que o cliente é encontrado em todo
     // o resto do app, e um formato divergente cria um cliente duplicado.
     const phone = data.clientPhone.replace(/\D/g, "");
+    // NAO atualiza o nome: `Client` e global e a chave e o telefone, entao
+    // pai e filho que usam o mesmo numero sao a MESMA linha. Renomear aqui
+    // reescrevia o nome no agendamento do outro — e em todas as lojas.
+    // O nome desta marcacao fica congelado no proprio agendamento.
     const client = await prisma.client.upsert({
       where: { phone },
       create: { name: data.clientName.trim(), phone },
-      update: { name: data.clientName.trim() },
+      update: {},
     });
 
     const dateObj = new Date(data.date + "T00:00:00.000Z");
@@ -113,6 +117,9 @@ export async function POST(req: NextRequest) {
               shopId: shop.id,
               barberId,
               clientId: client.id,
+              // Congelado aqui: o `Client` e compartilhado por telefone, e
+              // quem marcar depois com o mesmo numero nao muda este nome.
+              clientName: data.clientName.trim(),
               date: dateObj,
               startTime: data.startTime,
               endTime,

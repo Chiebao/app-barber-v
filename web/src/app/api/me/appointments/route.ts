@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { nomeDoCliente } from "@/app/lib/nome-do-cliente";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num, money, multiplyMoney } from "@/app/lib/money";
@@ -58,7 +59,10 @@ export async function GET(req: NextRequest) {
         paymentMethod: a.paymentMethod,
         paidAt: a.paidAt,
         barberName: a.barber.name,
-        client: a.client,
+        // O nome vem do AGENDAMENTO, nao do Client: telefone repetido (pai e
+        // filho) e a mesma linha de cliente, e quem marcou depois nao pode
+        // renomear quem marcou antes.
+        client: { ...a.client, name: nomeDoCliente(a) },
         services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,
         comanda: a.comandaItems.map(ci => ({ productId: ci.productId, name: ci.product.name, quantity: ci.quantity, price: num(ci.price) })),

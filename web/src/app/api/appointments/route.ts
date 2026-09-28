@@ -139,6 +139,9 @@ export async function POST(req: NextRequest) {
               shopId: data.shopId,
               barberId: data.barberId,
               clientId,
+              // Congelado aqui: o `Client` e compartilhado por telefone, e
+              // quem marcar depois com o mesmo numero nao muda este nome.
+              clientName: data.clientName.trim(),
               date: dateObj,
               startTime: data.startTime,
               endTime,

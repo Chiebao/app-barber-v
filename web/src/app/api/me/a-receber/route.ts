@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { nomeDoCliente } from "@/app/lib/nome-do-cliente";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num, money, multiplyMoney } from "@/app/lib/money";
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
     const porCliente = new Map<string, { id: string; name: string; phone: string; total: number; qtd: number; maisAntigo: string; temPromessaVencida: boolean }>();
     for (const i of itens) {
       const atual = porCliente.get(i.client.id) || {
-        id: i.client.id, name: i.client.name, phone: i.client.phone,
+        id: i.client.id, name: nomeDoCliente(i), phone: i.client.phone,
         total: 0, qtd: 0, maisAntigo: i.date, temPromessaVencida: false,
       };
       atual.total = money(atual.total + i.total);
