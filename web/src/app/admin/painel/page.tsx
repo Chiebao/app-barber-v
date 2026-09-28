@@ -60,7 +60,9 @@ interface DashboardData {
 }
 interface ServiceItem { id: string; name: string; duration: number; price: number; category: string; active: boolean; imageUrl?: string | null; }
 interface ProductItem { id: string; name: string; price: number; custo: number | null; description: string | null; imageUrl: string | null; active: boolean; }
-interface ClientItem { id: string; name: string; phone: string; notes: string | null; noShowCount: number; firstDate: string; totalAppointments: number; }
+// `id` e do telefone (usado para salvar a nota); `pessoa` separa quem
+// divide o numero. A chave da lista precisa dos dois.
+interface ClientItem { id: string; pessoa: string; name: string; phone: string; notes: string | null; noShowCount: number; firstDate: string; totalAppointments: number; }
 interface SlotData { allSlots: string[]; blocked: string[]; allDay: boolean; booked: string[]; }
 
 const STATUS_LABELS: Record<string, string> = { confirmed: "Confirmado", cancelled: "Cancelado", completed: "Concluido", pending: "Pendente", pending_payment: "Aguardando Pix", no_show: "Não compareceu" };
@@ -1597,7 +1599,7 @@ export default function PainelPage() {
           {clientsLoading ? <Spinner /> : filtered.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum cliente encontrado</p> : (
             <div className="space-y-3">
               {filtered.map(c => (
-                <div key={c.id} className="rounded-xl border border-gray-700 bg-dark-800 p-4">
+                <div key={`${c.id}|${c.pessoa}`} className="rounded-xl border border-gray-700 bg-dark-800 p-4">
                   <div className="flex items-center justify-between">
                     <div><p className="font-semibold text-white">{c.name}</p><p className="text-sm text-gray-400">{c.phone}</p></div>
                     <div className="text-center"><p className="text-lg font-semibold text-brand-400">{c.totalAppointments}</p><p className="text-xs text-gray-500">visitas</p></div>

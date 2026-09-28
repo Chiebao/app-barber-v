@@ -227,6 +227,13 @@ model Client {
   name        String
   phone       String   @unique
   email       String?
+  /// OBSOLETO — nao e mais lido nem escrito em lugar nenhum.
+  ///
+  /// Era o contador de faltas do TELEFONE, e pai e filho dividem telefone:
+  /// a falta do filho cobrava Pix do pai, e o Pix do pai limpava a ficha do
+  /// filho. A contagem agora e DERIVADA por pessoa, em `lib/faltas.ts`.
+  ///
+  /// A coluna ficou para nao exigir migracao de dado num banco em uso.
   noShowCount Int      @default(0)
   notes       String? // notas do barbeiro sobre o cliente (CRM)
   createdAt   DateTime @default(now())
@@ -275,6 +282,13 @@ model Appointment {
   ///
   /// Nulo = linha antiga; nesse caso vale o nome do `Client`.
   clientName          String?
+
+  /// Falta perdoada quando o cliente pagou o Pix da penalidade.
+  ///
+  /// Substitui o antigo `Client.noShowCount = 0`: zerar um contador
+  /// apagava a falta do PAI junto com a do filho, e nao deixava rastro de
+  /// que houve perdao. Aqui da para ver qual falta foi relevada.
+  faltaPerdoada       Boolean   @default(false)
   createdAt           DateTime  @default(now())
 
   shop         Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -396,6 +410,9 @@ model LoyaltyCount {
   id           String    @id @default(cuid())
   shopId       String
   clientId     String
+  /// Nome normalizado de QUEM foi atendido. O telefone e da casa; a
+  /// fidelidade e da pessoa. Ver `lib/pessoa.ts`.
+  pessoa       String    @default("")
   barberId     String? // ultimo barbeiro que atendeu
   count        Int       @default(0)
   lastRewardAt DateTime?
@@ -404,7 +421,7 @@ model LoyaltyCount {
   shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  @@unique([shopId, clientId])
+  @@unique([shopId, clientId, pessoa])
   @@map("loyalty_counts")
 }
 

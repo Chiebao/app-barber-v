@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { faltasDaPessoa } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 
@@ -27,19 +28,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: "Agendamento não está confirmado" }, { status: 400 });
     }
 
-    // Marca como no_show e incrementa contador do cliente
-    await prisma.$transaction([
-      prisma.appointment.update({
-        where: { id: params.id },
-        data: { status: "no_show" },
-      }),
-      prisma.client.update({
-        where: { id: appointment.clientId },
-        data: { noShowCount: { increment: 1 } },
-      }),
-    ]);
+    // So marca o agendamento. A falta pertence a PESSOA, e o contador que
+    // existia era do telefone: a falta do filho cobrava Pix do pai. Agora a
+    // conta e derivada dos proprios agendamentos (ver `lib/faltas.ts`).
+    await prisma.appointment.update({
+      where: { id: params.id },
+      data: { status: "no_show" },
+    });
 
-    return NextResponse.json({ ok: true, noShowCount: appointment.client.noShowCount + 1 });
+    const nome = appointment.clientName ?? appointment.client.name;
+    const faltas = await faltasDaPessoa(prisma, appointment.clientId, nome);
+    return NextResponse.json({ ok: true, noShowCount: faltas });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

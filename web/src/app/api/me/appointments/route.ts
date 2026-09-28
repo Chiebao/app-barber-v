@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { chaveDaPessoa } from "@/app/lib/pessoa";
 import { nomeDoCliente } from "@/app/lib/nome-do-cliente";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     const appointments = await prisma.appointment.findMany({
       where,
       include: {
-        client: { select: { id: true, name: true, phone: true, noShowCount: true, notes: true } },
+        client: { select: { id: true, name: true, phone: true, notes: true } },
         barber: { select: { name: true } },
         services: { include: { service: true } },
         rating: { select: { score: true } },
@@ -42,6 +43,25 @@ export async function GET(req: NextRequest) {
       },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
+
+    // Faltas de cada PESSOA do dia, numa consulta so.
+    //
+    // Era `Client.noShowCount`, um contador no TELEFONE: o card do pai
+    // mostrava as faltas do filho. Buscar por agendamento seria uma query
+    // por linha, entao pega o historico dos clientes do dia de uma vez e
+    // agrupa por pessoa aqui.
+    const clientesDoDia = [...new Set(appointments.map((a) => a.clientId))];
+    const historico = clientesDoDia.length
+      ? await prisma.appointment.findMany({
+          where: { clientId: { in: clientesDoDia }, status: "no_show", faltaPerdoada: false },
+          select: { clientId: true, clientName: true },
+        })
+      : [];
+    const faltasPorPessoa = new Map<string, number>();
+    for (const h of historico) {
+      const k = `${h.clientId}|${chaveDaPessoa(h.clientName)}`;
+      faltasPorPessoa.set(k, (faltasPorPessoa.get(k) ?? 0) + 1);
+    }
 
     const now = new Date();
 
@@ -62,7 +82,11 @@ export async function GET(req: NextRequest) {
         // O nome vem do AGENDAMENTO, nao do Client: telefone repetido (pai e
         // filho) e a mesma linha de cliente, e quem marcou depois nao pode
         // renomear quem marcou antes.
-        client: { ...a.client, name: nomeDoCliente(a) },
+        client: {
+          ...a.client,
+          name: nomeDoCliente(a),
+          noShowCount: faltasPorPessoa.get(`${a.clientId}|${chaveDaPessoa(nomeDoCliente(a))}`) ?? 0,
+        },
         services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,
         comanda: a.comandaItems.map(ci => ({ productId: ci.productId, name: ci.product.name, quantity: ci.quantity, price: num(ci.price) })),

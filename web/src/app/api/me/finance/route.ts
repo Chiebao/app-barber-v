@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { chaveDaPessoa } from "@/app/lib/pessoa";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { num, money, sumMoney, multiplyMoney } from "@/app/lib/money";
@@ -14,7 +15,7 @@ export async function PATCH(req: NextRequest) {
 
     const appointment = await prisma.appointment.findFirst({
       where: { id: appointmentId, shopId: payload.shopId },
-      include: { services: { include: { service: true } } },
+      include: { services: { include: { service: true } }, client: true },
     });
     if (!appointment) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
@@ -51,15 +52,18 @@ export async function PATCH(req: NextRequest) {
       data: { paymentMethod, paidAt: new Date(), status: "completed", totalPrice: finalPrice, deferredPaymentDate: null },
     });
 
-    // Fidelidade
+    // Fidelidade — da PESSOA, nao do telefone. Pai e filho sao o mesmo
+    // `Client`, e somar no mesmo balde daria corte de graca para quem nao
+    // cortou dez vezes.
+    const pessoa = chaveDaPessoa(appointment.clientName ?? appointment.client.name);
     await prisma.loyaltyCount.upsert({
-      where: { shopId_clientId: { shopId: payload.shopId, clientId: appointment.clientId } },
-      create: { shopId: payload.shopId, clientId: appointment.clientId, barberId: appointment.barberId, count: 1 },
+      where: { shopId_clientId_pessoa: { shopId: payload.shopId, clientId: appointment.clientId, pessoa } },
+      create: { shopId: payload.shopId, clientId: appointment.clientId, pessoa, barberId: appointment.barberId, count: 1 },
       update: { count: { increment: 1 }, barberId: appointment.barberId },
     });
 
     const loyalty = await prisma.loyaltyCount.findUnique({
-      where: { shopId_clientId: { shopId: payload.shopId, clientId: appointment.clientId } },
+      where: { shopId_clientId_pessoa: { shopId: payload.shopId, clientId: appointment.clientId, pessoa } },
       include: { client: true },
     });
 
@@ -67,7 +71,14 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      loyalty: loyalty ? { clientName: loyalty.client.name, clientPhone: loyalty.client.phone, count: loyalty.count, reachedReward } : null,
+      loyalty: loyalty
+        ? {
+            clientName: appointment.clientName ?? loyalty.client.name,
+            clientPhone: loyalty.client.phone,
+            count: loyalty.count,
+            reachedReward,
+          }
+        : null,
     });
   } catch (error) {
     console.error(error);

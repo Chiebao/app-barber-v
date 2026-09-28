@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { faltasDaPessoa, FALTAS_PARA_EXIGIR_PIX } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
 import { num, sumMoney, multiplyMoney } from "@/app/lib/money";
 import { computePendingDeadline, appointmentStartUtc, occupiesSlotWhere } from "@/app/lib/pending-deadline";
@@ -87,7 +88,10 @@ export async function POST(req: NextRequest) {
     // Verifica no-shows (cliente com 2+ faltas). Com o Mercado Pago conectado
     // basta ter conta ligada; sem ele, ainda depende da chave Pix manual.
     const mpToken = await tokenDaBarbearia(data.shopId);
-    const needsPix = client.noShowCount >= 2 && (!!mpToken || !!shop.pixKey);
+    // Faltas de QUEM esta marcando agora, nao do telefone. Antes, o pai
+    // que nunca faltou era obrigado a pagar Pix por causa do filho.
+    const faltas = await faltasDaPessoa(prisma, client.id, data.clientName);
+    const needsPix = faltas >= FALTAS_PARA_EXIGIR_PIX && (!!mpToken || !!shop.pixKey);
 
     // Fluxo manual: avisa o cliente que precisa pagar antes de criar qualquer coisa.
     // Com o Mercado Pago seguimos direto — criamos o agendamento e a cobranca juntos.
@@ -346,9 +350,13 @@ export async function GET(req: NextRequest) {
         }
       : null;
 
-    // Fidelidade do cliente nesta barbearia
+    // Fidelidade da PESSOA nesta barbearia.
+    //
+    // Quem abre a tela ja se identificou pelo nome no portao acima, e e esse
+    // nome que decide de quem e a cartela: no mesmo telefone, o pai nao pode
+    // ver (nem gastar) os cortes do filho.
     const loyalty = await prisma.loyaltyCount.findUnique({
-      where: { shopId_clientId: { shopId, clientId: client.id } },
+      where: { shopId_clientId_pessoa: { shopId, clientId: client.id, pessoa: entered } },
     });
     const LOYALTY_TARGET = 10;
     const loyaltyCount = loyalty?.count ?? 0;

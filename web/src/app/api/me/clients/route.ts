@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { chaveDaPessoa } from "@/app/lib/pessoa";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 
@@ -12,28 +13,39 @@ export async function GET(req: NextRequest) {
       select: {
         date: true,
         clientId: true,
-        client: { select: { id: true, name: true, phone: true, notes: true, noShowCount: true } },
+        clientName: true,
+        status: true,
+        faltaPerdoada: true,
+        client: { select: { id: true, name: true, phone: true, notes: true } },
       },
       orderBy: { date: "asc" },
     });
 
-    // Agrupa por cliente
+    // Agrupa por PESSOA, nao por telefone: pai e filho dividem o numero e
+    // apareciam como uma linha so, somando as faltas e os atendimentos dos
+    // dois. As notas continuam do telefone — sao sobre a casa.
     const map: Record<string, {
-      id: string; name: string; phone: string; notes: string | null;
+      id: string; pessoa: string; name: string; phone: string; notes: string | null;
       noShowCount: number; firstDate: string; totalAppointments: number;
     }> = {};
 
     for (const apt of appointments) {
       const c = apt.client;
+      const nome = apt.clientName?.trim() || c.name;
+      const pessoa = chaveDaPessoa(nome);
+      const chave = `${c.id}|${pessoa}`;
       const dateStr = apt.date.toISOString().split("T")[0];
-      if (!map[c.id]) {
-        map[c.id] = {
-          id: c.id, name: c.name, phone: c.phone, notes: c.notes,
-          noShowCount: c.noShowCount, firstDate: dateStr, totalAppointments: 0,
+      if (!map[chave]) {
+        map[chave] = {
+          id: c.id, pessoa, name: nome, phone: c.phone, notes: c.notes,
+          noShowCount: 0, firstDate: dateStr, totalAppointments: 0,
         };
       }
-      map[c.id].totalAppointments++;
-      if (dateStr < map[c.id].firstDate) map[c.id].firstDate = dateStr;
+      map[chave].totalAppointments++;
+      // Contado do fato, nao de um contador: o antigo `Client.noShowCount`
+      // era do telefone e nao dava para separar depois.
+      if (apt.status === "no_show" && !apt.faltaPerdoada) map[chave].noShowCount++;
+      if (dateStr < map[chave].firstDate) map[chave].firstDate = dateStr;
     }
 
     const clients = Object.values(map).sort((a, b) => b.totalAppointments - a.totalAppointments);

@@ -473,8 +473,29 @@ app_barber/
 - 109 linhas existentes foram congeladas com o nome que tinham. Quem JA
   tinha sido renomeado congelou com o nome errado — nao da para recuperar,
   porque o valor antigo foi sobrescrito e nunca houve log
-- Fidelidade e faltas continuam por TELEFONE, entao pai e filho dividem os
-  dois. Isso NAO foi resolvido: separar exigiria identidade por pessoa
+
+### Pessoa x telefone (faltas e fidelidade)
+- A pessoa e (TELEFONE, NOME normalizado) — `lib/pessoa.ts`. O telefone e da
+  casa; a pessoa e quem senta na cadeira
+- `Client.noShowCount` era contador no TELEFONE: a falta do filho cobrava Pix
+  do pai, e o Pix do pai limpava a ficha do filho. A coluna esta OBSOLETA e
+  nao e mais lida nem escrita — ficou so para nao migrar dado de banco em uso
+- A contagem agora e DERIVADA dos agendamentos `no_show` nao perdoados da
+  pessoa (`lib/faltas.ts`). Contador deriva e mente; contagem sobre o fato
+  nao tem como divergir
+- Perdao virou `Appointment.faltaPerdoada` em vez de zerar contador: da para
+  ver QUAL falta foi relevada, e so as da pessoa que pagou
+- Faltas continuam GLOBAIS entre lojas, como antes: quem falta no bairro nao
+  vira confiavel atravessando a rua
+- `LoyaltyCount` ganhou `pessoa` e a unica virou (shopId, clientId, pessoa)
+- A lista de clientes agrupa por PESSOA. As NOTAS continuam do telefone —
+  sao sobre a casa, e duas linhas do mesmo numero mostram a mesma nota
+- A normalizacao resolve "Joao"/"joao"/"JOÃO", mas NAO resolve "Joao" x
+  "Joao Silva": para o sistema sao duas pessoas. Mesma limitacao que o
+  portao de privacidade do "Meus agendamentos" ja tinha
+- Na hora da mudanca nao havia NENHUM telefone com dois nomes em producao,
+  e os 4 contadores batiam 1 pra 1 com os 4 `no_show`. Por isso a troca nao
+  teve ambiguidade de migracao
 
 ### Rastro de auditoria
 - NAO existe tabela de log. O que da para reconstruir sai do proprio

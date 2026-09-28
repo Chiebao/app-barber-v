@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perdoarFaltasDaPessoa } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
 import { occupiesSlotWhere } from "@/app/lib/pending-deadline";
@@ -45,17 +46,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }, { status: 409 });
     }
 
-    await prisma.$transaction([
-      prisma.appointment.update({
-        where: { id: params.id },
-        // Confirmado: some o prazo, o agendamento vira definitivo
-        data: { status: "confirmed", pendingExpiresAt: null },
-      }),
-      prisma.client.update({
-        where: { id: appointment.clientId },
-        data: { noShowCount: { set: 0 } },
-      }),
-    ]);
+    await prisma.appointment.update({
+      where: { id: params.id },
+      // Confirmado: some o prazo, o agendamento vira definitivo
+      data: { status: "confirmed", pendingExpiresAt: null },
+    });
+
+    // Perdoa as faltas DESTA pessoa. Zerar `Client.noShowCount` limpava a
+    // ficha de todo mundo que divide o telefone — o pai pagava e o filho
+    // saia livre junto.
+    await perdoarFaltasDaPessoa(
+      prisma,
+      appointment.clientId,
+      appointment.clientName ?? appointment.client.name,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {

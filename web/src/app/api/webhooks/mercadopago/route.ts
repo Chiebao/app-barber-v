@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perdoarFaltasDaPessoa } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
 import { consultarPagamento, tokenDaBarbearia } from "@/app/lib/mercadopago";
 import { sendWebPush, notifyTargets } from "@/app/lib/webpush";
@@ -63,11 +64,15 @@ export async function POST(req: NextRequest) {
         where: { id: agendamento.id },
         data: { status: "confirmed", pendingExpiresAt: null },
       }),
-      prisma.client.update({
-        where: { id: agendamento.clientId },
-        data: { noShowCount: { set: 0 } },
-      }),
     ]);
+
+    // Perdao por PESSOA, igual a confirmacao manual: quem dividia o
+    // telefone nao entra de carona no Pix do outro.
+    await perdoarFaltasDaPessoa(
+      prisma,
+      agendamento.clientId,
+      agendamento.clientName ?? agendamento.client.name,
+    );
 
     const servicos = agendamento.services.map((s) => s.service.name).join(", ");
 
