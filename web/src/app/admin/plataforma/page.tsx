@@ -24,6 +24,15 @@ interface Assinaturas {
   porEstado: Record<string, number>;
   cobrancasPendentes: number; valorPendente: number;
 }
+interface Uso {
+  agendamentos: { hoje: number; sete: number; trinta: number; total: number };
+  porMes: { mes: string; n: number }[];
+  noShows: number; cancelados: number;
+  taxaNoShow: number; taxaCancelamento: number;
+  comandas: number; despesas: number; esperas: number; fixos: number; lembretes: number;
+  avaliacoes: number; notaMedia: number | null;
+  atendimentosPagos: number; volumeFinanceiro: number;
+}
 interface Resumo {
   barbearias: number; ativas: number; emRisco: number; semUso: number;
   ativasNaSemana: number; clientesTotal: number; agendamentosMes: number;
@@ -47,7 +56,7 @@ const SITUACAO = {
 
 export default function PlataformaPage() {
   const [secret, setSecret] = useState("");
-  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[]; assinaturas: Assinaturas } | null>(null);
+  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[]; assinaturas: Assinaturas; uso: Uso } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const carregar = async () => {
@@ -189,6 +198,60 @@ export default function PlataformaPage() {
 
         {/* Lista */}
         <section className="space-y-3">
+          {/* O que prova numa conversa que o produto e usado — nao so
+              cadastrado. Barbearia que nao lanca comanda nem recebe
+              agendamento pelo link e caderno digital. */}
+          <h2 className="text-lg font-semibold">Uso do produto</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Metrica n={dados.uso.agendamentos.hoje} rotulo="Agendamentos hoje" destaque />
+            <Metrica n={dados.uso.agendamentos.sete} rotulo="Nos últimos 7 dias" />
+            <Metrica n={dados.uso.agendamentos.trinta} rotulo="Nos últimos 30 dias" />
+            <Metrica n={dados.uso.agendamentos.total} rotulo="Desde o início" />
+          </div>
+
+          {dados.uso.porMes.length > 0 && (
+            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
+              <p className="text-xs text-gray-500 mb-3">Agendamentos por mês</p>
+              <div className="flex items-end gap-2 h-28">
+                {dados.uso.porMes.map((m) => {
+                  const maior = Math.max(...dados.uso.porMes.map((x) => x.n), 1);
+                  return (
+                    <div key={m.mes} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-gray-400 tabular-nums">{m.n}</span>
+                      <div
+                        className="w-full rounded-t bg-brand-500"
+                        style={{ height: `${Math.max(4, (m.n / maior) * 72)}px` }}
+                      />
+                      <span className="text-[10px] text-gray-500">{m.mes.slice(5)}/{m.mes.slice(2, 4)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Metrica n={dados.uso.comandas} rotulo="Produtos na comanda" />
+            <Metrica n={dados.uso.fixos} rotulo="Cortes fixos ativos" />
+            <Metrica n={dados.uso.esperas} rotulo="Entradas na lista de espera" />
+            <Metrica n={dados.uso.despesas} rotulo="Despesas lançadas" />
+            <Metrica n={dados.uso.lembretes} rotulo="Lembretes WhatsApp enviados" />
+            <Metrica n={dados.uso.atendimentosPagos} rotulo="Atendimentos pagos" />
+            <Metrica
+              n={dados.uso.volumeFinanceiro.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              rotulo="Movimentado pelas barbearias"
+            />
+            <Metrica
+              n={dados.uso.notaMedia !== null ? `${dados.uso.notaMedia} ★` : "—"}
+              rotulo={`Nota média (${dados.uso.avaliacoes} avaliações)`}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Metrica n={`${dados.uso.taxaNoShow}%`} rotulo={`Taxa de falta (${dados.uso.noShows})`} />
+            <Metrica n={`${dados.uso.taxaCancelamento}%`} rotulo={`Taxa de cancelamento (${dados.uso.cancelados})`} />
+          </div>
+
           <h2 className="text-lg font-semibold">Barbearias</h2>
           {dados.barbearias.length === 0 ? (
             <p className="text-gray-500 py-8 text-center">Nenhuma barbearia cadastrada ainda.</p>
@@ -246,5 +309,20 @@ export default function PlataformaPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+/** Um numero com o rotulo embaixo. Repetido demais para ficar solto. */
+function Metrica({ n, rotulo, destaque }: { n: number | string; rotulo: string; destaque?: boolean }) {
+  return (
+    <div
+      className={
+        "rounded-xl border p-4 " +
+        (destaque ? "bg-brand-500/10 border-brand-400/30" : "bg-dark-800 border-gray-700")
+      }
+    >
+      <p className={`text-2xl font-bold tabular-nums ${destaque ? "text-brand-400" : "text-white"}`}>{n}</p>
+      <p className="text-xs text-gray-500 mt-1">{rotulo}</p>
+    </div>
   );
 }

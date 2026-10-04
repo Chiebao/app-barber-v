@@ -35,7 +35,7 @@ const linkZap = `https://wa.me/${ZAP}?text=${encodeURIComponent(CONVITE)}`;
 const TITULO = "BarberPro — agenda, lembrete no WhatsApp e o lucro do mês";
 const RESUMO =
   "Seu cliente marca sozinho por um link, o app lembra ele no WhatsApp e no " +
-  "fim do mês mostra o que sobrou. A partir de R$ 49,90 por mês.";
+  "fim do mês mostra o que sobrou. A partir de R$ 29,90 por mês.";
 
 // Sem isto o link colado no WhatsApp aparece como URL crua. O cartão é a
 // primeira impressão de quem recebe a indicação de um amigo.
@@ -349,12 +349,13 @@ export default function Home() {
           </h2>
 
           <div className="mt-6 grid gap-3">
-            <Plano nome="Mensal" obs="Sem fidelidade, cancela quando quiser" valor="R$ 79,90" />
-            <Plano nome="Semestral" obs="R$ 359,40 a cada 6 meses" valor="R$ 59,90" />
+            <Plano nome="Mensal" obs="Sem fidelidade, cancela quando quiser" valor="R$ 45,90" />
+            <Plano nome="Trimestral" obs="R$ 119,70 a cada 3 meses" valor="R$ 39,90" />
+            <Plano nome="Semestral" obs="R$ 209,40 a cada 6 meses" valor="R$ 34,90" />
             <Plano
               nome="Anual"
-              obs="R$ 598,80 por ano · economiza R$ 360"
-              valor="R$ 49,90"
+              obs="R$ 358,80 por ano · economiza R$ 192"
+              valor="R$ 29,90"
               destaque
               fita="Mais escolhido"
             />

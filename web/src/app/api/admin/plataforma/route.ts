@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
 import { PLANOS, type PlanoId, situacaoDe } from "@/app/lib/assinatura";
+import { agoraNaBarbearia } from "@/app/lib/time-slots";
 
 /**
  * Visão do dono da PLATAFORMA (não do dono da barbearia).
@@ -64,6 +65,44 @@ export async function POST(req: NextRequest) {
       _max: { createdAt: true },
     });
     const ultimoPorShop = new Map(ultimos.map((u) => [u.shopId, u._max.createdAt]));
+
+    // ─── Uso do produto ───
+    //
+    // A pergunta que isto responde nao e "quantas barbearias temos", e
+    // "elas USAM?". Barbearia cadastrada que nao lanca comanda, nao bloqueia
+    // horario e nao recebe agendamento pelo link e caderno digital, nao
+    // produto. Estes numeros sao o que da para mostrar numa conversa.
+    const hojeISO = agoraNaBarbearia(agora).dia;
+    const inicioHoje = new Date(hojeISO + "T00:00:00.000Z");
+    const fimHoje = new Date(hojeISO + "T23:59:59.999Z");
+
+    const [
+      agsHoje, agsSete, agsTrinta, agsTotal,
+      noShows, cancelados, comandas, despesas, esperas, fixos,
+      lembretes, avaliacoes, pagosTotal, porMes,
+    ] = await Promise.all([
+      prisma.appointment.count({ where: { date: { gte: inicioHoje, lte: fimHoje }, status: { not: "cancelled" } } }),
+      prisma.appointment.count({ where: { createdAt: { gte: seteDias } } }),
+      prisma.appointment.count({ where: { createdAt: { gte: trintaDias } } }),
+      prisma.appointment.count(),
+      prisma.appointment.count({ where: { status: "no_show" } }),
+      prisma.appointment.count({ where: { status: "cancelled" } }),
+      prisma.comandaItem.count(),
+      prisma.expense.count(),
+      prisma.waitlist.count(),
+      prisma.recurringAppointment.count({ where: { active: true } }),
+      prisma.appointment.count({ where: { reminderSentAt: { not: null } } }),
+      prisma.rating.aggregate({ _count: true, _avg: { score: true } }),
+      prisma.appointment.aggregate({ where: { paidAt: { not: null } }, _sum: { totalPrice: true }, _count: true }),
+      // Serie mensal: e o grafico que responde "esta crescendo?". Em SQL
+      // porque agrupar por mes em JS exigiria trazer tudo para a memoria.
+      prisma.$queryRawUnsafe<Array<{ mes: string; n: bigint }>>(
+        `SELECT to_char(date_trunc('month', "createdAt"), 'YYYY-MM') AS mes, count(*) AS n
+           FROM appointments
+          WHERE "createdAt" >= now() - interval '6 months'
+          GROUP BY 1 ORDER BY 1`,
+      ),
+    ]);
 
     const ativasSemana = new Set(agsSemana.map((a) => a.shopId));
     const receitaPorShop = new Map<string, number>();
@@ -162,6 +201,21 @@ export async function POST(req: NextRequest) {
         porEstado,
         cobrancasPendentes: aReceber._count,
         valorPendente: aReceber._sum.valor ? num(aReceber._sum.valor) : 0,
+      },
+      uso: {
+        agendamentos: { hoje: agsHoje, sete: agsSete, trinta: agsTrinta, total: agsTotal },
+        porMes: porMes.map((m) => ({ mes: m.mes, n: Number(m.n) })),
+        // Percentuais sobre o TOTAL: sao as taxas que o barbeiro sente.
+        noShows, cancelados,
+        taxaNoShow: agsTotal ? Math.round((noShows / agsTotal) * 1000) / 10 : 0,
+        taxaCancelamento: agsTotal ? Math.round((cancelados / agsTotal) * 1000) / 10 : 0,
+        // Cada um destes e uma funcao que so aparece se alguem usou de
+        // verdade — e o que separa produto de agenda bonita.
+        comandas, despesas, esperas, fixos, lembretes,
+        avaliacoes: avaliacoes._count,
+        notaMedia: avaliacoes._avg.score ? Math.round(avaliacoes._avg.score * 10) / 10 : null,
+        atendimentosPagos: pagosTotal._count,
+        volumeFinanceiro: pagosTotal._sum.totalPrice ? num(pagosTotal._sum.totalPrice) : 0,
       },
       barbearias,
     });

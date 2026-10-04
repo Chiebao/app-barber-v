@@ -426,7 +426,10 @@ app_barber/
   quem recebe a indicacao
 - O "Entrar" no topo existe porque a raiz era o atalho de quem ja e
   cliente. Tirar sem deixar porta seria trocar um problema por outro
-- Precos: R$ 79,90 mensal / R$ 59,90 semestral / R$ 49,90 anual
+- Precos: R$ 45,90 mensal / R$ 39,90 trimestral / R$ 34,90 semestral /
+  R$ 29,90 anual. Baixados em out/2026 — a faixa antiga (79,90 a 49,90)
+  estava afastando. Ninguem tinha pago nada ainda, entao nao houve cliente
+  para preservar
 
 ### Janela da agenda (ate onde o cliente enxerga)
 - `Shop.diasAbertos` (7, 15 ou 30) e SO do link publico. No painel o
@@ -496,6 +499,21 @@ app_barber/
 - Na hora da mudanca nao havia NENHUM telefone com dois nomes em producao,
   e os 4 contadores batiam 1 pra 1 com os 4 `no_show`. Por isso a troca nao
   teve ambiguidade de migracao
+
+### Painel da plataforma (/admin/plataforma)
+- E a visao do dono do PRODUTO, nao do dono da barbearia. Protegida pela
+  mesma senha-mestra do reset (`ADMIN_SECRET`)
+- Alem de quantas barbearias existem, tem o bloco **Uso do produto**: a
+  pergunta que ele responde nao e "quantas cadastramos" e sim "elas USAM?".
+  Barbearia que nao lanca comanda, nao bloqueia horario e nao recebe
+  agendamento pelo link e caderno digital, nao produto
+- Agendamentos hoje / 7d / 30d / total, serie dos ultimos 6 meses, taxa de
+  falta e de cancelamento, comandas, cortes fixos, lista de espera,
+  despesas, lembretes enviados, nota media e volume financeiro
+- "Hoje" e janela FECHADA dos dois lados (`gte` e `lte`): so com `gte` o
+  numero virava "de hoje em diante" e contava a agenda inteira do futuro
+- A serie mensal sai em SQL (`date_trunc`), nao em JS: agrupar por mes em
+  memoria exigiria trazer todos os agendamentos para o servidor
 
 ### Rastro de auditoria
 - NAO existe tabela de log. O que da para reconstruir sai do proprio
