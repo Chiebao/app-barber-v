@@ -4,6 +4,7 @@ import { num } from "@/app/lib/money";
 import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe } from "@/app/lib/assinatura";
 import { criarLinkCobranca, cobrancaOk } from "@/app/lib/infinitepay";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { sendWebPush } from "@/app/lib/webpush";
 
 /**
  * Gera as cobranças que estão para vencer.
@@ -52,6 +53,67 @@ function prazoEmTexto(vencimento: Date, agora: Date): string {
   const dias = Math.ceil((vencimento.getTime() - agora.getTime()) / 86_400_000);
   if (dias <= 0) return "hoje";
   return dias === 1 ? "1 dia" : `${dias} dias`;
+}
+
+const brl = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+
+/**
+ * Avisa o dono de que ha cobranca — WhatsApp e, se ele tiver, push.
+ *
+ * O link nos dois leva a /pagar/{fatura}, onde ele escolhe o plano e paga
+ * sem precisar entrar no painel. Antes a mensagem dizia "Painel, em
+ * Configuracoes": tres passos entre o aviso e o pagamento, e cada passo e
+ * onde alguem desiste.
+ */
+async function avisarDono(
+  a: { shopId: string; trialEndsAt: Date | null; shop: { name: string; owner: { name: string; phone: string } } },
+  faturaId: string,
+  vencimento: Date,
+  valor: number,
+  agora: Date,
+) {
+  const primeiro = a.shop.owner.name.trim().split(/s+/)[0];
+
+  // Saiu do teste e nunca pagou: a conversa e "escolha um plano", nao "sua
+  // assinatura vence". `trialEndsAt` so e limpo pelo webhook no primeiro
+  // pagamento, entao preenchido e no passado quer dizer: nunca assinou.
+  const saiuDoTeste = !!a.trialEndsAt && a.trialEndsAt <= agora;
+
+  let enviado = false;
+  if (saiuDoTeste) {
+    const maisBarato = Math.min(...Object.values(PLANOS).map((p) => p.mensal));
+    enviado = await enviarModelo(
+      a.shop.owner.phone, "fim_do_teste",
+      [primeiro, a.shop.name, brl(maisBarato)],
+      faturaId,
+    );
+  }
+  // Renovacao comum, ou o modelo novo ainda em revisao na Meta: cai no de
+  // cobranca, que ja e aprovado. Mensagem generica e melhor que nenhuma.
+  if (!enviado) {
+    await enviarModelo(
+      a.shop.owner.phone, "cobranca_assinatura",
+      [primeiro, prazoEmTexto(vencimento, agora), brl(valor)],
+      faturaId,
+    );
+  }
+
+  // Push vai junto e de graca: chega mesmo se o WhatsApp falhar. So para o
+  // DONO — cobranca da plataforma nao e assunto do barbeiro contratado.
+  const dono = await prisma.barber.findFirst({
+    where: { shopId: a.shopId, isOwnerProfile: true },
+    select: { id: true },
+  });
+  if (dono) {
+    await sendWebPush([dono.id], {
+      title: saiuDoTeste ? "Seu teste grátis terminou" : "Sua assinatura vence em breve",
+      body: saiuDoTeste
+        ? "Escolha um plano para continuar recebendo agendamentos."
+        : `Fatura de ${brl(valor)} pronta. Toque para pagar.`,
+      url: `/pagar/${faturaId}`,
+      tag: "assinatura",
+    });
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -157,11 +219,8 @@ export async function GET(req: NextRequest) {
       const avisosJaDados = a.cobrancas.length;
       const deveAvisar = avisosJaDados < MAX_AVISOS && situacao.estado !== "bloqueada";
       if (deveAvisar) {
-        enviarModelo(a.shop.owner.phone, "cobranca_assinatura", [
-          a.shop.owner.name.split(" ")[0],
-          prazoEmTexto(fatura.vencimento, agora),
-          `R$ ${num(fatura.valor).toFixed(2).replace(".", ",")}`,
-        ]).catch(console.error);
+        await avisarDono(a, fatura.id, fatura.vencimento, num(fatura.valor), agora)
+          .catch((err) => console.error("[cron cobrancas] aviso falhou:", err));
       }
     }
 

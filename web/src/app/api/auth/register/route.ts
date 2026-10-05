@@ -42,7 +42,13 @@ export async function POST(req: NextRequest) {
 
     let slug = slugify(data.shopName, { lower: true, strict: true });
     const slugExists = await prisma.shop.findUnique({ where: { slug } });
-    if (slugExists) slug = `${slug}-${Date.now().toString(36)}`;
+    // Rotas do proprio app: uma barbearia chamada "Admin" ou "Pagar" ganharia
+    // um slug que cai numa pagina do sistema, e a dela ficaria inacessivel
+    // — a rota fixa sempre ganha da dinamica [slug].
+    const RESERVADOS = new Set([
+      "admin", "api", "pagar", "termos", "privacidade", "download", "exclusao-de-dados", "og",
+    ]);
+    if (slugExists || RESERVADOS.has(slug)) slug = `${slug}-${Date.now().toString(36)}`;
 
     const passwordHash = await hashPassword(data.password);
 

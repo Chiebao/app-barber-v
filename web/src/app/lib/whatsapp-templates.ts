@@ -29,7 +29,8 @@ export type NomeModelo =
   | "cobranca_assinatura"
   | "agendamento_marcado"
   | "agenda_do_dia"
-  | "espera_sem_vaga";
+  | "espera_sem_vaga"
+  | "fim_do_teste";
 
 export interface Modelo {
   /** Nome exato cadastrado no WhatsApp Manager. */
@@ -139,7 +140,32 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
       "💳 Fatura de {{3}}\n" +
       "📍 Painel, em Configurações\n\n" +
       "A cobrança já está pronta, é só abrir e pagar.",
-    exemplo: ["Eduardo", "3 dias", "R$ 79,90"],
+    exemplo: ["Eduardo", "3 dias", "R$ 45,90"],
+    // O link vai direto para a pagina de pagamento — sem ele o dono tinha
+    // de abrir o painel, achar Configuracoes e so entao pagar, e cada passo
+    // e um lugar onde ele desiste. Valor do botao = id da fatura.
+    botaoComLink: true,
+  },
+
+  // Para quem saiu do teste gratis e ainda nao escolheu plano.
+  //
+  // Separado do `cobranca_assinatura` porque a conversa e outra: aquele diz
+  // "sua assinatura vence", e quem nunca pagou nao tem assinatura vencendo
+  // — tem um teste que acabou e uma escolha a fazer. Mandar "vence em
+  // hoje" para quem nunca assinou e confuso e soa como cobranca indevida.
+  //
+  // O botao leva a /pagar/{fatura}, onde ele ESCOLHE o plano antes de pagar.
+  fim_do_teste: {
+    nome: "fim_do_teste",
+    idioma: "pt_BR",
+    variaveis: 3,
+    textoAprovado:
+      "Olá, {{1}}! 👋\n\n" +
+      "O teste grátis da {{2}} no BarberPro terminou.\n\n" +
+      "Para continuar recebendo agendamentos, escolha seu plano — a partir de {{3}} por mês.\n\n" +
+      "É só tocar no botão abaixo.",
+    exemplo: ["Eduardo", "Lion barbearia", "R$ 29,90"],
+    botaoComLink: true,
   },
 
   // A agenda do dia no WhatsApp do BARBEIRO, de manhã.

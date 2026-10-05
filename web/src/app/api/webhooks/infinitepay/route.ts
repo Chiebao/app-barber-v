@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
-import { PLANOS, type PlanoId, proximoVencimento } from "@/app/lib/assinatura";
+import { aplicarPagamento } from "@/app/lib/assinatura";
 import { conferirPagamento } from "@/app/lib/infinitepay";
 
 /**
@@ -66,47 +66,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, valorInsuficiente: true });
     }
 
-    // O plano vem DA FATURA, não da assinatura.
-    //
-    // Sem isto havia um furo de dinheiro: gerava-se a cobrança no mensal
-    // (R$ 79,90), trocava-se para anual, pagava-se os R$ 79,90 e o webhook
-    // avançava doze meses. A fatura é um contrato por um valor E um período;
-    // trocar de plano depois não pode reescrever o que ela comprou.
-    const plano = (fatura.plano in PLANOS ? fatura.plano : "mensal") as PlanoId;
-    const agora = new Date();
+    // O efeito no banco mora em `aplicarPagamento` (lib/assinatura) para
+    // poder ser testado: daqui so passa quem a InfinitePay confirmou, e
+    // nenhum teste consegue chegar aqui sem dinheiro de verdade.
+    const { plano, ate } = await aplicarPagamento(prisma, fatura, {
+      metodo: conferido.metodo === "credit_card" ? "cartao" : conferido.metodo || "pix",
+      transactionNsu: transactionNsu || null,
+    });
 
-    // O novo período começa no fim do anterior quando ele ainda está em dia —
-    // quem paga adiantado não perde os dias que já tinha. Quem paga atrasado
-    // começa a contar de hoje.
-    const base = fatura.subscription.periodoFim > agora ? fatura.subscription.periodoFim : agora;
-
-    await prisma.$transaction([
-      prisma.subscriptionInvoice.update({
-        where: { id: fatura.id },
-        data: {
-          status: "paga",
-          pagaEm: agora,
-          metodo: conferido.metodo === "credit_card" ? "cartao" : conferido.metodo || "pix",
-          mpPaymentId: transactionNsu || null,
-        },
-      }),
-      prisma.subscription.update({
-        where: { id: fatura.subscriptionId },
-        data: {
-          status: "ativa",
-          periodoFim: proximoVencimento(base, plano),
-          metodo: conferido.metodo === "credit_card" ? "cartao" : "pix",
-          trialEndsAt: null,
-          canceladaEm: null,
-          // Cada pagamento avança o compromisso. É este contador que diz,
-          // se ele sair no meio, quantos meses de desconto adiantado foram
-          // usados — e portanto quanto ficou em aberto.
-          ciclosPagos: { increment: 1 },
-        },
-      }),
-    ]);
-
-    console.log("[InfinitePay] assinatura renovada:", fatura.subscriptionId, "até", proximoVencimento(base, plano));
+    console.log("[InfinitePay] assinatura renovada:", fatura.subscriptionId, plano, "até", ate);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[InfinitePay] erro no webhook:", error);

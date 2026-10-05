@@ -232,7 +232,11 @@ function calcularSituacao(
   if (agora < fimCarencia) {
     const dias = diasEntre(agora, fimCarencia);
     return { ...base, estado: "carencia", podeEscrever: true, aceitaAgendamento: true, diasRestantes: dias,
-      aviso: `Pagamento em atraso. Você tem ${dias} dia${dias === 1 ? "" : "s"} antes da agenda ser bloqueada.` };
+      // Quem saiu do teste nunca pagou nada — "pagamento em atraso" soaria
+      // como cobranca indevida. `trialEndsAt` so e limpo no primeiro pagamento.
+      aviso: a.trialEndsAt
+        ? `Seu teste grátis terminou. Escolha um plano em até ${dias} dia${dias === 1 ? "" : "s"} para não perder a agenda.`
+        : `Pagamento em atraso. Você tem ${dias} dia${dias === 1 ? "" : "s"} antes da agenda ser bloqueada.` };
   }
 
   // Bloqueada: ainda VÊ a agenda e confirma pagamento do que já existe —
@@ -264,4 +268,61 @@ export async function iniciarTrial(shopId: string) {
       periodoFim: fim,
     },
   });
+}
+
+/**
+ * O que acontece no banco quando uma fatura e paga.
+ *
+ * Separado do webhook porque o webhook confere o pagamento DE VOLTA na
+ * InfinitePay antes de aceitar — nenhum teste chega ate la sem dinheiro de
+ * verdade, e o trecho que mexe na assinatura ficava sem cobertura nenhuma.
+ */
+export async function aplicarPagamento(
+  db: import("@prisma/client").PrismaClient,
+  fatura: { id: string; plano: string; subscriptionId: string; subscription: { periodoFim: Date } },
+  pagamento: { metodo: string; transactionNsu: string | null },
+  agora: Date = new Date(),
+): Promise<{ plano: PlanoId; ate: Date }> {
+  // O plano vem DA FATURA, nao da assinatura. A fatura e um contrato por um
+  // valor E um periodo: gerar no mensal, trocar para anual e pagar o mensal
+  // nao pode render doze meses.
+  const plano = (fatura.plano in PLANOS ? fatura.plano : "mensal") as PlanoId;
+
+  // Quem paga adiantado nao perde os dias que ja tinha; quem paga atrasado
+  // comeca a contar de hoje.
+  const base = fatura.subscription.periodoFim > agora ? fatura.subscription.periodoFim : agora;
+  const ate = proximoVencimento(base, plano);
+  const metodoAssinatura = pagamento.metodo === "cartao" ? "cartao" : "pix";
+
+  await db.$transaction([
+    db.subscriptionInvoice.update({
+      where: { id: fatura.id },
+      data: { status: "paga", pagaEm: agora, metodo: pagamento.metodo, mpPaymentId: pagamento.transactionNsu },
+    }),
+    db.subscription.update({
+      where: { id: fatura.subscriptionId },
+      data: {
+        status: "ativa",
+        periodoFim: ate,
+        // O que foi pago e o que ele tem. Sem isto, quem escolhia anual pelo
+        // link e pagava R$ 358,80 ganhava doze meses — e no vencimento o cron
+        // cobrava o MENSAL, porque a assinatura continuava dizendo "mensal".
+        plano,
+        valorCiclo: valorDoCiclo(plano),
+        metodo: metodoAssinatura,
+        trialEndsAt: null,
+        canceladaEm: null,
+        ciclosPagos: { increment: 1 },
+      },
+    }),
+    // As outras em aberto perderam o sentido. Sem isto ficavam no painel
+    // como "pendente" para sempre — e quem trocou de plano na pagina de
+    // pagamento deixava viva a fatura do plano que nao escolheu.
+    db.subscriptionInvoice.updateMany({
+      where: { subscriptionId: fatura.subscriptionId, status: "pendente", id: { not: fatura.id } },
+      data: { status: "cancelada" },
+    }),
+  ]);
+
+  return { plano, ate };
 }

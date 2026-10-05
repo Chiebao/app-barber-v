@@ -518,6 +518,38 @@ app_barber/
 - Ninguem tinha pago nada quando o preco baixou (32 faturas, zero pagas),
   entao nao houve cliente para preservar nem valor a respeitar
 
+### Do WhatsApp ao pagamento (/pagar/[fatura])
+- O cron de cobranca (GitHub Actions, 12:00 UTC = 9h BRT) gera a fatura e
+  manda o link NA MENSAGEM. Antes a mensagem dizia "Painel, em
+  Configuracoes": entrar, achar a aba, gerar, pagar — cada passo e onde o
+  dono deixa para depois, e depois e o dia em que a agenda bloqueia
+- `/pagar/{faturaId}` e PUBLICA, sem login: quem esqueceu a senha nunca
+  pagaria. O id da fatura (cuid) e a chave. Destrava pouco e inofensivo:
+  ver o nome da loja e pagar. Escolher plano ali so muda o que sera cobrado
+- Escolher o mesmo plano de novo REAPROVEITA a fatura aberta (link de ate 3
+  dias, valor batendo com o catalogo). Senao cada toque gerava cobranca nova
+- Dois modelos de mensagem, ambos com botao para /pagar/{fatura}:
+  `fim_do_teste` (saiu do teste e nunca pagou — a conversa e "escolha um
+  plano") e `cobranca_assinatura` (renovacao). Se o `fim_do_teste` ainda
+  nao estiver aprovado na Meta, cai no `cobranca_assinatura`
+- "Saiu do teste" = `trialEndsAt` preenchido e no passado. O webhook so
+  limpa esse campo no PRIMEIRO pagamento, entao e um sinal confiavel
+- Push web vai junto, de graca, so para o perfil de DONO — cobranca da
+  plataforma nao e assunto do barbeiro contratado
+- O efeito do pagamento no banco mora em `aplicarPagamento` (lib), e nao no
+  webhook: o webhook confere DE VOLTA na InfinitePay antes de aceitar, entao
+  nenhum teste chegava la, e o trecho ficava sem cobertura
+- `aplicarPagamento` GRAVA o plano pago na assinatura. Antes so avancava o
+  periodo: quem escolhia anual pelo link e pagava R$ 358,80 ganhava doze
+  meses, e no vencimento o cron cobrava o MENSAL de novo
+- E CANCELA as outras faturas pendentes da assinatura — senao a do plano que
+  ele nao escolheu ficava viva no painel para sempre
+- Carencia de quem saiu do teste diz "Seu teste gratis terminou", nao
+  "Pagamento em atraso": quem nunca pagou nada nao esta atrasado
+- Slugs RESERVADOS no cadastro (admin, api, pagar, termos, privacidade,
+  download, exclusao-de-dados, og): a rota fixa sempre ganha da [slug], e
+  uma barbearia chamada "Pagar" teria a pagina publica inacessivel
+
 ### Painel da plataforma (/admin/plataforma)
 - E a visao do dono do PRODUTO, nao do dono da barbearia. Protegida pela
   mesma senha-mestra do reset (`ADMIN_SECRET`)
