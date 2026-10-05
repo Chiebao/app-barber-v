@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
-import { PLANOS, type PlanoId, situacaoDe } from "@/app/lib/assinatura";
+import { PLANOS, type PlanoId, situacaoDe, primeiroNome, DIAS_CARENCIA } from "@/app/lib/assinatura";
+import { rodadaAtual, etapasDa, proximaFaturaAutomatica } from "@/app/lib/processo-cobranca";
 import { agoraNaBarbearia } from "@/app/lib/time-slots";
 
 /**
@@ -33,15 +34,22 @@ export async function POST(req: NextRequest) {
       prisma.shop.findMany({
         select: {
           id: true, name: true, slug: true, createdAt: true,
+          owner: { select: { name: true, phone: true } },
           _count: { select: { barbers: true, appointments: true } },
           subscription: {
             select: {
               status: true, plano: true, valorCiclo: true, trialEndsAt: true,
               periodoFim: true, canceladaEm: true, metodo: true,
+              // Uma rodada de cobranca raramente passa de 4 faturas (o cron
+              // para em 4 abertas); 8 cobre a rodada e a paga anterior.
               cobrancas: {
                 orderBy: { createdAt: "desc" },
-                take: 1,
-                select: { status: true, valor: true, vencimento: true, pagaEm: true, linkPagamento: true },
+                take: 8,
+                select: {
+                  id: true, createdAt: true, status: true, plano: true, valor: true, vencimento: true,
+                  pagaEm: true, metodo: true, linkPagamento: true,
+                  origem: true, avisadaEm: true, avisoWhatsapp: true, abertaEm: true,
+                },
               },
             },
           },
@@ -121,11 +129,34 @@ export async function POST(req: NextRequest) {
       const assin = situacaoDe(s.subscription ?? null, agora);
       const ultimaCobranca = s.subscription?.cobrancas?.[0] ?? null;
 
+      // Em que passo da cobranca o dono parou — o "acompanhar o processo".
+      const faturas = (s.subscription?.cobrancas ?? []).map((c) => ({ ...c, valor: num(c.valor) }));
+      const rodada = rodadaAtual(faturas);
+      const pendentes = faturas.filter((f) => f.status === "pendente");
+      const processo = s.subscription
+        ? {
+            etapas: etapasDa(rodada),
+            rodada: rodada.map((f) => ({
+              id: f.id, criadaEm: f.createdAt, status: f.status, plano: f.plano, valor: f.valor,
+              pagaEm: f.pagaEm, metodo: f.metodo, origem: f.origem,
+              avisoWhatsapp: f.avisoWhatsapp, abertaEm: f.abertaEm,
+            })),
+            // A mais nova em aberto: e o link que vai na mensagem de quem
+            // for chamar o dono na mao.
+            faturaAberta: [...pendentes].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.id ?? null,
+            proximaFatura: proximaFaturaAutomatica(s.subscription, pendentes, agora),
+            trialEndsAt: s.subscription.trialEndsAt,
+            bloqueiaEm: new Date(s.subscription.periodoFim.getTime() + DIAS_CARENCIA * 86_400_000),
+          }
+        : null;
+
       return {
         id: s.id,
         nome: s.name,
         slug: s.slug,
         criadaEm: s.createdAt,
+        dono: { nome: primeiroNome(s.owner.name), telefone: s.owner.phone },
+        processo,
         assinatura: {
           estado: assin.estado,
           plano: assin.plano,

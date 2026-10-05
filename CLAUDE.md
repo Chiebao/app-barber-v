@@ -573,6 +573,25 @@ app_barber/
   numero virava "de hoje em diante" e contava a agenda inteira do futuro
 - A serie mensal sai em SQL (`date_trunc`), nao em JS: agrupar por mes em
   memoria exigiria trazer todos os agendamentos para o servidor
+- **Cobranca, passo a passo**: um cartao por barbearia com os quatro passos
+  (fatura gerada → aviso no WhatsApp → abriu o link → pagou). Antes so dava
+  para ver "pendente", que nao diz se o WhatsApp saiu nem se o dono abriu
+- O rastro mora na fatura: `origem` (cron/link/painel), `avisadaEm` +
+  `avisoWhatsapp` (modelo que saiu, ou "falhou") e `abertaEm`. Tudo derivado
+  em `lib/processo-cobranca.ts`, coberto por teste de unidade
+- A RODADA e o que veio desde o pagamento anterior. A fatura que o pagamento
+  cancelou e da mesma rodada — e ela que carrega o aviso, porque o dono
+  recebeu o link do mensal e pagou o anual
+- "Abriu o link" e marcado pela rota `/api/pagar` (chamada pelo JavaScript
+  da pagina), nao pelo HTML: a previa de link do WhatsApp nao conta. Mas
+  ABRIR O LINK DO DONO VOCE MESMO CONTA — para conferir, use o painel
+- A previsao "a fatura sai amanha, por volta das 9h" usa a MESMA
+  `REGUA_COBRANCA` do cron (lib/assinatura). Duas copias dos numeros
+  divergiriam na primeira mudanca
+- "Chamar no WhatsApp" abre conversa com o dono ja com o link /pagar na
+  mensagem: e o empurrao manual para quem parou no meio
+- `primeiroNome()` existe porque o `split(/s+/)` solto no cron perdeu a barra
+  e cortava na LETRA s ("Elias" virava "Elia") — no WhatsApp de cobranca
 
 ### Rastro de auditoria
 - NAO existe tabela de log. O que da para reconstruir sai do proprio
@@ -834,6 +853,7 @@ app_barber/
 | 62 | Barbeiro e avisado quando alguem entra na lista de espera | — | ✅ | ✅ |
 | 63 | Janela da agenda no link publico (7, 15 ou 30 dias) | ✅ | — | ✅ |
 | 64 | Landing page de venda na raiz do site | ✅ | — | — |
+| 65 | Cobranca passo a passo no painel da plataforma (fatura → aviso → link → pago) | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

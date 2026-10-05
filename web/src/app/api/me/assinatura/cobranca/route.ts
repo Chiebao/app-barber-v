@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
         status: "pendente",
         vencimento: assinatura.periodoFim > new Date() ? assinatura.periodoFim : new Date(),
         provedor: "infinitepay",
+        origem: "painel",
       },
     });
 

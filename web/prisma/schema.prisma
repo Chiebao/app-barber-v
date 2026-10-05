@@ -502,6 +502,20 @@ model SubscriptionInvoice {
   copiaECola    String?
   qrCodeBase64  String?
 
+  /// O rastro da cobranca, para o painel da plataforma mostrar em que passo
+  /// cada dono parou. Sem isto so dava para ver "pendente" — e pendente nao
+  /// diz se o WhatsApp saiu, nem se ele chegou a abrir o link.
+  ///
+  /// De onde a fatura nasceu: "cron" (perto do vencimento), "link" (o dono
+  /// escolheu o plano em /pagar) ou "painel". Null nas anteriores a isto.
+  origem        String?
+  /// Quando o aviso foi tentado, e o que saiu: o nome do modelo de WhatsApp,
+  /// ou "falhou". Null = ninguem tentou avisar por esta fatura.
+  avisadaEm     DateTime?
+  avisoWhatsapp String?
+  /// Primeira vez que alguem abriu /pagar/{fatura} num navegador.
+  abertaEm      DateTime?
+
   createdAt DateTime @default(now())
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)

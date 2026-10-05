@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
-import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe } from "@/app/lib/assinatura";
+import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe, REGUA_COBRANCA, primeiroNome } from "@/app/lib/assinatura";
 import { criarLinkCobranca, cobrancaOk } from "@/app/lib/infinitepay";
 
 /**
@@ -19,10 +19,10 @@ import { criarLinkCobranca, cobrancaOk } from "@/app/lib/infinitepay";
  */
 
 /** Cobranca aberta e recente e reaproveitada — o link da InfinitePay vale uns dias. */
-const VALIDADE_LINK_MS = 3 * 86_400_000;
+const VALIDADE_LINK_MS = REGUA_COBRANCA.validadeDias * 86_400_000;
 
 /** Antecedencia em que ja faz sentido pagar o proximo ciclo. Igual ao cron. */
-const ANTECEDENCIA_MS = 5 * 86_400_000;
+const ANTECEDENCIA_MS = REGUA_COBRANCA.antecedenciaDias * 86_400_000;
 
 async function carregar(faturaId: string) {
   return prisma.subscriptionInvoice.findUnique({
@@ -58,9 +58,17 @@ export async function GET(_req: NextRequest, { params }: { params: { faturaId: s
 
   const sub = fatura.subscription;
   const agora = new Date();
+
+  // Rastro para o painel da plataforma: o dono ABRIU o link? So a primeira
+  // vez conta. E so navegador de verdade chega aqui — quem chama esta rota e
+  // o JavaScript da pagina; a previa de link do WhatsApp le o HTML e para.
+  await prisma.subscriptionInvoice
+    .updateMany({ where: { id: fatura.id, abertaEm: null }, data: { abertaEm: agora } })
+    .catch((err) => console.error("[pagar] rastro da abertura:", err));
+
   return NextResponse.json({
     loja: sub.shop.name,
-    dono: sub.shop.owner.name.trim().split(/\s+/)[0],
+    dono: primeiroNome(sub.shop.owner.name),
     // Mesmo criterio do cron: `trialEndsAt` so e limpo no primeiro pagamento.
     saiuDoTeste: !!sub.trialEndsAt && sub.trialEndsAt <= agora,
     emDia: emDia(sub, agora),
@@ -114,6 +122,7 @@ export async function POST(req: NextRequest, { params }: { params: { faturaId: s
         status: "pendente",
         vencimento: sub.periodoFim > agora ? sub.periodoFim : agora,
         provedor: "infinitepay",
+        origem: "link",
       },
     });
 

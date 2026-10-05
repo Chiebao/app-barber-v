@@ -67,6 +67,35 @@ export const DIAS_TRIAL = 14;
  */
 export const DIAS_CARENCIA = 7;
 
+/**
+ * A regua do cron de cobranca (`/api/cron/cobrancas`).
+ *
+ * Mora aqui, e nao na rota, porque o painel da plataforma PREVE a proxima
+ * rodada com as mesmas contas — e duas copias destes numeros divergiriam na
+ * primeira vez que alguem mexesse em uma so.
+ */
+export const REGUA_COBRANCA = {
+  /** Quantos dias antes do vencimento a cobranca ja fica disponivel. */
+  antecedenciaDias: 5,
+  /** Uma cobranca aberta e recente e reaproveitada em vez de duplicada. */
+  validadeDias: 3,
+  /** Quantas faturas em aberto uma assinatura acumula antes de pararmos. */
+  maxFaturasAbertas: 4,
+  /** Hora UTC do agendador (GitHub Actions): 12:00 UTC = 9h em Brasilia. */
+  horaUtc: 12,
+} as const;
+
+/**
+ * "Eduardo", de "Eduardo Guilherme". E como a mensagem chama o dono.
+ *
+ * Funcao, e nao um `split` solto em cada rota, porque o solto ja perdeu a
+ * barra uma vez: `split(/s+/)` corta na LETRA s, e "Elias Henrique" virava
+ * "Elia" — no WhatsApp de cobranca, que e o pior lugar para errar o nome.
+ */
+export function primeiroNome(nome: string): string {
+  return nome.trim().split(/\s+/)[0] || "";
+}
+
 export type EstadoAssinatura =
   | "trial"
   | "ativa"

@@ -47,6 +47,10 @@ test.describe("Pagar a assinatura pelo link", () => {
     expect(j.emDia).toBe(false);
     expect(j.planoAtual).toBe("mensal");
     expect(j.planos.map((p: { id: string }) => p.id)).toEqual(["mensal", "trimestral", "semestral", "anual"]);
+
+    // O painel da plataforma mostra "abriu o link" a partir daqui.
+    const f = await db().subscriptionInvoice.findUniqueOrThrow({ where: { id: faturaId } });
+    expect(f.abertaEm, "abrir o link tem que deixar rastro").not.toBeNull();
   });
 
   test("link de fatura que nao existe da 404, sem vazar nada", async ({ request }) => {
@@ -65,6 +69,7 @@ test.describe("Pagar a assinatura pelo link", () => {
     });
     expect(doAnual).toHaveLength(1);
     expect(Number(doAnual[0].valor)).toBeCloseTo(358.8, 2);
+    expect(doAnual[0].origem).toBe("link");
 
     // Segundo toque no botao: mesmo link, nenhuma fatura nova. Sem isso cada
     // toque gerava uma cobranca na InfinitePay e uma linha a mais no painel.

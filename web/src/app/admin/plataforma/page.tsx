@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "@/app/lib/toast";
 
 /**
@@ -8,8 +8,23 @@ import { toast } from "@/app/lib/toast";
  * Mostra quantas barbearias existem, quais estão vivas e quais pararam de usar.
  */
 
+interface Etapa {
+  chave: "fatura" | "aviso" | "aberta" | "paga";
+  feito: boolean; falhou: boolean; pulado: boolean; quando: string | null;
+}
+interface FaturaDaRodada {
+  id: string; criadaEm: string; status: string; plano: string; valor: number;
+  pagaEm: string | null; metodo: string | null; origem: string | null;
+  avisoWhatsapp: string | null; abertaEm: string | null;
+}
+interface Processo {
+  etapas: Etapa[]; rodada: FaturaDaRodada[]; faturaAberta: string | null;
+  proximaFatura: string | null; trialEndsAt: string | null; bloqueiaEm: string;
+}
 interface Barbearia {
   id: string; nome: string; slug: string; criadaEm: string;
+  dono: { nome: string; telefone: string };
+  processo: Processo | null;
   barbeiros: number; agendamentosTotal: number; receitaMes: number;
   ultimoAgendamento: string | null; diasParado: number | null;
   situacao: "ativa" | "em_risco" | "sem_uso";
@@ -53,6 +68,34 @@ const SITUACAO = {
   em_risco: { label: "Em risco", cor: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
   sem_uso:  { label: "Sem uso",  cor: "bg-red-500/15 text-red-400 border-red-500/30" },
 } as const;
+
+/** Ordem dos cartoes de cobranca: quem esta perto de bloquear vem primeiro. */
+const URGENCIA: Record<string, number> = { carencia: 0, bloqueada: 1, trial: 2, ativa: 3 };
+
+const PASSO: Record<Etapa["chave"], string> = {
+  fatura: "Fatura gerada",
+  aviso: "Aviso no WhatsApp",
+  aberta: "Abriu o link",
+  paga: "Pagou",
+};
+
+const ORIGEM: Record<string, string> = {
+  cron: "gerada pelo sistema",
+  link: "escolhida no link",
+  painel: "gerada no painel",
+};
+
+const STATUS_FATURA: Record<string, { label: string; cor: string }> = {
+  pendente:  { label: "em aberto", cor: "text-yellow-400" },
+  paga:      { label: "paga",      cor: "text-green-400" },
+  cancelada: { label: "cancelada", cor: "text-gray-500" },
+  vencida:   { label: "vencida",   cor: "text-red-400" },
+};
+
+const MODELO_WHATSAPP: Record<string, string> = {
+  fim_do_teste: "fim do teste",
+  cobranca_assinatura: "cobrança",
+};
 
 export default function PlataformaPage() {
   const [secret, setSecret] = useState("");
@@ -108,6 +151,16 @@ export default function PlataformaPage() {
   }
 
   const r = dados.resumo;
+
+  // Quem tem cobranca para acompanhar, do mais urgente para o mais folgado.
+  // Cortesia e cancelada ficam de fora: nao ha processo nenhum ali.
+  const acompanhar = dados.barbearias
+    .filter((b) => b.processo && b.assinatura.estado in URGENCIA)
+    .sort(
+      (a, b) =>
+        URGENCIA[a.assinatura.estado] - URGENCIA[b.assinatura.estado] ||
+        a.assinatura.venceEm.localeCompare(b.assinatura.venceEm),
+    );
 
   const saude = [
     { v: String(r.barbearias), l: "Barbearias", cor: "text-white" },
@@ -195,6 +248,23 @@ export default function PlataformaPage() {
             </p>
           )}
         </section>
+
+        {/* O "acompanhar o processo": em que passo cada dono parou. Sem isto
+            so dava para ver "pendente" — que nao diz se o WhatsApp saiu, nem
+            se ele chegou a abrir o link. */}
+        {acompanhar.length > 0 && (
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold">Cobrança, passo a passo</h2>
+              <p className="text-xs text-gray-500">Fatura gerada → aviso no WhatsApp → link aberto → pagamento</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {acompanhar.map((b) => (
+                <CartaoCobranca key={b.id} b={b} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Lista */}
         <section className="space-y-3">
@@ -324,5 +394,166 @@ function Metrica({ n, rotulo, destaque }: { n: number | string; rotulo: string; 
       <p className={`text-2xl font-bold tabular-nums ${destaque ? "text-brand-400" : "text-white"}`}>{n}</p>
       <p className="text-xs text-gray-500 mt-1">{rotulo}</p>
     </div>
+  );
+}
+
+// Horario de Brasilia, nao o do navegador: quem abre o painel viajando
+// leria "fatura saiu as 12:00" de um cron que rodou as 9h.
+const BRT = "America/Sao_Paulo";
+const dia = (s: string) => new Date(s).toLocaleDateString("pt-BR", { timeZone: BRT, day: "2-digit", month: "2-digit" });
+const diaHora = (s: string) =>
+  new Date(s)
+    .toLocaleString("pt-BR", { timeZone: BRT, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    .replace(",", "");
+const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const plano = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
+
+/** "hoje", "amanhã (06/10)" ou "em 30/10" — no dia de Brasilia. */
+function quandoSai(s: string): string {
+  const alvo = dia(s);
+  if (alvo === dia(new Date().toISOString())) return "hoje";
+  if (alvo === dia(new Date(Date.now() + 86_400_000).toISOString())) return `amanhã (${alvo})`;
+  return `em ${alvo}`;
+}
+
+/** Conversa no WhatsApp com o dono, ja com o link de pagamento na mensagem. */
+function chamarNoWhatsapp(b: Barbearia, faturaId: string): string {
+  const digitos = b.dono.telefone.replace(/\D/g, "");
+  const numero = digitos.length <= 11 ? "55" + digitos : digitos;
+  const link = `${window.location.origin}/pagar/${faturaId}`;
+  const texto = `Oi, ${b.dono.nome}! Tudo certo? A fatura do BarberPro da ${b.nome} está aqui, é só escolher o plano e pagar: ${link}`;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+/**
+ * Um dono, os quatro passos da cobranca e o que vem a seguir.
+ *
+ * O passo "agora" e o primeiro que falta: e nele que o dono parou, e e ali
+ * que vale olhar — ou chamar no WhatsApp.
+ */
+function CartaoCobranca({ b }: { b: Barbearia }) {
+  const p = b.processo!;
+  const [fatura, aviso, aberta, paga] = p.etapas;
+  const semRodada = p.rodada.length === 0;
+  const atual = paga.feito || (semRodada && !p.proximaFatura)
+    ? -1
+    : p.etapas.findIndex((e) => !e.feito && !e.pulado && !e.falhou);
+  const visual = ASSINATURA_VISUAL[b.assinatura.estado];
+
+  const situacao =
+    b.assinatura.estado === "trial" && p.trialEndsAt ? `teste até ${dia(p.trialEndsAt)}`
+    : b.assinatura.estado === "carencia"
+      ? `${p.trialEndsAt ? `teste acabou ${dia(p.trialEndsAt)}` : `venceu ${dia(b.assinatura.venceEm)}`} · bloqueia ${dia(p.bloqueiaEm)}`
+    : b.assinatura.estado === "bloqueada" ? `bloqueada desde ${dia(p.bloqueiaEm)}`
+    : b.assinatura.estado === "ativa" ? `pago até ${dia(b.assinatura.venceEm)}`
+    : "";
+
+  let proximo: ReactNode;
+  if (paga.feito) {
+    proximo = p.proximaFatura
+      ? <>Pago. A próxima fatura sai <b className="text-white">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
+      : <>Pago.</>;
+  } else if (semRodada) {
+    proximo = p.proximaFatura
+      ? <>A fatura e o WhatsApp saem <b className="text-white">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
+      : <>Nenhuma cobrança prevista.</>;
+  } else if (aviso.falhou) {
+    proximo = <span className="text-red-300">O WhatsApp não saiu. Vale chamar {b.dono.nome} direto.</span>;
+  } else if (!aberta.feito) {
+    proximo = <>Esperando {b.dono.nome} abrir o link.</>;
+  } else {
+    proximo = <>{b.dono.nome} abriu o link em {diaHora(aberta.quando!)} e ainda não pagou.</>;
+  }
+
+  const legenda = (e: Etapa, i: number) => {
+    if (e.feito && e.quando) {
+      const pix = e.chave === "paga" ? p.rodada.find((f) => f.status === "paga")?.metodo : null;
+      return diaHora(e.quando) + (pix ? ` · ${pix === "cartao" ? "cartão" : pix}` : "");
+    }
+    if (e.falhou) return "não saiu";
+    if (e.pulado) return "não precisou";
+    if (i === 0 && atual === 0 && p.proximaFatura) return `prevista ${dia(p.proximaFatura)}`;
+    return "—";
+  };
+
+  const estilo = (e: Etapa, i: number) =>
+    e.feito ? "border-green-500 bg-green-500 text-dark-900"
+    : e.falhou ? "border-red-500 bg-dark-800 text-red-400"
+    : i === atual ? "border-brand-400 bg-dark-800 text-brand-400 ring-4 ring-brand-500/15"
+    : "border-gray-700 bg-dark-800 text-gray-600";
+
+  return (
+    <article className="space-y-4 rounded-xl border border-gray-700 bg-dark-800 p-4">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-white">{b.nome}</p>
+          <p className="text-xs text-gray-500">
+            {b.dono.nome} · {plano(b.assinatura.plano)} {reais(b.assinatura.valorCiclo)}
+            {situacao && ` · ${situacao}`}
+          </p>
+        </div>
+        <span className={"shrink-0 rounded-full border px-2 py-1 text-xs " + (visual?.cor || "border-gray-700 text-gray-400")}>
+          {visual?.label || b.assinatura.estado}
+        </span>
+      </header>
+
+      <ol className="grid grid-cols-4" aria-label="Passos da cobrança">
+        {p.etapas.map((e, i) => {
+          const proximoFeito = i < 3 && (p.etapas[i + 1].feito || p.etapas[i + 1].pulado);
+          return (
+            <li key={e.chave} className="relative flex flex-col items-center text-center">
+              {i < 3 && (
+                <span
+                  aria-hidden
+                  className={"absolute left-1/2 top-3.5 h-0.5 w-full " + (proximoFeito ? "bg-green-500/60" : "bg-gray-700")}
+                />
+              )}
+              <span className={"relative z-10 grid h-7 w-7 place-items-center rounded-full border text-xs font-bold " + estilo(e, i)}>
+                {e.feito ? "✓" : e.falhou ? "✕" : e.pulado ? "–" : i + 1}
+              </span>
+              <span className="mt-2 text-[11px] leading-tight text-gray-300">{PASSO[e.chave]}</span>
+              <span className={"mt-0.5 text-[10px] tabular-nums " + (e.falhou ? "text-red-400" : "text-gray-500")}>
+                {legenda(e, i)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p className="text-sm text-gray-300">{proximo}</p>
+
+      {p.faturaAberta && !paga.feito && (
+        <a
+          href={chamarNoWhatsapp(b, p.faturaAberta)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-400 transition hover:bg-green-500/20"
+        >
+          Chamar {b.dono.nome} no WhatsApp
+        </a>
+      )}
+
+      {!semRodada && (
+        <ul className="space-y-1 border-t border-gray-700/60 pt-3 text-[11px] text-gray-500">
+          {p.rodada.map((f) => {
+            const st = STATUS_FATURA[f.status] ?? { label: f.status, cor: "text-gray-400" };
+            const zap = f.avisoWhatsapp
+              ? f.avisoWhatsapp === "falhou" ? "WhatsApp falhou" : `WhatsApp: ${MODELO_WHATSAPP[f.avisoWhatsapp] ?? f.avisoWhatsapp}`
+              : null;
+            return (
+              <li key={f.id} className="flex flex-wrap gap-x-1.5">
+                <span className="tabular-nums text-gray-400">{diaHora(f.criadaEm)}</span>
+                <span>·</span>
+                <span className="text-gray-300">{plano(f.plano)} {reais(f.valor)}</span>
+                {f.origem && <><span>·</span><span>{ORIGEM[f.origem] ?? f.origem}</span></>}
+                {zap && <><span>·</span><span className={f.avisoWhatsapp === "falhou" ? "text-red-400" : ""}>{zap}</span></>}
+                <span>·</span>
+                <span className={st.cor}>{st.label}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </article>
   );
 }

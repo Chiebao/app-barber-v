@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { num } from "@/app/lib/money";
-import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe } from "@/app/lib/assinatura";
+import { PLANOS, type PlanoId, valorDoCiclo, situacaoDe, REGUA_COBRANCA, primeiroNome } from "@/app/lib/assinatura";
 import { criarLinkCobranca, cobrancaOk } from "@/app/lib/infinitepay";
 import { enviarModelo } from "@/app/lib/whatsapp-send";
 import { sendWebPush } from "@/app/lib/webpush";
@@ -18,10 +18,10 @@ import { sendWebPush } from "@/app/lib/webpush";
  */
 
 /** Quantos dias antes do vencimento a cobrança já fica disponível. */
-const ANTECEDENCIA_DIAS = 5;
+const ANTECEDENCIA_DIAS = REGUA_COBRANCA.antecedenciaDias;
 
 /** Uma cobrança aberta e recente é reaproveitada em vez de duplicada. */
-const VALIDADE_DIAS = 3;
+const VALIDADE_DIAS = REGUA_COBRANCA.validadeDias;
 
 /** Teto por execução — evita uma rodada gigante travar a função. */
 const MAX_POR_RODADA = 40;
@@ -41,7 +41,7 @@ const MAX_AVISOS = 2;
  * Passado disso, quem não pagou não vai pagar por link novo: os antigos
  * continuam no painel, e a loja já está em leitura apenas.
  */
-const MAX_FATURAS_ABERTAS = 4;
+const MAX_FATURAS_ABERTAS = REGUA_COBRANCA.maxFaturasAbertas;
 
 /**
  * Prazo em português, para a mensagem do dono.
@@ -71,6 +71,9 @@ const brl = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
  * sem precisar entrar no painel. Antes a mensagem dizia "Painel, em
  * Configuracoes": tres passos entre o aviso e o pagamento, e cada passo e
  * onde alguem desiste.
+ *
+ * Devolve o modelo de WhatsApp que saiu, ou "falhou" — vai gravado na fatura
+ * para o painel da plataforma mostrar se o dono chegou a ser avisado.
  */
 async function avisarDono(
   a: { shopId: string; trialEndsAt: Date | null; shop: { name: string; owner: { name: string; phone: string } } },
@@ -78,8 +81,8 @@ async function avisarDono(
   vencimento: Date,
   valor: number,
   agora: Date,
-) {
-  const primeiro = a.shop.owner.name.trim().split(/s+/)[0];
+): Promise<string> {
+  const primeiro = primeiroNome(a.shop.owner.name);
 
   // Saiu do teste e nunca pagou: a conversa e "escolha um plano", nao "sua
   // assinatura vence". `trialEndsAt` so e limpo pelo webhook no primeiro
@@ -87,21 +90,24 @@ async function avisarDono(
   const saiuDoTeste = !!a.trialEndsAt && a.trialEndsAt <= agora;
 
   let enviado = false;
+  let modelo = "falhou";
   if (saiuDoTeste) {
     enviado = await enviarModelo(
       a.shop.owner.phone, "fim_do_teste",
       [primeiro, a.shop.name, brl(valor), diaCurto(vencimento)],
       faturaId,
     );
+    if (enviado) modelo = "fim_do_teste";
   }
   // Renovacao comum, ou o modelo novo ainda em revisao na Meta: cai no de
   // cobranca, que ja e aprovado. Mensagem generica e melhor que nenhuma.
   if (!enviado) {
-    await enviarModelo(
+    const foi = await enviarModelo(
       a.shop.owner.phone, "cobranca_assinatura",
       [primeiro, prazoEmTexto(vencimento, agora), brl(valor)],
       faturaId,
     );
+    if (foi) modelo = "cobranca_assinatura";
   }
 
   // Push vai junto e de graca: chega mesmo se o WhatsApp falhar. So para o
@@ -120,6 +126,7 @@ async function avisarDono(
       tag: "assinatura",
     });
   }
+  return modelo;
 }
 
 export async function GET(req: NextRequest) {
@@ -188,6 +195,7 @@ export async function GET(req: NextRequest) {
           status: "pendente",
           vencimento: a.periodoFim > agora ? a.periodoFim : agora,
           provedor: "infinitepay",
+          origem: "cron",
         },
       });
 
@@ -225,8 +233,12 @@ export async function GET(req: NextRequest) {
       const avisosJaDados = a.cobrancas.length;
       const deveAvisar = avisosJaDados < MAX_AVISOS && situacao.estado !== "bloqueada";
       if (deveAvisar) {
-        await avisarDono(a, fatura.id, fatura.vencimento, num(fatura.valor), agora)
-          .catch((err) => console.error("[cron cobrancas] aviso falhou:", err));
+        const aviso = await avisarDono(a, fatura.id, fatura.vencimento, num(fatura.valor), agora)
+          .catch((err) => { console.error("[cron cobrancas] aviso falhou:", err); return "falhou"; });
+        await prisma.subscriptionInvoice.update({
+          where: { id: fatura.id },
+          data: { avisadaEm: agora, avisoWhatsapp: aviso },
+        }).catch((err) => console.error("[cron cobrancas] rastro do aviso:", err));
       }
     }
 
