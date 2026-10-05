@@ -21,31 +21,34 @@ import { num } from "@/app/lib/money";
  *   compromisso    — o tamanho do plano. Serve para explicar e para dar
  *                    desconto; não afeta a cobrança.
  *
- * Um "Anual pago todo mês" tem compromisso 12 e cobrança 1: o barbeiro paga
- * R$ 59,90 por mês com preço de anual, em vez de R$ 598,80 de uma vez.
+ * Hoje os dois andam juntos: cada plano e cobrado pelo ciclo inteiro, entao
+ * `mesesCobranca === compromisso`. A escada e so o tamanho do compromisso,
+ * e o desconto mora nele.
  *
- * Quem paga à vista ganha mais desconto porque entrega dinheiro E certeza —
- * é o que justifica a diferença entre 59,90 e 49,90.
+ * Antes existiam variantes "pago todo mes" (compromisso 12, cobranca 1), com
+ * preco um pouco maior e cobranca da diferenca para quem saisse antes. Foram
+ * retiradas em out/2026 ao baixar os precos: seis degraus vendiam pior que
+ * quatro, e a faixa antiga (79,90 a 49,90) estava afastando.
+ *
+ * `descontoAAcertar` continua no codigo e devolve 0 para todos estes planos.
+ * Fica como guarda: se um dia voltar um plano com `mesesCobranca: 1` e
+ * `compromisso > 1`, a regra volta a valer sozinha.
  */
 export const PLANOS = {
   mensal: {
-    mensal: 79.9, mesesCobranca: 1, compromisso: 1,
+    mensal: 45.9, mesesCobranca: 1, compromisso: 1,
     rotulo: "Mensal", comoPaga: "todo mês",
   },
-  semestral_mensal: {
-    mensal: 69.9, mesesCobranca: 1, compromisso: 6,
-    rotulo: "Semestral", comoPaga: "todo mês",
+  trimestral: {
+    mensal: 39.9, mesesCobranca: 3, compromisso: 3,
+    rotulo: "Trimestral", comoPaga: "a cada 3 meses",
   },
   semestral: {
-    mensal: 64.9, mesesCobranca: 6, compromisso: 6,
-    rotulo: "Semestral", comoPaga: "à vista",
-  },
-  anual_mensal: {
-    mensal: 59.9, mesesCobranca: 1, compromisso: 12,
-    rotulo: "Anual", comoPaga: "todo mês",
+    mensal: 34.9, mesesCobranca: 6, compromisso: 6,
+    rotulo: "Semestral", comoPaga: "a cada 6 meses",
   },
   anual: {
-    mensal: 49.9, mesesCobranca: 12, compromisso: 12,
+    mensal: 29.9, mesesCobranca: 12, compromisso: 12,
     rotulo: "Anual", comoPaga: "à vista",
   },
 } as const;

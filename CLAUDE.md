@@ -500,6 +500,24 @@ app_barber/
   e os 4 contadores batiam 1 pra 1 com os 4 `no_show`. Por isso a troca nao
   teve ambiguidade de migracao
 
+### Planos e cobranca
+- QUATRO planos, cada um cobrado pelo CICLO INTEIRO: mensal 45,90 /
+  trimestral 39,90 / semestral 34,90 / anual 29,90 (valores por mes)
+- Logo `mesesCobranca === compromisso` em todos. A escada e so o tamanho do
+  compromisso, e o desconto mora nele
+- Existiam 6 planos: cada compromisso tinha a variante "pago todo mes", mais
+  cara, com cobranca da diferenca para quem saisse antes. Retiradas em
+  out/2026 junto com a baixa de preco — seis degraus vendiam pior que quatro
+- `descontoAAcertar` CONTINUA no codigo e devolve 0 para todos os planos de
+  hoje. E guarda, nao codigo morto: se voltar um plano com `mesesCobranca:
+  1` e `compromisso > 1`, a regra volta sozinha. Um teste varre o catalogo
+  inteiro e falha se alguem adicionar um plano assim sem pensar
+- `situacaoDe` le o `valorCiclo` GRAVADO, nao o derivado do plano. Mudar
+  preco exige alinhar a coluna das assinaturas existentes, senao o barbeiro
+  e cobrado pelo preco velho
+- Ninguem tinha pago nada quando o preco baixou (32 faturas, zero pagas),
+  entao nao houve cliente para preservar nem valor a respeitar
+
 ### Painel da plataforma (/admin/plataforma)
 - E a visao do dono do PRODUTO, nao do dono da barbearia. Protegida pela
   mesma senha-mestra do reset (`ADMIN_SECRET`)
