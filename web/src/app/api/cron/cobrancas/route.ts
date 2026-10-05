@@ -49,9 +49,16 @@ const MAX_FATURAS_ABERTAS = 4;
  * Arredonda para cima porque "vence em 0 dias" não diz nada a ninguém —
  * o que falta hoje ainda é hoje.
  */
+/** "06/10", no dia da barbearia — nao no do servidor, que ja virou as 21h. */
+function diaCurto(d: Date): string {
+  return d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" });
+}
+
 function prazoEmTexto(vencimento: Date, agora: Date): string {
   const dias = Math.ceil((vencimento.getTime() - agora.getTime()) / 86_400_000);
-  if (dias <= 0) return "hoje";
+  // O modelo aprovado diz "Sua assinatura vence em {{2}}" — e "vence em
+  // hoje" nao e portugues. A data serve para os dois casos.
+  if (dias <= 0) return diaCurto(vencimento);
   return dias === 1 ? "1 dia" : `${dias} dias`;
 }
 
@@ -81,7 +88,11 @@ async function avisarDono(
 
   let enviado = false;
   if (saiuDoTeste) {
-    enviado = await enviarModelo(a.shop.owner.phone, "fim_do_teste", [primeiro, a.shop.name], faturaId);
+    enviado = await enviarModelo(
+      a.shop.owner.phone, "fim_do_teste",
+      [primeiro, a.shop.name, brl(valor), diaCurto(vencimento)],
+      faturaId,
+    );
   }
   // Renovacao comum, ou o modelo novo ainda em revisao na Meta: cai no de
   // cobranca, que ja e aprovado. Mensagem generica e melhor que nenhuma.

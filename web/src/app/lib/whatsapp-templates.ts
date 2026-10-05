@@ -158,16 +158,20 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
   fim_do_teste: {
     nome: "fim_do_teste",
     idioma: "pt_BR",
-    // SEM preco e sem o nome do produto: foi exatamente "BarberPro" ao lado
-    // de valor que fez a Meta reprovar o `cobranca_assinatura` como
-    // Marketing na primeira versao. Status da conta + uma acao e Utilidade.
-    // Os precos aparecem na pagina de pagamento, onde ele escolhe.
-    variaveis: 2,
+    // No MOLDE do `cobranca_assinatura`, que passou como Utilidade: fala de
+    // uma fatura que JA EXISTE, com valor e data. A primeira versao ("teste
+    // gratis terminou, escolha um plano") a Meta marcou que seria rejeitada
+    // como Utilidade — "gratis" e "escolher plano" sao pedido de venda, e
+    // pedido de venda e Marketing por definicao. A escolha do plano continua
+    // existindo: mora na pagina /pagar, nao na mensagem.
+    variaveis: 4,
     textoAprovado:
-      "Olá, {{1}}! 👋\n\n" +
-      "O teste grátis da {{2}} terminou.\n\n" +
-      "Para continuar recebendo agendamentos, é só escolher um plano pelo botão abaixo.",
-    exemplo: ["Eduardo", "Lion barbearia"],
+      "Olá, {{1}}!\n\n" +
+      "O período de teste da {{2}} foi encerrado.\n\n" +
+      "💳 Fatura de {{3}}\n" +
+      "📅 Vencimento em {{4}}\n\n" +
+      "A cobrança já está pronta, é só tocar no botão abaixo.",
+    exemplo: ["Eduardo", "Lion barbearia", "R$ 45,90", "06/10"],
     botaoComLink: true,
   },
 

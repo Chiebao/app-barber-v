@@ -532,9 +532,15 @@ app_barber/
   `fim_do_teste` (saiu do teste e nunca pagou — a conversa e "escolha um
   plano") e `cobranca_assinatura` (renovacao). Se o `fim_do_teste` ainda
   nao estiver aprovado na Meta, cai no `cobranca_assinatura`
-- `fim_do_teste` NAO cita preco nem o nome BarberPro: produto ao lado de
-  valor foi o que fez a Meta reprovar o `cobranca_assinatura` como Marketing.
-  Status da conta + uma acao e Utilidade. O preco fica na pagina /pagar
+- `fim_do_teste` segue o MOLDE do `cobranca_assinatura`: fatura que ja
+  existe, com valor e data. A versao "teste gratis terminou, escolha um
+  plano" a Meta avisou que seria REJEITADA como Utilidade — "gratis" e
+  "escolher plano" sao pedido de venda, e venda e Marketing. A escolha do
+  plano mora na pagina /pagar, nao na mensagem
+- Nao vale submeter como Marketing para passar: custa mais por mensagem e a
+  Meta limita a entrega de Marketing por destinatario. Cobranca tem de chegar
+- "vence em hoje" virou "vence em 06/10": o modelo aprovado e "Sua
+  assinatura vence em {{2}}", e a data serve para o dia e para o atraso
 - "Saiu do teste" = `trialEndsAt` preenchido e no passado. O webhook so
   limpa esse campo no PRIMEIRO pagamento, entao e um sinal confiavel
 - Push web vai junto, de graca, so para o perfil de DONO — cobranca da
