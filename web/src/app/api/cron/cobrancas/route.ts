@@ -81,12 +81,7 @@ async function avisarDono(
 
   let enviado = false;
   if (saiuDoTeste) {
-    const maisBarato = Math.min(...Object.values(PLANOS).map((p) => p.mensal));
-    enviado = await enviarModelo(
-      a.shop.owner.phone, "fim_do_teste",
-      [primeiro, a.shop.name, brl(maisBarato)],
-      faturaId,
-    );
+    enviado = await enviarModelo(a.shop.owner.phone, "fim_do_teste", [primeiro, a.shop.name], faturaId);
   }
   // Renovacao comum, ou o modelo novo ainda em revisao na Meta: cai no de
   // cobranca, que ja e aprovado. Mensagem generica e melhor que nenhuma.

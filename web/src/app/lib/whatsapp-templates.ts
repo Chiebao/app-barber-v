@@ -158,13 +158,16 @@ export const MODELOS: Record<NomeModelo, Modelo> = {
   fim_do_teste: {
     nome: "fim_do_teste",
     idioma: "pt_BR",
-    variaveis: 3,
+    // SEM preco e sem o nome do produto: foi exatamente "BarberPro" ao lado
+    // de valor que fez a Meta reprovar o `cobranca_assinatura` como
+    // Marketing na primeira versao. Status da conta + uma acao e Utilidade.
+    // Os precos aparecem na pagina de pagamento, onde ele escolhe.
+    variaveis: 2,
     textoAprovado:
       "Olá, {{1}}! 👋\n\n" +
-      "O teste grátis da {{2}} no BarberPro terminou.\n\n" +
-      "Para continuar recebendo agendamentos, escolha seu plano — a partir de {{3}} por mês.\n\n" +
-      "É só tocar no botão abaixo.",
-    exemplo: ["Eduardo", "Lion barbearia", "R$ 29,90"],
+      "O teste grátis da {{2}} terminou.\n\n" +
+      "Para continuar recebendo agendamentos, é só escolher um plano pelo botão abaixo.",
+    exemplo: ["Eduardo", "Lion barbearia"],
     botaoComLink: true,
   },
 

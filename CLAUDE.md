@@ -532,6 +532,9 @@ app_barber/
   `fim_do_teste` (saiu do teste e nunca pagou — a conversa e "escolha um
   plano") e `cobranca_assinatura` (renovacao). Se o `fim_do_teste` ainda
   nao estiver aprovado na Meta, cai no `cobranca_assinatura`
+- `fim_do_teste` NAO cita preco nem o nome BarberPro: produto ao lado de
+  valor foi o que fez a Meta reprovar o `cobranca_assinatura` como Marketing.
+  Status da conta + uma acao e Utilidade. O preco fica na pagina /pagar
 - "Saiu do teste" = `trialEndsAt` preenchido e no passado. O webhook so
   limpa esse campo no PRIMEIRO pagamento, entao e um sinal confiavel
 - Push web vai junto, de graca, so para o perfil de DONO — cobranca da
