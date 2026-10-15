@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 
 /**
  * Radar de cliente sumido (B19).
@@ -58,8 +59,8 @@ export default function Sumidos({
 
   if (carregando) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5">
-        <div className="h-4 w-40 bg-gray-700/60 rounded animate-pulse" />
+      <div className="hud-card p-5">
+        <div className="h-4 w-40 bg-[color-mix(in_srgb,var(--hud-surface)_60%,transparent)] rounded animate-pulse" />
       </div>
     );
   }
@@ -67,11 +68,11 @@ export default function Sumidos({
 
   if (dados.total === 0) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-2">
-        <h3 className="font-semibold text-white">🔍 Clientes sumidos</h3>
-        <p className="text-sm text-gray-400">
+      <div className="hud-card p-5 space-y-2">
+        <h3 className="font-semibold text-hud-text"><Icon nome="busca" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Clientes sumidos</h3>
+        <p className="text-sm text-hud-muted">
           Nenhum cliente atrasado no momento — quem costuma voltar está voltando no ritmo.
-          Bom sinal! 👏
+          Bom sinal!
         </p>
       </div>
     );
@@ -79,11 +80,11 @@ export default function Sumidos({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4">
-        <p className="text-sm font-semibold text-yellow-400">
-          🔍 {dados.total} cliente{dados.total > 1 ? "s" : ""} passou do ponto de voltar
+      <div className="rounded bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] p-4">
+        <p className="text-sm font-semibold text-hud-warn">
+          {dados.total} cliente{dados.total > 1 ? "s" : ""} passou do ponto de voltar
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-hud-muted mt-1">
           Comparamos o ritmo de cada um com o tempo que está sem vir. Chamar de volta quem já foi
           cliente costuma dar mais resultado do que buscar gente nova.
         </p>
@@ -93,20 +94,20 @@ export default function Sumidos({
         {dados.clientes.map((c) => {
           const jaChamado = chamados.includes(c.clientId);
           return (
-            <div key={c.clientId} className="rounded-xl border border-gray-700 bg-dark-800 p-4 space-y-3">
+            <div key={c.clientId} className="hud-card p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-white truncate">{c.nome}</p>
-                  <p className="text-sm text-gray-400">{c.telefone}</p>
+                  <p className="font-semibold text-hud-text truncate">{c.nome}</p>
+                  <p className="text-sm text-hud-muted">{c.telefone}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-bold text-yellow-400 tabular-nums">{c.diasSemVir}d</p>
-                  <p className="text-xs text-gray-500">sem vir</p>
+                  <p className="text-lg font-bold text-hud-warn tabular-nums">{c.diasSemVir}d</p>
+                  <p className="text-xs text-hud-muted">sem vir</p>
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500">
-                Vinha a cada <strong className="text-gray-300">{c.intervaloMedio} dias</strong> ·{" "}
+              <p className="text-xs text-hud-muted">
+                Vinha a cada <strong className="text-hud-soft">{c.intervaloMedio} dias</strong> ·{" "}
                 {c.visitas} visitas · última em{" "}
                 {new Date(c.ultimaVisita + "T12:00:00").toLocaleDateString("pt-BR")}
               </p>
@@ -114,13 +115,13 @@ export default function Sumidos({
               <button
                 onClick={() => chamar(c)}
                 className={
-                  "w-full rounded-lg py-2 text-sm font-medium transition border " +
+                  "w-full rounded py-2 text-sm font-medium transition border " +
                   (jaChamado
-                    ? "border-gray-700 text-gray-500"
-                    : "border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20")
+                    ? "border-hud-border text-hud-muted"
+                    : "border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] text-hud-ok hover:bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)]")
                 }
               >
-                {jaChamado ? "✓ Chamado" : "💬 Chamar de volta"}
+                {jaChamado ? "Chamado" : "Chamar de volta"}
               </button>
             </div>
           );

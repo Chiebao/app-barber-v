@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Login</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:844px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:30px;left:50%;margin-left:-230px;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.20),rgba(245,183,49,0) 62%)"></div>
+
+  <div style="position:relative;height:100%;box-sizing:border-box;padding:56px 24px 24px;display:flex;flex-direction:column;gap:26px">
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+      <svg role="img" aria-label="BarberPro" width="84" height="84" viewBox="0 0 112 112" fill="none">
+        <defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F9DA8A"></stop><stop offset="0.45" stop-color="#F5B731"></stop><stop offset="1" stop-color="#C47A08"></stop></linearGradient></defs>
+        <polygon points="56,4 102,30 102,82 56,108 10,82 10,30" fill="rgba(245,183,49,0.10)" stroke="url(#lg1)" stroke-width="2"></polygon>
+        <polygon points="56,16 92,36 92,76 56,96 20,76 20,36" fill="none" stroke="rgba(245,183,49,0.35)" stroke-width="1"></polygon>
+        <path d="M38 38l36 36M74 38L38 74" stroke="url(#lg1)" stroke-width="5" stroke-linecap="round"></path>
+        <path d="M44 30l12 8 12-8" stroke="url(#lg1)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <div style="font-family:'Marcellus',Georgia,serif;font-size:38px;line-height:1;font-style:italic;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 12px rgba(245,183,49,0.3));padding-right:4px">BarberPro</div>
+      <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#8B8FA3">Agenda para barbearias</div>
+    </div>
+
+    <div style="position:relative;padding:22px 18px 20px;border:1px solid #2A2D42;background:rgba(22,22,37,0.92);border-radius:4px;display:flex;flex-direction:column;gap:16px">
+      <span style="position:absolute;top:-1px;left:-1px;width:12px;height:12px;border-top:2px solid #F9DA8A;border-left:2px solid #F9DA8A"></span>
+      <span style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-bottom:2px solid #F9DA8A;border-right:2px solid #F9DA8A"></span>
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:26px;line-height:1.1">Acesse sua conta</h1>
+
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:8px">Telefone</label>
+        <div style="height:52px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #F5B731;background:rgba(11,11,20,0.7);border-radius:4px;box-shadow:0 0 0 3px rgba(245,183,49,0.12);font-size:16px;font-variant-numeric:tabular-nums">(15) 99999-9999</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:8px">Senha</label>
+        <div style="height:52px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:16px;letter-spacing:0.2em">••••••••<svg aria-label="Mostrar senha" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B8FA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
+      </div>
+
+      <button type="button" style="height:56px;display:flex;align-items:center;justify-content:center;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:15px;letter-spacing:0.1em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)">Entrar</button>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <button type="button" style="height:44px;border:0;background:transparent;color:#F9DA8A;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Esqueci minha senha</button>
+        <button type="button" style="height:44px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Usar código de recuperação</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;color:#6E7289;font-size:12px"><span style="flex:1;height:1px;background:#2A2D42"></span>Ainda não tem conta?<span style="flex:1;height:1px;background:#2A2D42"></span></div>
+
+    <button type="button" style="height:52px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #F5B731;background:rgba(245,183,49,0.08);border-radius:4px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Cadastre sua barbearia</span></button>
+
+    <div style="margin-top:auto;text-align:center;font-size:12px;color:#6E7289">Termos de Uso · Política de Privacidade</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

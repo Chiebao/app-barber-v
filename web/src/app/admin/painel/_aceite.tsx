@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 import { Modal } from "@/app/lib/modal";
 
@@ -75,15 +76,15 @@ export default function Aceite({
     <Modal aberto onFechar={() => {}} bloqueante largura="max-w-md">
 
         <div>
-          <p className="text-xs text-brand-400 uppercase tracking-widest mb-2">
+          <p className="text-xs text-hud-light uppercase tracking-widest mb-2">
             {estado.primeiraVez ? "Antes de continuar" : "Termos atualizados"}
           </p>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             {estado.primeiraVez
               ? "Precisamos do seu aceite"
               : "Nossos termos mudaram"}
           </h2>
-          <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+          <p className="text-sm text-hud-muted mt-2 leading-relaxed">
             {estado.primeiraVez ? (
               <>
                 Sua conta foi criada antes de passarmos a registrar o aceite dos termos.
@@ -103,21 +104,21 @@ export default function Aceite({
           </p>
         </div>
 
-        <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-2.5">
+        <div className="rounded bg-hud-bg border border-hud-border p-4 space-y-2.5">
           <a
             href="/termos" target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-between text-sm text-brand-400 hover:text-brand-300 transition"
+            className="flex items-center justify-between text-sm text-hud-light hover:text-hud-light transition"
           >
-            <span>📄 Termos de Uso</span>
-            <span className="text-gray-600">abrir ›</span>
+            <span className="inline-flex items-center gap-1.5"><Icon nome="ticket" tamanho={15} /> Termos de Uso</span>
+            <span className="text-hud-faint">abrir ›</span>
           </a>
-          <div className="border-t border-gray-700/60" />
+          <div className="border-t border-hud-border" />
           <a
             href="/privacidade" target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-between text-sm text-brand-400 hover:text-brand-300 transition"
+            className="flex items-center justify-between text-sm text-hud-light hover:text-hud-light transition"
           >
-            <span>🔒 Política de Privacidade</span>
-            <span className="text-gray-600">abrir ›</span>
+            <span><Icon nome="cadeado" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Política de Privacidade</span>
+            <span className="text-hud-faint">abrir ›</span>
           </a>
         </div>
 
@@ -128,7 +129,7 @@ export default function Aceite({
             onChange={(e) => setMarcado(e.target.checked)}
             className="mt-0.5 h-5 w-5 shrink-0 accent-brand-500 cursor-pointer"
           />
-          <span className="text-sm text-gray-300 leading-relaxed">
+          <span className="text-sm text-hud-soft leading-relaxed">
             Li e aceito os Termos de Uso e a Política de Privacidade
             {estado.versaoVigente ? ` (versão ${estado.versaoVigente})` : ""}.
           </span>
@@ -137,19 +138,19 @@ export default function Aceite({
         <button
           onClick={aceitar}
           disabled={!marcado || salvando}
-          className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           {salvando ? "Registrando..." : "Aceitar e continuar"}
         </button>
 
         <button
           onClick={onSair}
-          className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1"
+          className="hud-focus min-h-[44px] w-full text-sm text-hud-muted hover:text-hud-soft transition py-1"
         >
           Sair da conta
         </button>
 
-        <p className="text-xs text-gray-600 text-center leading-relaxed">
+        <p className="text-xs text-hud-faint text-center leading-relaxed">
           Registramos a data e a versão do seu aceite. Seus dados e sua agenda
           continuam intactos.
         </p>

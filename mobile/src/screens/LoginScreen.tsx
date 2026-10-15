@@ -6,6 +6,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { useColors } from "../utils/useColors";
 import { fontSize, fontWeight, spacing } from "../utils/tokens";
@@ -64,8 +65,7 @@ export default function LoginScreen({ onLogin, onGoToRegister }: Props) {
       >
         {/* Logo */}
         <View style={styles.logoBlock}>
-          <Text style={styles.logo}>BarberPro</Text>
-          <View style={styles.brandLine} />
+          <Image source={require("../../assets/logo.png")} style={styles.logoImg} resizeMode="contain" accessibilityLabel="BarberPro App" />
           <Text style={styles.subtitle}>Entre na sua conta</Text>
         </View>
 
@@ -117,7 +117,11 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     logoBlock: {
       alignItems: "center",
-      marginBottom: spacing["4xl"],
+      marginBottom: spacing["3xl"],
+    },
+    logoImg: {
+      width: 170,
+      height: 219,
     },
     logo: {
       fontSize: fontSize.display,

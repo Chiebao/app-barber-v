@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Assinatura</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1500px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:-140px;right:-120px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.14),rgba(245,183,49,0) 65%)"></div>
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 24px;display:flex;flex-direction:column;gap:14px">
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Voltar" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:28px;line-height:1.1">Assinatura</h1>
+    </div>
+
+    <!-- estado atual: teste -->
+    <div style="position:relative;padding:16px;border:1px solid rgba(96,165,250,0.5);background:rgba(96,165,250,0.07);border-radius:4px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#93C5FD;text-transform:uppercase">Teste grátis</div>
+      <div style="margin-top:6px;font-family:'Marcellus',Georgia,serif;font-size:34px;line-height:1.05">12 dias restantes</div>
+      <div style="margin-top:4px;font-size:12px;color:#8B8FA3">Termina em 26/10/2026 · escolha um plano para continuar</div>
+    </div>
+
+    <!-- variantes de estado -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-top:4px">Outros estados do banner</div>
+    <div style="padding:14px;border:1px solid rgba(74,222,128,0.45);background:rgba(74,222,128,0.06);border-radius:4px"><div style="font-size:14px;font-weight:700;color:#4ADE80">Plano Anual ativo</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3">Próxima cobrança: 14/08/2027 · R$ 29,90/mês</div></div>
+    <div style="padding:14px;border:1px solid rgba(251,146,60,0.55);background:rgba(251,146,60,0.07);border-radius:4px"><div style="font-size:14px;font-weight:700;color:#FDBA74">Fatura vencida · 3 dias de carência</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3">Pague para não bloquear a agenda dos seus clientes.</div><button type="button" style="margin-top:10px;width:100%;height:44px;border:0;border-radius:4px;background:#FB923C;color:#0B0B14;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Pagar fatura</button></div>
+    <div style="padding:14px;border:1px solid rgba(248,113,113,0.55);background:rgba(248,113,113,0.07);border-radius:4px"><div style="font-size:14px;font-weight:700;color:#FCA5A5">Conta bloqueada</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3">Novos agendamentos estão pausados até o pagamento.</div></div>
+
+    <!-- planos -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-top:6px">Planos</div>
+    <div role="radiogroup" aria-label="Plano" style="display:flex;flex-direction:column;gap:8px">
+      <div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px"><span style="width:20px;height:20px;border-radius:50%;border:1.5px solid #4A4E66"></span><div style="flex:1"><div style="font-size:14px;font-weight:700">Mensal</div><div style="font-size:12px;color:#8B8FA3">Cobrança todo mês</div></div><div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">R$ 45,90</div></div>
+      <div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px"><span style="width:20px;height:20px;border-radius:50%;border:1.5px solid #4A4E66"></span><div style="flex:1"><div style="font-size:14px;font-weight:700">Trimestral</div><div style="font-size:12px;color:#8B8FA3">por mês</div></div><div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">R$ 39,90</div></div>
+      <div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px"><span style="width:20px;height:20px;border-radius:50%;border:1.5px solid #4A4E66"></span><div style="flex:1"><div style="font-size:14px;font-weight:700">Semestral</div><div style="font-size:12px;color:#8B8FA3">por mês</div></div><div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">R$ 34,90</div></div>
+      <div style="position:relative;min-height:72px;display:flex;align-items:center;gap:12px;padding:0 14px;border:1px solid #F5B731;background:rgba(245,183,49,0.09);border-radius:4px;box-shadow:0 0 24px rgba(245,183,49,0.14)">
+        <span style="position:absolute;top:-10px;right:12px;padding:2px 8px;border-radius:3px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);color:#0B0B14;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase">Mais escolhido</span>
+        <span style="width:20px;height:20px;border-radius:50%;border:1.5px solid #F5B731;display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08)"></span></span>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#F9DA8A">Anual</div><div style="font-size:12px;color:#8B8FA3">por mês · economize 35%</div></div>
+        <div style="font-family:'Marcellus',Georgia,serif;font-size:24px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">R$ 29,90</div>
+      </div>
+    </div>
+
+    <button type="button" style="height:56px;display:flex;align-items:center;justify-content:center;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:15px;letter-spacing:0.1em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)">Assinar plano Anual</button>
+
+    <!-- cobranças -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-top:6px">Cobranças</div>
+    <div style="border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;overflow:hidden">
+      <div style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid #2A2D42"><div style="flex:1"><div style="font-size:13px;font-weight:600">Plano Mensal</div><div style="font-size:11px;color:#8B8FA3">Venc. 14/10/2026</div></div><span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;margin-right:8px">R$ 45,90</span><span style="padding:3px 8px;border:1px solid rgba(251,146,60,0.55);border-radius:3px;font-size:10px;font-weight:700;color:#FB923C">Pendente</span></div>
+      <div style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 14px"><div style="flex:1"><div style="font-size:13px;font-weight:600">Plano Mensal</div><div style="font-size:11px;color:#8B8FA3">Venc. 14/09/2026</div></div><span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;margin-right:8px">R$ 45,90</span><span style="padding:3px 8px;border:1px solid rgba(74,222,128,0.5);border-radius:3px;font-size:10px;font-weight:700;color:#4ADE80">Paga</span></div>
+    </div>
+
+    <button type="button" style="margin-top:6px;height:44px;border:0;background:transparent;color:#F87171;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Cancelar assinatura</button>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

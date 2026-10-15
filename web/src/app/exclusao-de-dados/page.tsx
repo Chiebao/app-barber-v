@@ -18,19 +18,19 @@ const SUPORTE = "5515997767794";
 
 export default function ExclusaoDeDadosPage() {
   return (
-    <main className="min-h-screen bg-dark-900 text-gray-300 px-4 py-12 sm:px-8">
+    <main className="min-h-screen hud-bg text-hud-soft px-4 py-12 sm:px-8">
       <article className="mx-auto max-w-3xl space-y-8">
         <header>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-hud-text mb-2">
             Exclusão de dados
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-hud-muted">
             Como apagar seus dados do BarberPro
           </p>
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             Se você e cliente de uma barbearia
           </h2>
           <p>
@@ -41,11 +41,11 @@ export default function ExclusaoDeDadosPage() {
           <p>Ha dois caminhos, e os dois funcionam:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-white">Peça à barbearia.</strong> Ela
+              <strong className="text-hud-text">Peça à barbearia.</strong> Ela
               apaga na hora, pelo painel dela. É o caminho mais rápido.
             </li>
             <li>
-              <strong className="text-white">Peca direto a nos</strong> pelo
+              <strong className="text-hud-text">Peca direto a nos</strong> pelo
               WhatsApp abaixo, informando o telefone que você usa para agendar.
               Confirmamos a identidade e apagamos em até 15 dias.
             </li>
@@ -57,7 +57,7 @@ export default function ExclusaoDeDadosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             Se você e dono de barbearia
           </h2>
           <p>
@@ -72,7 +72,7 @@ export default function ExclusaoDeDadosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             O que fica, e por que
           </h2>
           <p>
@@ -84,15 +84,15 @@ export default function ExclusaoDeDadosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">Como falar conosco</h2>
+          <h2 className="font-display text-2xl leading-tight text-hud-text">Como falar conosco</h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-gray-200">WhatsApp:</strong>{" "}
+              <strong className="text-hud-soft">WhatsApp:</strong>{" "}
               <a
                 href={`https://wa.me/${SUPORTE}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-400 underline"
+                className="text-hud-light underline"
               >
                 (15) 99776-7794
               </a>
@@ -101,10 +101,10 @@ export default function ExclusaoDeDadosPage() {
           </ul>
         </section>
 
-        <footer className="border-t border-gray-800 pt-6 text-sm text-gray-500">
+        <footer className="border-t border-hud-border pt-6 text-sm text-hud-muted">
           <p>
             Detalhes sobre quais dados coletamos e por quanto tempo estão na{" "}
-            <a href="/privacidade" className="text-brand-400 underline">
+            <a href="/privacidade" className="text-hud-light underline">
               Política de Privacidade
             </a>
             .

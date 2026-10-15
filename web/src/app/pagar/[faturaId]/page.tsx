@@ -60,25 +60,27 @@ export default function Pagar({ params }: { params: { faturaId: string } }) {
   const maisBarato = dados ? Math.min(...dados.planos.map((p) => p.mensal)) : 0;
 
   return (
-    <main className="min-h-screen bg-dark-900 px-5 py-10">
+    <main className="min-h-screen hud-bg px-5 py-10">
       <div className="mx-auto flex max-w-[28rem] flex-col gap-6">
-        <span className="font-display text-xl tracking-tight text-white">
-          Barber<span className="text-brand-400">Pro</span>
+        <span className="flex items-center gap-2.5 font-display text-xl tracking-tight text-hud-text">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="h-10 w-10 rounded-full border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] object-cover" />
+          <span>Barber<span className="text-hud-light">Pro</span></span>
         </span>
 
-        {!dados && !erro && <p className="text-sm text-gray-400">Carregando…</p>}
+        {!dados && !erro && <p className="text-sm text-hud-muted">Carregando…</p>}
 
         {erro && !dados && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{erro}</div>
+          <div className="rounded border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] p-4 text-sm text-hud-err">{erro}</div>
         )}
 
         {dados?.emDia && (
           <div className="flex flex-col gap-4">
-            <h1 className="font-display text-3xl leading-tight text-white">Tudo certo por aqui ✓</h1>
-            <p className="text-gray-400">
-              A assinatura da <b className="text-white">{dados.loja}</b> está em dia. Não há nada para pagar agora.
+            <h1 className="font-display text-3xl leading-tight text-hud-text">Tudo certo por aqui ✓</h1>
+            <p className="text-hud-muted">
+              A assinatura da <b className="text-hud-text">{dados.loja}</b> está em dia. Não há nada para pagar agora.
             </p>
-            <Link href="/admin/painel" className="w-full rounded-xl bg-brand-500 py-4 text-center font-semibold text-dark-900">
+            <Link href="/admin/painel" className="w-full rounded gold-fill py-4 text-center font-semibold text-[var(--hud-on-accent)]">
               Abrir o painel
             </Link>
           </div>
@@ -87,12 +89,12 @@ export default function Pagar({ params }: { params: { faturaId: string } }) {
         {dados && !dados.emDia && (
           <>
             <div className="flex flex-col gap-2">
-              <h1 className="text-balance font-display text-3xl leading-tight text-white">
+              <h1 className="text-balance font-display text-3xl leading-tight text-hud-text">
                 {dados.saiuDoTeste
                   ? `${dados.dono}, o teste grátis da ${dados.loja} terminou`
                   : `Assinatura da ${dados.loja}`}
               </h1>
-              <p className="text-gray-400">
+              <p className="text-hud-muted">
                 Escolha um plano para continuar recebendo agendamentos. A partir de {brl(maisBarato)} por mês.
               </p>
             </div>
@@ -108,37 +110,37 @@ export default function Pagar({ params }: { params: { faturaId: string } }) {
                     aria-checked={ativo}
                     onClick={() => setEscolhido(p.id)}
                     className={
-                      "grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border p-4 text-left transition " +
-                      (ativo ? "border-brand-500 bg-brand-500/10" : "border-white/10 bg-dark-800 hover:border-white/25")
+                      "grid grid-cols-[1fr_auto] items-center gap-3 rounded border p-4 text-left transition " +
+                      (ativo ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]" : "border-white/10 bg-hud-surface hover:border-white/25")
                     }
                   >
                     <span>
-                      <span className="block font-bold text-white">{p.rotulo}</span>
-                      <span className="block text-xs text-gray-400">
+                      <span className="block font-bold text-hud-text">{p.rotulo}</span>
+                      <span className="block text-xs text-hud-muted">
                         {p.meses === 1 ? "Cobrado todo mês" : `${brl(p.total)} a cada ${p.meses} meses`}
-                        {economia > 0 && <span className="text-emerald-400"> · economiza {brl(economia)}</span>}
+                        {economia > 0 && <span className="text-hud-ok"> · economiza {brl(economia)}</span>}
                       </span>
                     </span>
                     <span className="text-right">
-                      <b className="block font-display text-xl tabular-nums text-white">{brl(p.mensal)}</b>
-                      <span className="text-[11px] text-gray-400">por mês</span>
+                      <b className="block font-display text-xl tabular-nums text-hud-text">{brl(p.mensal)}</b>
+                      <span className="text-[11px] text-hud-muted">por mês</span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            {erro && <p className="text-sm text-red-300">{erro}</p>}
+            {erro && <p className="text-sm text-hud-err">{erro}</p>}
 
             <button
               onClick={pagar}
               disabled={!plano || indo}
-              className="w-full rounded-xl bg-brand-500 py-4 font-semibold text-dark-900 transition hover:bg-brand-400 disabled:opacity-60"
+              className="hud-focus w-full rounded gold-fill py-4 font-semibold text-[var(--hud-on-accent)] transition hover:brightness-105 disabled:opacity-60"
             >
               {indo ? "Abrindo o pagamento…" : plano ? `Pagar ${brl(plano.total)}` : "Escolha um plano"}
             </button>
 
-            <p className="text-center text-xs leading-relaxed text-gray-500">
+            <p className="text-center text-xs leading-relaxed text-hud-muted">
               Pix ou cartão, pela InfinitePay. A confirmação é automática — a agenda continua liberada assim que o
               pagamento cair.
             </p>

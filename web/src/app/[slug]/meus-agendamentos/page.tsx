@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Badge, EmptyState, Field, GoldButton, HudCard, Icon, Input, Tabs } from "@/app/components/hud";
 import { useParams, useRouter } from "next/navigation";
 import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
@@ -664,119 +665,134 @@ export default function MeusAgendamentos() {
     return "Cancelado";
   };
 
-  const statusClass = (status: string) => {
-    if (status === "confirmed") return "bg-blue-500/20 text-blue-400";
-    if (status === "completed") return "bg-green-500/20 text-green-400";
-    return "bg-red-500/20 text-red-400";
+  const statusTom = (status: string): "destaque" | "ok" | "err" => {
+    if (status === "confirmed") return "destaque";
+    if (status === "completed") return "ok";
+    return "err";
   };
 
+  const brl = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+  // Cantoneiras só no primeiro agendamento confirmado: é o "próximo".
+  const idDestaque = appointments.find((a) => a.status === "confirmed")?.id;
+
   return (
-    <main className="min-h-screen bg-dark-900 pb-8">
+    <main className="hud-bg min-h-screen pb-10">
       {dialogoConfirmacao}
-      <header className="bg-dark-800 border-b border-gray-800 p-6 flex flex-col items-center gap-2">
-        {shopLogo && <img src={shopLogo} alt={shopName} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />}
-        <h1 className="text-2xl font-semibold text-brand-400">{shopName || "..."}</h1>
+      <header className="border-b border-hud-border bg-[color-mix(in_srgb,var(--hud-bg)_88%,transparent)]">
+        <div className="mx-auto flex max-w-lg flex-col items-center gap-2 px-4 pb-3 pt-6">
+          {shopLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={shopLogo} alt="" className="h-14 w-14 rounded-full border border-hud-accent object-cover" />
+          ) : (
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-hud-accent text-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_12%,transparent)]">
+              <Icon nome="tesoura" tamanho={24} />
+            </span>
+          )}
+          <h1 className="font-display text-2xl text-hud-text">{shopName || "…"}</h1>
+        </div>
+        <div className="mx-auto max-w-lg">
+          <Tabs
+            rotulo="Navegação"
+            valor="meus"
+            onChange={(v) => { if (v === "agendar") router.push(`/${slug}`); }}
+            abas={[{ valor: "agendar", rotulo: "Agendar" }, { valor: "meus", rotulo: "Meus agendamentos" }]}
+          />
+        </div>
       </header>
 
-      <nav className="flex border-b border-gray-800 bg-dark-800">
-        <button
-          onClick={() => router.push(`/${slug}`)}
-          className="flex-1 py-3 text-sm font-medium text-center text-gray-400 hover:text-white transition-colors"
-        >
-          Agendar
-        </button>
-        <button className="flex-1 py-3 text-sm font-medium text-center border-b-2 border-brand-400 text-brand-400">
-          Meus Agendamentos
-        </button>
-      </nav>
-
-      <div className="max-w-lg mx-auto px-4 pt-6">
+      <div className="mx-auto max-w-lg px-4 pt-6">
         {!searched ? (
-          <div className="animate-slide-up space-y-4">
+          <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold">Ver meus agendamentos</h2>
-              <p className="text-sm text-gray-400 mt-1">Informe seu nome e telefone — os mesmos usados no agendamento.</p>
+              <h2 className="font-display text-[28px] leading-tight text-hud-text">Consultar agendamentos</h2>
+              <p className="mt-1 text-sm text-hud-muted">Informe seu nome e telefone — os mesmos usados no agendamento.</p>
             </div>
-            <input
-              type="text"
-              placeholder="Seu nome"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors"
-            />
-            <input
-              type="tel"
-              placeholder="(00) 00000-0000"
-              value={phone}
-              onChange={(e) => setPhone(formatPhone(e.target.value))}
-              onKeyDown={(e) => { if (e.key === "Enter") search(); }}
-              className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors"
-            />
-            <button
-              disabled={phone.replace(/\D/g, "").length < 10 || name.trim().length < 2 || loading}
+            <Field label="Nome">
+              {(a) => <Input {...a} type="text" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />}
+            </Field>
+            <Field label="Telefone com DDD">
+              {(a) => (
+                <Input
+                  {...a}
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="(00) 00000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  onKeyDown={(e) => { if (e.key === "Enter") search(); }}
+                  autoComplete="tel"
+                />
+              )}
+            </Field>
+            <GoldButton
+              cheio
+              carregando={loading}
+              disabled={phone.replace(/\D/g, "").length < 10 || name.trim().length < 2}
               onClick={search}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? "Buscando..." : "Ver agendamentos"}
-            </button>
-            <p className="text-xs text-gray-600 text-center">🔒 Pedimos o nome para proteger seus dados — só você vê seus agendamentos.</p>
+              Ver agendamentos
+            </GoldButton>
+            <p className="flex items-start justify-center gap-1.5 text-center text-xs text-hud-muted">
+              <Icon nome="cadeado" tamanho={14} className="mt-0.5 shrink-0" />
+              Pedimos o nome para proteger seus dados — só você vê seus agendamentos.
+            </p>
           </div>
         ) : (
-          <div className="animate-slide-up space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {appointments.length} agendamento{appointments.length !== 1 ? "s" : ""}
-              </h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[28px] leading-tight text-hud-text">Meus agendamentos</h2>
               {appointments.length > 0 && (
-                <button
-                  onClick={generatePdf}
-                  disabled={generatingPdf}
-                  className="rounded-lg bg-dark-800 border border-gray-700 px-4 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition-colors disabled:opacity-50"
-                >
-                  {generatingPdf ? "Gerando..." : "Exportar PDF"}
-                </button>
+                <GoldButton variante="neutro" compacto carregando={generatingPdf} onClick={generatePdf} className="shrink-0">
+                  {!generatingPdf && <Icon nome="baixar" tamanho={16} />} {generatingPdf ? "Gerando…" : "PDF"}
+                </GoldButton>
               )}
             </div>
 
             {appointments.length === 0 ? (
               !verified ? (
-                <div className="text-center py-8 space-y-2">
-                  <p className="text-3xl">🔒</p>
-                  <p className="text-gray-300 font-medium">Não encontramos agendamentos com esses dados</p>
-                  <p className="text-sm text-gray-500">Confira se o <strong>nome</strong> e o <strong>telefone</strong> são exatamente os usados no agendamento.</p>
-                </div>
+                <EmptyState
+                  icone="cadeado"
+                  titulo="Não encontramos agendamentos"
+                  texto={<>Confira se o <strong>nome</strong> e o <strong>telefone</strong> são exatamente os usados no agendamento.</>}
+                  acao={{ rotulo: "Tentar com outros dados", onClick: () => setSearched(false) }}
+                />
               ) : (
-                <p className="text-center text-gray-400 py-8">Nenhum agendamento encontrado</p>
+                <EmptyState icone="agenda" titulo="Nenhum agendamento" texto="Quando você agendar, ele aparece aqui." acao={{ rotulo: "Agendar agora", onClick: () => router.push(`/${slug}`) }} />
               )
             ) : (
               <>
-                <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 flex justify-between items-center">
-                  <span className="text-gray-400">Total gasto</span>
-                  <span className="text-xl font-semibold text-brand-400">R$ {totalGasto.toFixed(2)}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <HudCard className="p-4">
+                    <p className="hud-label">Agendamentos</p>
+                    <p className="mt-1 font-display text-3xl text-hud-text tabular-nums">{appointments.length}</p>
+                  </HudCard>
+                  <HudCard className="p-4">
+                    <p className="hud-label">Total gasto</p>
+                    <p className="gold-text mt-1 font-display text-3xl tabular-nums">{brl(totalGasto)}</p>
+                  </HudCard>
                 </div>
 
                 <div className="space-y-3">
                   {appointments.map((apt) => (
-                    <div key={apt.id} className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{formatDate(apt.date)}</p>
-                          <p className="text-sm text-gray-400">{apt.startTime} - {apt.endTime}</p>
-                          {apt.barberName && (
-                            <p className="text-xs text-gray-500 mt-0.5">com {apt.barberName}</p>
-                          )}
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${statusClass(apt.status)}`}>
-                          {statusLabel(apt.status)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-end gap-3">
+                    <HudCard key={apt.id} variante={apt.id === idDestaque ? "destaque" : "normal"} className="space-y-2.5 p-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm text-gray-400">{apt.services.map((s) => s.name).join(", ")}</p>
+                          {apt.id === idDestaque && <p className="hud-eyebrow mb-1">Próximo</p>}
+                          <p className="font-semibold text-hud-text first-letter:uppercase">{formatDate(apt.date)}</p>
+                          <p className="flex items-center gap-1 text-sm text-hud-muted">
+                            <Icon nome="relogio" tamanho={14} /> {apt.startTime} – {apt.endTime}
+                          </p>
+                          {apt.barberName && <p className="mt-0.5 text-xs text-hud-muted">com {apt.barberName}</p>}
+                        </div>
+                        <Badge tom={statusTom(apt.status)}>{statusLabel(apt.status)}</Badge>
+                      </div>
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm text-hud-soft">{apt.services.map((s) => s.name).join(", ")}</p>
                           {/* O produto que o barbeiro lançou precisa aparecer aqui:
                               sem isto o cliente paga 115 e lê 45 no próprio histórico. */}
                           {(apt.produtos?.length ?? 0) > 0 && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-hud-muted">
                               +{" "}
                               {apt.produtos!
                                 .map((p) => (p.quantity > 1 ? p.quantity + "x " : "") + p.name)
@@ -784,85 +800,60 @@ export default function MeusAgendamentos() {
                             </p>
                           )}
                         </div>
-                        <p className="font-semibold text-brand-400 shrink-0">
-                          R$ {(apt.totalGeral ?? apt.totalPrice).toFixed(2)}
-                        </p>
+                        <p className="gold-text shrink-0 font-display text-xl tabular-nums">{brl(apt.totalGeral ?? apt.totalPrice)}</p>
                       </div>
 
                       {/* Edição inline */}
                       {editingId === apt.id && (
-                        <div className="pt-2 space-y-3 border-t border-gray-700">
-                          <p className="text-xs font-semibold text-brand-400">Editar serviços:</p>
+                        <div className="space-y-3 border-t border-hud-border pt-3">
+                          <p className="hud-label">Editar serviços</p>
                           <div className="space-y-2">
                             {shopServices.map((svc) => {
                               const checked = editServiceIds.includes(svc.id);
                               return (
-                                <label key={svc.id} className="flex items-center gap-3 cursor-pointer">
+                                <label key={svc.id} className={`hud-card flex min-h-[48px] cursor-pointer items-center gap-3 px-3 ${checked ? "hud-card-sel" : ""}`}>
                                   <input
                                     type={svc.category === "corte" ? "radio" : "checkbox"}
                                     checked={checked}
                                     onChange={() => toggleEditService(svc.id, svc.category)}
-                                    className="accent-yellow-400"
+                                    className="h-4 w-4 accent-[var(--hud-accent)]"
                                   />
-                                  <span className={`flex-1 text-sm ${checked ? "text-white" : "text-gray-500"}`}>
-                                    {svc.name}
-                                  </span>
-                                  <span className="text-sm text-brand-400">R$ {svc.price.toFixed(2)}</span>
+                                  <span className={`flex-1 text-sm ${checked ? "text-hud-text" : "text-hud-muted"}`}>{svc.name}</span>
+                                  <span className="text-sm font-semibold text-hud-light">{brl(svc.price)}</span>
                                 </label>
                               );
                             })}
                           </div>
-                          <div className="flex justify-between items-center text-sm font-semibold">
-                            <span className="text-gray-400">Total:</span>
-                            <span className="text-brand-400">R$ {editTotal.toFixed(2)}</span>
+                          <div className="flex items-center justify-between text-sm font-semibold">
+                            <span className="text-hud-muted">Total</span>
+                            <span className="gold-text font-display text-xl">{brl(editTotal)}</span>
                           </div>
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingId(null)}
-                              className="flex-1 rounded-lg border border-gray-700 py-2 text-sm text-gray-400 hover:text-white transition-colors"
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              onClick={handleSaveEdit}
-                              disabled={saving || editServiceIds.length === 0}
-                              className="flex-1 rounded-lg bg-brand-500 py-2 text-sm font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
-                            >
-                              {saving ? "Salvando..." : "Confirmar"}
-                            </button>
+                            <GoldButton variante="neutro" compacto className="flex-1" onClick={() => setEditingId(null)}>Cancelar</GoldButton>
+                            <GoldButton compacto className="flex-1" carregando={saving} disabled={editServiceIds.length === 0} onClick={handleSaveEdit}>
+                              Confirmar
+                            </GoldButton>
                           </div>
                         </div>
                       )}
 
                       {apt.status === "confirmed" && editingId !== apt.id && (
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            onClick={() => startEdit(apt)}
-                            className="flex-1 rounded-lg border border-brand-400/40 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition-colors"
-                          >
-                            Editar serviços
-                          </button>
-                          <button
-                            onClick={() => handleCancel(apt.id)}
-                            disabled={cancelling === apt.id}
-                            className="flex-1 rounded-lg border border-red-500/30 py-2 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
-                          >
-                            {cancelling === apt.id ? "Cancelando..." : "Cancelar"}
-                          </button>
+                        <div className="flex gap-2 pt-1">
+                          <GoldButton variante="secundario" compacto className="flex-1" onClick={() => startEdit(apt)}>
+                            <Icon nome="editar" tamanho={16} /> Editar
+                          </GoldButton>
+                          <GoldButton variante="destrutivo-contorno" compacto className="flex-1" carregando={cancelling === apt.id} onClick={() => handleCancel(apt.id)}>
+                            Cancelar
+                          </GoldButton>
                         </div>
                       )}
-                    </div>
+                    </HudCard>
                   ))}
                 </div>
               </>
             )}
 
-            <button
-              onClick={() => setSearched(false)}
-              className="w-full rounded-xl border border-gray-700 py-3 text-gray-400 hover:text-white transition-colors"
-            >
-              Consultar com outros dados
-            </button>
+            <GoldButton variante="neutro" cheio onClick={() => setSearched(false)}>Consultar com outros dados</GoldButton>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { WEB_PALETTES } from "@/app/lib/palettes";
 
 export const runtime = "edge";
 
@@ -14,14 +15,19 @@ export const runtime = "edge";
  * pelo layout do slug, que tem acesso ao banco.
  */
 
-/** Paletas espelhadas de palettes.ts — o Edge não importa o módulo do app. */
-const PALETAS: Record<string, { brand: string; fundo: string; fundo2: string }> = {
-  midnight_gold: { brand: "#c9a96e", fundo: "#0B0B14", fundo2: "#161625" },
-  deep_emerald: { brand: "#10b981", fundo: "#081A10", fundo2: "#0F2A1B" },
-  royal_amethyst: { brand: "#a78bfa", fundo: "#12081A", fundo2: "#1E1030" },
-  warm_parchment: { brand: "#b45309", fundo: "#FAF6EF", fundo2: "#F0E8DA" },
-  clean_stone: { brand: "#475569", fundo: "#F8FAFC", fundo2: "#E9EEF4" },
-};
+/**
+ * Paletas lidas de palettes.ts (módulo puro, roda no Edge). Antes havia uma
+ * cópia à mão aqui, e ela tinha divergido: "Pedra Limpa" estava como
+ * `clean_stone` (o id real é `clean_slate`) e saía com as cores da Midnight
+ * Gold; a Ametista estava com outro roxo.
+ */
+const PALETAS: Record<string, { brand: string; fundo: string; fundo2: string }> = Object.fromEntries(
+  WEB_PALETTES.map((p) => [
+    p.id,
+    // Midnight Gold usa o ouro do visual Ouro HUD, igual ao resto do app.
+    { brand: p.id === "midnight_gold" ? "#F5B731" : p.brand500, fundo: p.dark900, fundo2: p.dark800 },
+  ]),
+);
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;

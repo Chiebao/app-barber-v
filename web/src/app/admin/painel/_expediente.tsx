@@ -148,17 +148,17 @@ export default function Expediente({
   return (
     <Modal aberto={aberto} onFechar={onFechar} largura="max-w-md">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-xl font-semibold text-white">Horário de trabalho</h3>
+        <h3 className="font-display text-[22px] leading-tight text-hud-text">Horário de trabalho</h3>
         <button
           onClick={onFechar}
           aria-label="Fechar"
-          className="shrink-0 rounded-lg px-2 py-1 text-lg text-gray-500 hover:text-white transition"
+          className="hud-focus min-h-[44px] shrink-0 rounded px-2 py-1 text-lg text-hud-muted hover:text-hud-text transition"
         >
           ✕
         </button>
       </div>
 
-      {carregando && <p className="text-sm text-gray-500 py-6 text-center">Carregando...</p>}
+      {carregando && <p className="text-sm text-hud-muted py-6 text-center">Carregando...</p>}
 
       {!carregando && atual && (
         <>
@@ -168,12 +168,12 @@ export default function Expediente({
               <button
                 key={d.dia}
                 onClick={() => setSel(d.dia)}
-                className={`shrink-0 w-[52px] rounded-xl py-1.5 text-center border transition ${
+                className={`shrink-0 w-[52px] rounded py-1.5 text-center border transition ${
                   d.dia === sel
-                    ? "bg-brand-500 border-brand-500 text-dark-900"
+                    ? "gold-fill border-hud-accent text-[var(--hud-on-accent)]"
                     : d.aberto
-                    ? "bg-dark-900 border-gray-700 text-gray-300"
-                    : "bg-dark-900 border-gray-800 text-gray-600"
+                    ? "bg-hud-bg border-hud-border text-hud-soft"
+                    : "bg-hud-bg border-hud-border text-hud-faint"
                 }`}
               >
                 <span className="block text-sm font-bold">{NOMES[d.dia].curto}</span>
@@ -184,24 +184,24 @@ export default function Expediente({
             ))}
           </div>
 
-          <div className="rounded-xl border border-gray-700 p-3.5 space-y-3">
+          <div className="rounded border border-hud-border p-3.5 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-bold text-white">{NOMES[sel].longo}</span>
+              <span className="text-sm font-bold text-hud-text">{NOMES[sel].longo}</span>
               <button
                 onClick={() => mudar("aberto", !atual.aberto)}
                 aria-pressed={atual.aberto}
                 aria-label={atual.aberto ? "Fechar este dia" : "Abrir este dia"}
-                className={`relative h-7 w-12 shrink-0 rounded-full transition ${atual.aberto ? "bg-brand-500" : "bg-gray-700"}`}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition ${atual.aberto ? "gold-fill" : "bg-[var(--hud-track)]"}`}
               >
                 <span
-                  className={`absolute top-1 h-5 w-5 rounded-full transition-all ${atual.aberto ? "left-6 bg-dark-900" : "left-1 bg-gray-400"}`}
+                  className={`absolute top-1 h-5 w-5 rounded-full transition-all ${atual.aberto ? "left-6 bg-hud-bg" : "left-1 bg-[var(--hud-text-2)]"}`}
                 />
               </button>
             </div>
 
             {!atual.aberto ? (
               // Fechar guarda os horários: reabrir não faz digitar de novo.
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-hud-muted">
                 Fechado. Os horários ficam guardados — se reabrir, voltam como estavam.
               </p>
             ) : (
@@ -220,7 +220,7 @@ export default function Expediente({
                     onMudar={(v) => mudar("almocoFim", v || null)}
                   />
                 </div>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-hud-muted">
                   Dia sem parada? Deixe o almoço vazio.
                 </p>
 
@@ -229,10 +229,10 @@ export default function Expediente({
                   {faixas(atual).map((f, i) => (
                     <div
                       key={i}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs tabular-nums ${
+                      className={`flex items-center gap-2 rounded px-3 py-2 text-xs tabular-nums ${
                         f.tipo === "trab"
-                          ? "border border-green-500/30 bg-green-500/5 text-green-400"
-                          : "border border-dashed border-gray-700 text-gray-500"
+                          ? "border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_5%,transparent)] text-hud-ok"
+                          : "border border-dashed border-hud-border text-hud-muted"
                       }`}
                     >
                       <span className="font-bold w-[92px]">{f.de} – {f.ate}</span>
@@ -246,14 +246,14 @@ export default function Expediente({
 
           {/* O caso comum é cinco dias iguais e dois diferentes. */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] text-gray-500">Copiar para:</span>
+            <span className="text-[11px] text-hud-muted">Copiar para:</span>
             {dias
               .filter((d) => d.dia !== sel)
               .map((d) => (
                 <button
                   key={d.dia}
                   onClick={() => copiarPara(d.dia)}
-                  className="rounded-full border border-gray-700 px-2.5 py-1 text-[11px] font-bold text-gray-400 hover:border-brand-400 hover:text-brand-400 transition"
+                  className="rounded-full border border-hud-border px-2.5 py-1 text-[11px] font-bold text-hud-muted hover:border-hud-accent hover:text-hud-light transition"
                 >
                   {NOMES[d.dia].longo.slice(0, 3)}
                 </button>
@@ -263,7 +263,7 @@ export default function Expediente({
           <button
             onClick={salvar}
             disabled={salvando}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition"
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition"
           >
             {salvando ? "Salvando..." : "Salvar horário"}
           </button>
@@ -284,12 +284,12 @@ function Campo({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{rotulo}</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-hud-muted">{rotulo}</span>
       <input
         type="time"
         value={valor}
         onChange={(e) => onMudar(e.target.value)}
-        className="rounded-lg bg-dark-900 border border-gray-700 px-2.5 py-2 text-sm text-white text-center tabular-nums focus:border-brand-500 focus:outline-none"
+        className="rounded bg-hud-bg border border-hud-border px-2.5 py-2 text-sm text-hud-text text-center tabular-nums focus:border-hud-accent focus:outline-none"
       />
     </label>
   );

@@ -11,7 +11,7 @@ interface Props {
 }
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
-  confirmed: { color: feedback.info, bg: feedback.infoBg, label: "Confirmado" },
+  confirmed: { color: "#F5B731", bg: "transparent", label: "Confirmado" },
   completed: { color: feedback.success, bg: feedback.successBg, label: "Concluído" },
   cancelled: { color: feedback.error, bg: feedback.errorBg, label: "Cancelado" },
   pending: { color: feedback.warning, bg: feedback.warningBg, label: "Pendente" },
@@ -29,7 +29,7 @@ export default function StatusBadge({ status, label, size = "sm" }: Props) {
         styles.badge,
         {
           backgroundColor: config.bg,
-          borderColor: config.color + "30",
+          borderColor: config.color + "99",
           paddingVertical: isMd ? 6 : spacing.xs,
           paddingHorizontal: isMd ? spacing.md : 10,
         },

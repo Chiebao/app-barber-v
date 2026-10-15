@@ -132,24 +132,24 @@ export default function Comanda({
     <Modal aberto={aberto} onFechar={onFechar}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-xl font-semibold text-white">Adicionar produto</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{clienteNome}</p>
+          <h3 className="font-display text-[22px] leading-tight text-hud-text">Adicionar produto</h3>
+          <p className="text-xs text-hud-muted mt-0.5">{clienteNome}</p>
         </div>
         <button
           onClick={onFechar}
           aria-label="Fechar"
-          className="shrink-0 rounded-lg px-2 py-1 text-lg text-gray-500 hover:text-white transition"
+          className="hud-focus min-h-[44px] shrink-0 rounded px-2 py-1 text-lg text-hud-muted hover:text-hud-text transition"
         >
           ✕
         </button>
       </div>
 
-      {carregando && <p className="text-sm text-gray-500 py-4 text-center">Carregando...</p>}
+      {carregando && <p className="text-sm text-hud-muted py-4 text-center">Carregando...</p>}
 
       {!carregando && produtos.length === 0 && (
-        <p className="text-sm text-gray-400 py-4 text-center leading-relaxed">
+        <p className="text-sm text-hud-muted py-4 text-center leading-relaxed">
           Nenhum produto cadastrado ainda.
-          <span className="block text-xs text-gray-500 mt-1">
+          <span className="block text-xs text-hud-muted mt-1">
             Cadastre em Início › Produtos para vender durante o atendimento.
           </span>
         </p>
@@ -161,19 +161,19 @@ export default function Comanda({
           return (
             <div
               key={p.id}
-              className={`flex items-center gap-3 rounded-xl border p-3 transition ${
-                qtd > 0 ? "border-brand-500/45 bg-brand-500/10" : "border-gray-700"
+              className={`flex items-center gap-3 rounded border p-3 transition ${
+                qtd > 0 ? "border-[color-mix(in_srgb,var(--hud-accent)_45%,transparent)] bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]" : "border-hud-border"
               }`}
             >
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-semibold text-white truncate">{p.name}</span>
-                <span className="block text-xs text-gray-500 tabular-nums">{BRL(p.price)}</span>
+                <span className="block text-sm font-semibold text-hud-text truncate">{p.name}</span>
+                <span className="block text-xs text-hud-muted tabular-nums">{BRL(p.price)}</span>
               </span>
 
               {qtd === 0 ? (
                 <button
                   onClick={() => mudar(p.id, 1)}
-                  className="shrink-0 rounded-lg border border-gray-700 px-3 py-1.5 text-xs font-bold text-gray-300 hover:border-brand-400 hover:text-brand-400 transition"
+                  className="shrink-0 rounded border border-hud-border px-3 py-1.5 text-xs font-bold text-hud-soft hover:border-hud-accent hover:text-hud-light transition"
                 >
                   Adicionar
                 </button>
@@ -184,15 +184,15 @@ export default function Comanda({
                   <button
                     onClick={() => mudar(p.id, -1)}
                     aria-label={`Menos um ${p.name}`}
-                    className="h-7 w-7 rounded-lg border border-gray-700 text-gray-300 hover:text-white transition"
+                    className="h-7 w-7 rounded border border-hud-border text-hud-soft hover:text-hud-text transition"
                   >
                     −
                   </button>
-                  <span className="w-5 text-center text-sm font-bold text-brand-400 tabular-nums">{qtd}</span>
+                  <span className="w-5 text-center text-sm font-bold text-hud-light tabular-nums">{qtd}</span>
                   <button
                     onClick={() => mudar(p.id, 1)}
                     aria-label={`Mais um ${p.name}`}
-                    className="h-7 w-7 rounded-lg border border-gray-700 text-gray-300 hover:text-white transition"
+                    className="h-7 w-7 rounded border border-hud-border text-hud-soft hover:text-hud-text transition"
                   >
                     +
                   </button>
@@ -204,18 +204,18 @@ export default function Comanda({
       </div>
 
       {total > 0 && (
-        <div className="flex items-baseline justify-between gap-3 rounded-xl bg-dark-900 border border-gray-700 px-3 py-2.5">
-          <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+        <div className="flex items-baseline justify-between gap-3 rounded bg-hud-bg border border-hud-border px-3 py-2.5">
+          <span className="text-xs font-bold uppercase tracking-widest text-hud-muted">
             Produtos
           </span>
-          <span className="text-base font-bold text-brand-400 tabular-nums">{BRL(total)}</span>
+          <span className="text-base font-bold text-hud-light tabular-nums">{BRL(total)}</span>
         </div>
       )}
 
       <button
         onClick={salvar}
         disabled={salvando}
-        className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition"
+        className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition"
       >
         {salvando ? "Salvando..." : "Salvar edição"}
       </button>

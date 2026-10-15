@@ -6,6 +6,7 @@ import { getPaletteById, paletteToVars } from "@/app/lib/palettes";
 import { toast } from "@/app/lib/toast";
 import BarberPageChat from "./_chat-page";
 import PixAutomatico from "./_pix-automatico";
+import { Alert, EmptyState, Field, GoldButton, HudCard, Icon, Input, SectionLabel, Skeleton, Spinner, StepPills, TextArea } from "@/app/components/hud";
 
 /**
  * Id anonimo da sessao — sobrevive ao recarregar a aba, morre ao fechar.
@@ -480,9 +481,18 @@ export default function BarberPage() {
 
   if (loadError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <p className="text-red-400">{loadError}</p>
-      </div>
+      <main className="hud-bg flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <EmptyState
+            erro
+            titulo={loadError === "Barbearia não encontrada" ? "Barbearia não encontrada" : "Não foi possível abrir"}
+            texto={loadError === "Barbearia não encontrada"
+              ? "Confira o link com a barbearia. Ele pode ter mudado."
+              : loadError}
+            acao={{ rotulo: "Tentar de novo", onClick: () => window.location.reload() }}
+          />
+        </div>
+      </main>
     );
   }
 
@@ -492,282 +502,323 @@ export default function BarberPage() {
     return <BarberPageChat shop={shop} slug={slug} initialName={clientName} initialPhone={clientPhone} />;
   }
 
+  // Passos do fluxo clássico, na ordem REAL do código. Profissional só conta
+  // quando há mais de um barbeiro — com um só, a etapa é pulada.
+  const etapas: { chave: Step[]; rotulo: string }[] = [
+    { chave: ["name", "phone"], rotulo: "Identificação" },
+    { chave: ["services"], rotulo: "Serviços" },
+    ...(shop && shop.barbers.length > 1 ? [{ chave: ["barber"] as Step[], rotulo: "Profissional" }] : []),
+    { chave: ["date"], rotulo: "Data" },
+    { chave: ["time"], rotulo: "Horário" },
+    { chave: ["confirm"], rotulo: "Confirmar" },
+  ];
+  const etapaAtual = etapas.findIndex((e) => e.chave.includes(step));
+  const pills = etapaAtual >= 0 ? <StepPills atual={etapaAtual + 1} total={etapas.length} rotulo={etapas[etapaAtual].rotulo} /> : null;
+
+  const voltar = (para: Step) => (
+    <button
+      type="button"
+      onClick={() => setStep(para)}
+      className="hud-focus -ml-2 mb-3 inline-flex min-h-[44px] items-center gap-1 rounded px-2 text-sm font-semibold text-hud-light"
+    >
+      <Icon nome="voltar" tamanho={18} /> Voltar
+    </button>
+  );
+
+  const titulo = (texto: React.ReactNode, sub?: React.ReactNode) => (
+    <div>
+      <h2 className="font-display text-[28px] leading-tight text-hud-text">{texto}</h2>
+      {sub && <p className="mt-1 text-sm text-hud-muted">{sub}</p>}
+    </div>
+  );
+
+  const brl = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+
+  // Manhã / tarde / noite é só apresentação da MESMA lista de horários.
+  const periodos = [
+    { rotulo: "Manhã", horarios: availableSlots.filter((t) => Number(t.slice(0, 2)) < 12) },
+    { rotulo: "Tarde", horarios: availableSlots.filter((t) => Number(t.slice(0, 2)) >= 12 && Number(t.slice(0, 2)) < 18) },
+    { rotulo: "Noite", horarios: availableSlots.filter((t) => Number(t.slice(0, 2)) >= 18) },
+  ].filter((p) => p.horarios.length > 0);
+
+  const linhaTicket = (rotulo: string, valor: React.ReactNode) => (
+    <div className="flex justify-between gap-4 text-sm">
+      <span className="text-hud-muted">{rotulo}</span>
+      <span className="text-right font-semibold text-hud-text">{valor}</span>
+    </div>
+  );
+
   return (
-    <main className="min-h-screen bg-dark-900 text-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-dark-800 border-b border-gray-700 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          {shop?.logoUrl ? (
-            <img src={shop.logoUrl} alt={shop.name} className="w-10 h-10 rounded-full object-cover border border-brand-500/30" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
-          )}
-          <div>
-            <p className="font-semibold text-brand-400 text-sm">{shop?.name || "..."}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500">{shop ? `${shop.openTime} – ${shop.closeTime}` : ""}</p>
-              {shop?.avgRating && shop.ratingCount > 0 && (
-                <span className="flex items-center gap-0.5 text-xs text-amber-400 font-semibold">
-                  ★ {shop.avgRating.toFixed(1)}
-                  <span className="text-gray-600 font-normal">({shop.ratingCount})</span>
-                </span>
-              )}
+    <main className="hud-bg min-h-screen">
+      {/* Cabeçalho da barbearia */}
+      <header className="sticky top-0 z-20 border-b border-hud-border bg-[color-mix(in_srgb,var(--hud-bg)_88%,transparent)] backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-3">
+            {shop?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shop.logoUrl} alt="" className="h-11 w-11 shrink-0 rounded-full border border-hud-accent object-cover" />
+            ) : (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hud-accent text-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_12%,transparent)]">
+                <Icon nome="tesoura" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate font-display text-lg leading-tight text-hud-text">{shop?.name || "…"}</p>
+              <div className="flex items-center gap-2 text-xs text-hud-muted">
+                {shop && (
+                  <span className="inline-flex items-center gap-1">
+                    <Icon nome="relogio" tamanho={13} /> {shop.openTime} – {shop.closeTime}
+                  </span>
+                )}
+                {shop?.avgRating && shop.ratingCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-hud-light">
+                    <Icon nome="estrela" tamanho={13} /> {shop.avgRating.toFixed(1)}
+                    <span className="font-normal text-hud-muted">({shop.ratingCount})</span>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          <GoldButton variante="neutro" compacto onClick={() => router.push(`/${slug}/meus-agendamentos`)} className="shrink-0 !px-3 text-xs">
+            Meus agendamentos
+          </GoldButton>
         </div>
-        <button
-          onClick={() => router.push(`/${slug}/meus-agendamentos`)}
-          className="text-xs text-gray-400 border border-gray-700 rounded-lg px-3 py-1.5 hover:text-white transition"
-        >
-          Meus agendamentos
-        </button>
+
+        {/* Onde fica e como falar. So aparece se a barbearia preencheu. */}
+        {shop && (shop.address || shop.city || shop.phone) && (
+          <div className="mx-auto flex max-w-lg flex-wrap items-center gap-x-4 px-4 pb-1.5 text-xs text-hud-muted">
+            {(shop.address || shop.city) && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  [shop.name, shop.address, shop.neighborhood, shop.city, shop.state].filter(Boolean).join(", ")
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hud-focus inline-flex min-h-[36px] items-center gap-1.5 rounded hover:text-hud-light"
+              >
+                <Icon nome="local" tamanho={14} />
+                <span>
+                  {[shop.address, shop.neighborhood].filter(Boolean).join(" - ")}
+                  {(shop.address || shop.neighborhood) && (shop.city || shop.state) ? " · " : ""}
+                  {[shop.city, shop.state].filter(Boolean).join("/")}
+                </span>
+              </a>
+            )}
+            {shop.phone && (
+              <a href={`https://wa.me/55${shop.phone}`} target="_blank" rel="noopener noreferrer" className="hud-focus inline-flex min-h-[36px] items-center gap-1.5 rounded hover:text-hud-light">
+                <Icon nome="mensagem" tamanho={14} />
+                <span>
+                  {shop.phone.length === 11
+                    ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 7)}-${shop.phone.slice(7)}`
+                    : shop.phone.length === 10
+                      ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 6)}-${shop.phone.slice(6)}`
+                      : shop.phone}
+                </span>
+              </a>
+            )}
+          </div>
+        )}
       </header>
 
-      {/* Onde fica e como falar. So aparece se a barbearia preencheu —
-          quem cadastrou antes desses campos existirem nao ve faixa vazia. */}
-      {shop && (shop.address || shop.city || shop.phone) && (
-        <div className="px-4 py-2.5 bg-dark-800/60 border-b border-gray-800 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
-          {(shop.address || shop.city) && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                [shop.name, shop.address, shop.neighborhood, shop.city, shop.state].filter(Boolean).join(", ")
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-brand-400 transition"
-            >
-              <span>📍</span>
-              <span>
-                {[shop.address, shop.neighborhood].filter(Boolean).join(" - ")}
-                {(shop.address || shop.neighborhood) && (shop.city || shop.state) ? " · " : ""}
-                {[shop.city, shop.state].filter(Boolean).join("/")}
-              </span>
-            </a>
-          )}
-          {shop.phone && (
-            <a href={`https://wa.me/55${shop.phone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-400 transition">
-              <span>💬</span>
-              <span>
-                {shop.phone.length === 11
-                  ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 7)}-${shop.phone.slice(7)}`
-                  : shop.phone.length === 10
-                    ? `(${shop.phone.slice(0, 2)}) ${shop.phone.slice(2, 6)}-${shop.phone.slice(6)}`
-                    : shop.phone}
-              </span>
-            </a>
-          )}
-        </div>
-      )}
+      <div className={`mx-auto max-w-lg px-4 pt-6 ${step === "services" ? "pb-36" : "pb-12"}`}>
+        {pills && <div className="mb-6">{pills}</div>}
 
-      <div className="max-w-lg mx-auto px-4 py-8">
-
-        {/* Loading */}
+        {/* Carregando */}
         {step === "loading" && (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-3 pt-4">
+            <Skeleton altura={28} className="w-2/3" />
+            <Skeleton altura={52} />
+            <Skeleton altura={56} />
           </div>
         )}
 
-        {/* Step: Name */}
+        {/* Etapa: Nome */}
         {step === "name" && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Bem-vindo! 👋</h2>
-              <p className="text-gray-400 mt-1">Vamos agendar seu horário em <span className="text-brand-400">{shop?.name}</span></p>
-            </div>
+            {titulo("Bem-vindo!", <>Vamos agendar seu horário em <span className="font-semibold text-hud-light">{shop?.name}</span></>)}
             <div className="space-y-3">
-              <label className="block text-sm text-gray-400">Qual é o seu nome completo?</label>
-              <input
-                autoFocus
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitName(); } }}
-                placeholder="Seu nome..."
-                className="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors"
-              />
-              <button
-                onClick={handleSubmitName}
-                disabled={!nameInput.trim()}
-                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
-              >
+              <Field label="Qual é o seu nome completo?">
+                {(a) => (
+                  <Input
+                    {...a}
+                    autoFocus
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitName(); } }}
+                    placeholder="Seu nome"
+                    autoComplete="name"
+                  />
+                )}
+              </Field>
+              <GoldButton cheio onClick={handleSubmitName} disabled={!nameInput.trim()}>
                 Continuar
-              </button>
+              </GoldButton>
             </div>
 
-            {/* Reviews */}
+            {/* Avaliações */}
             {reviews.length > 0 && (
               <div className="space-y-3 pt-2">
-                <p className="text-xs text-gray-500 uppercase tracking-widest">O que dizem nossos clientes</p>
+                <SectionLabel>O que dizem nossos clientes</SectionLabel>
                 {reviews.map((r) => (
-                  <div key={r.id} className="bg-dark-900 border border-gray-800 rounded-2xl p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-sm font-semibold">
+                  <HudCard key={r.id} className="space-y-2 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-hud-light bg-[color-mix(in_srgb,var(--hud-accent)_14%,transparent)]">
                           {r.clientName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">{r.clientName}</p>
-                          <p className="text-xs text-gray-500">com {r.barberName}</p>
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-hud-text">{r.clientName}</p>
+                          <p className="text-xs text-hud-muted">com {r.barberName}</p>
                         </div>
                       </div>
-                      <span className="text-amber-400 text-sm font-semibold">{"★".repeat(r.score)}{"☆".repeat(5 - r.score)}</span>
+                      <span className="flex shrink-0 gap-0.5 text-hud-accent" aria-label={`${r.score} de 5 estrelas`}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <span key={n} className={n <= r.score ? "" : "opacity-25"}><Icon nome="estrela" tamanho={14} /></span>
+                        ))}
+                      </span>
                     </div>
-                    {r.comment && <p className="text-sm text-gray-400 leading-relaxed">&ldquo;{r.comment}&rdquo;</p>}
-                    <p className="text-xs text-gray-600">{r.services.join(", ")}</p>
-                  </div>
+                    {r.comment && <p className="text-sm leading-relaxed text-hud-soft">&ldquo;{r.comment}&rdquo;</p>}
+                    <p className="text-xs text-hud-muted">{r.services.join(", ")}</p>
+                  </HudCard>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Step: Phone */}
+        {/* Etapa: Telefone */}
         {step === "phone" && (
           <div className="space-y-6">
             <div>
-              <button onClick={() => setStep("name")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-semibold">Olá, {clientName.split(" ")[0]}!</h2>
-              <p className="text-gray-400 mt-1">Informe seu telefone para continuar</p>
+              {voltar("name")}
+              {titulo(<>Olá, {clientName.split(" ")[0]}!</>, "Informe seu telefone para continuar")}
             </div>
             <div className="space-y-3">
-              <label className="block text-sm text-gray-400">Telefone com DDD</label>
-              <input
-                autoFocus
-                value={phoneInput}
-                onChange={(e) => handlePhoneInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitPhone(); } }}
-                placeholder="(11) 99999-9999"
-                type="tel"
-                className="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors"
-              />
-              <button
-                onClick={handleSubmitPhone}
-                disabled={phoneInput.replace(/\D/g, "").length < 10}
-                className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
-              >
+              <Field label="Telefone com DDD" dica="É por ele que você consulta e recebe os lembretes.">
+                {(a) => (
+                  <Input
+                    {...a}
+                    autoFocus
+                    value={phoneInput}
+                    onChange={(e) => handlePhoneInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitPhone(); } }}
+                    placeholder="(11) 99999-9999"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                )}
+              </Field>
+              <GoldButton cheio onClick={handleSubmitPhone} disabled={phoneInput.replace(/\D/g, "").length < 10}>
                 Continuar
-              </button>
+              </GoldButton>
             </div>
           </div>
         )}
 
-        {/* Step: Rating */}
+        {/* Etapa: Avaliação */}
         {step === "rating" && pendingRating && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Como foi sua visita?</h2>
-              <p className="text-gray-400 mt-1">
-                {pendingRating.services.join(", ")} com {pendingRating.barberName} — {formatDate(pendingRating.date)}
-              </p>
-            </div>
-            <div className="bg-dark-900 border border-gray-700 rounded-2xl p-6 space-y-4">
-              <div className="flex justify-center gap-4">
+            {titulo("Como foi sua visita?", <>{pendingRating.services.join(", ")} com {pendingRating.barberName} — {formatDate(pendingRating.date)}</>)}
+            <HudCard variante="destaque" className="space-y-4 p-5">
+              <div role="radiogroup" aria-label="Nota de 1 a 5" className="flex justify-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
+                    type="button"
+                    role="radio"
+                    aria-checked={ratingScore === star}
+                    aria-label={`${star} estrela${star > 1 ? "s" : ""}`}
                     onClick={() => setRatingScore(star)}
-                    className={`text-4xl transition-all ${ratingScore >= star ? "text-yellow-400" : "text-gray-700"}`}
+                    className={`hud-focus flex h-12 w-12 items-center justify-center rounded transition ${ratingScore >= star ? "text-hud-accent gold-glow" : "text-[var(--hud-track)]"}`}
                   >
-                    ★
+                    <svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" /></svg>
                   </button>
                 ))}
               </div>
-              <input
-                value={ratingComment}
-                onChange={(e) => setRatingComment(e.target.value)}
-                placeholder="Comentário (opcional)"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitRating(); } }}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand-400"
-              />
-            </div>
+              <p className="text-center text-xs text-hud-muted" aria-live="polite">
+                {ratingScore === 0 ? "Toque nas estrelas" : `${ratingScore} de 5`}
+              </p>
+              <Field label="Comentário (opcional)">
+                {(a) => (
+                  <TextArea
+                    {...a}
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                    placeholder="Conte como foi"
+                  />
+                )}
+              </Field>
+            </HudCard>
             <div className="flex gap-3">
-              <button
-                onClick={() => setStep("mode_select")}
-                className="flex-1 border border-gray-700 rounded-xl py-3 text-sm text-gray-400 hover:text-white transition"
-              >
-                Pular
-              </button>
-              <button
-                onClick={handleSubmitRating}
-                disabled={ratingScore === 0}
-                className="flex-1 bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 text-sm transition disabled:opacity-40"
-              >
+              <GoldButton variante="neutro" className="flex-1" onClick={() => setStep("mode_select")}>Pular</GoldButton>
+              <GoldButton className="flex-[2]" compacto onClick={handleSubmitRating} disabled={ratingScore === 0}>
                 Avaliar e continuar
-              </button>
+              </GoldButton>
             </div>
           </div>
         )}
 
-        {/* Step: Mode Select */}
+        {/* Etapa: Modo */}
         {step === "mode_select" && shop && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Como prefere agendar?</h2>
-              <p className="text-gray-400 mt-1">Escolha a forma que preferir — você pode mudar sempre que quiser.</p>
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              <button
-                onClick={() => { setClientMode("steps"); setStep("services"); }}
-                className="w-full text-left bg-dark-900 border-2 border-gray-700 hover:border-brand-400 rounded-2xl p-5 transition group"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl">📋</span>
-                  <div>
-                    <p className="font-semibold text-white text-lg group-hover:text-brand-400 transition">Etapas clássico</p>
-                    <p className="text-gray-500 text-sm mt-0.5">Escolha serviço, barbeiro, data e hora passo a passo</p>
+            {titulo("Como prefere agendar?", "Escolha a forma que preferir — você pode mudar sempre que quiser.")}
+            <div className="grid gap-3">
+              {([
+                { modo: "steps" as const, icone: "agenda" as const, nome: "Etapas clássico", desc: "Escolha serviço, barbeiro, data e hora passo a passo" },
+                { modo: "agent" as const, icone: "mensagem" as const, nome: "Chatbot IA", desc: "Converse naturalmente e deixe a IA montar seu agendamento" },
+              ]).map((m, i) => (
+                <HudCard key={m.modo} variante={i === 0 ? "destaque" : "normal"} onClick={() => { setClientMode(m.modo); setStep("services"); }} className="p-5">
+                  <div className="flex items-center gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-hud-accent text-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]">
+                      <Icon nome={m.icone} tamanho={24} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display text-xl text-hud-text">{m.nome}</p>
+                      <p className="mt-0.5 text-sm text-hud-muted">{m.desc}</p>
+                    </div>
+                    <span className="text-hud-muted"><Icon nome="avancar" /></span>
                   </div>
-                </div>
-              </button>
-              <button
-                onClick={() => { setClientMode("agent"); setStep("services"); }}
-                className="w-full text-left bg-dark-900 border-2 border-gray-700 hover:border-brand-400 rounded-2xl p-5 transition group"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl">🤖</span>
-                  <div>
-                    <p className="font-semibold text-white text-lg group-hover:text-brand-400 transition">Chatbot IA</p>
-                    <p className="text-gray-500 text-sm mt-0.5">Converse naturalmente e deixe a IA montar seu agendamento</p>
-                  </div>
-                </div>
-              </button>
+                </HudCard>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Step: Services */}
+        {/* Etapa: Serviços */}
         {step === "services" && shop && (
           <div className="space-y-5">
-            {/* Banner de fidelidade — só aparece quando o cliente tem histórico */}
+            {/* Fidelidade — só aparece quando o cliente tem histórico */}
             {loyaltyCount > 0 && (
-              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex items-center gap-3">
-                <span className="text-2xl">🏆</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-400">
+              <HudCard variante="destaque" className="flex items-center gap-3 px-4 py-3">
+                <span className="text-hud-accent"><Icon nome="presente" tamanho={26} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-hud-text">
                     {loyaltyProgress === 0 && loyaltyCount > 0
-                      ? `Parabéns! Você atingiu ${loyaltyCount} cortes! 🎉`
+                      ? `Parabéns! Você atingiu ${loyaltyCount} cortes!`
                       : `Faltam ${loyaltyTarget - loyaltyProgress} corte${loyaltyTarget - loyaltyProgress !== 1 ? "s" : ""} para o seu brinde!`}
                   </p>
-                  <div className="mt-1.5 h-2 w-full rounded-full bg-amber-900/40 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-amber-400 transition-all duration-700"
-                      style={{ width: `${(loyaltyProgress / loyaltyTarget) * 100}%` }}
-                    />
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-[3px] bg-[var(--hud-track)]">
+                    <div className="h-full rounded-[3px] transition-all duration-700 motion-reduce:transition-none" style={{ width: `${(loyaltyProgress / loyaltyTarget) * 100}%`, background: "var(--hud-gradient-h)" }} />
                   </div>
-                  <p className="text-xs text-amber-500/80 mt-1">{loyaltyProgress}/{loyaltyTarget} cortes</p>
+                  <p className="mt-1 text-xs text-hud-muted">{loyaltyProgress}/{loyaltyTarget} cortes</p>
                 </div>
-              </div>
+              </HudCard>
             )}
-            {/* Card "Agendar novamente" — último agendamento do cliente */}
+            {/* "Agendar novamente" — último agendamento do cliente */}
             {lastBooking && (
-              <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🔄</span>
-                  <p className="text-sm font-semibold text-brand-400">Agendar novamente?</p>
+              <HudCard className="space-y-3 p-4">
+                <div className="flex items-center gap-2 text-hud-light">
+                  <Icon nome="agenda" tamanho={18} />
+                  <p className="text-sm font-bold">Agendar novamente?</p>
                 </div>
-                <p className="text-sm text-gray-400">
-                  {lastBooking.serviceNames.join(", ")} com {lastBooking.barberName} — R$ {lastBooking.totalPrice.toFixed(2)}
+                <p className="text-sm text-hud-soft">
+                  {lastBooking.serviceNames.join(", ")} com {lastBooking.barberName} — {brl(lastBooking.totalPrice)}
                 </p>
-                <button
+                <GoldButton
+                  variante="secundario"
+                  cheio
+                  compacto
                   onClick={() => {
                     // Valida se os serviços e barbeiro ainda existem na barbearia
                     const validServiceIds = lastBooking.serviceIds.filter((id) => shop.services.some((s) => s.id === id));
@@ -784,19 +835,15 @@ export default function BarberPage() {
                       setStep("barber");
                     }
                   }}
-                  className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-2.5 text-sm transition press-scale"
                 >
                   Repetir agendamento
-                </button>
-              </div>
+                </GoldButton>
+              </HudCard>
             )}
 
-            <div>
-              <h2 className="text-2xl font-semibold">Escolha os serviços</h2>
-              <p className="text-gray-400 mt-1">Selecione um ou mais serviços</p>
-            </div>
+            {titulo("Escolha os serviços", "Selecione um ou mais serviços")}
 
-            {/* Cards visuais — cortes e luzes (serviços principais com foto) */}
+            {/* Cortes e luzes (principais, com foto) + complementos */}
             {(() => {
               const cardCategories = ["corte", "luzes"];
               const cardServices = shop.services.filter((s) => cardCategories.includes(s.category));
@@ -810,69 +857,57 @@ export default function BarberPage() {
                         return (
                           <button
                             key={service.id}
+                            type="button"
+                            aria-pressed={selected}
                             onClick={() => toggleService(service.id, service.category)}
-                            className={`relative rounded-2xl overflow-hidden border-2 transition-all aspect-[4/3] ${
-                              selected ? "border-brand-400" : "border-transparent"
-                            }`}
+                            className={`hud-card hud-focus relative aspect-[4/3] overflow-hidden text-left transition ${selected ? "hud-card-sel hud-corners" : "hover:border-hud-muted"}`}
                           >
                             {service.imageUrl ? (
-                              <img src={service.imageUrl} alt={service.name} className="w-full h-full object-cover" />
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={service.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center text-4xl">✂️</div>
+                              <span className="absolute inset-0 flex items-center justify-center text-hud-accent opacity-60"><Icon nome="tesoura" tamanho={36} /></span>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            <div
-                              className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                selected ? "bg-brand-400 border-brand-400" : "bg-white/20 border-white/60"
-                              }`}
-                            >
-                              {selected && <span className="text-black text-xs font-semibold">✓</span>}
-                            </div>
-                            <div className="absolute bottom-0 left-0 right-0 p-2.5 text-left">
-                              <p className="text-white font-semibold text-sm leading-tight">{service.name}</p>
-                              <div className="flex justify-between text-xs text-gray-300 mt-0.5">
-                                <span>R$ {service.price.toFixed(2)}</span>
-                                <span>{service.duration}min</span>
-                              </div>
-                            </div>
+                            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                            <span className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 ${selected ? "gold-fill border-transparent" : "border-white/70 bg-black/30"}`}>
+                              {selected && <Icon nome="check" tamanho={14} traco={3} />}
+                            </span>
+                            <span className="absolute inset-x-0 bottom-0 p-2.5">
+                              <span className="block text-sm font-bold leading-tight text-white">{service.name}</span>
+                              <span className="mt-0.5 flex justify-between text-xs text-white/80">
+                                <span className="font-semibold">{brl(service.price)}</span>
+                                <span>{service.duration} min</span>
+                              </span>
+                            </span>
                           </button>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* Complementos — barba, sobrancelha, pezinho (checkbox simples) */}
                   {extraServices.length > 0 && (
                     <div className="space-y-2">
-                      {cardServices.length > 0 && (
-                        <p className="text-xs text-gray-500 uppercase tracking-widest mt-2">Complementos</p>
-                      )}
+                      {cardServices.length > 0 && <SectionLabel className="mt-2">Complementos</SectionLabel>}
                       {extraServices.map((service) => {
                         const selected = selectedServices.includes(service.id);
                         return (
                           <button
                             key={service.id}
+                            type="button"
+                            aria-pressed={selected}
                             onClick={() => toggleService(service.id, service.category)}
-                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all ${
-                              selected
-                                ? "border-brand-400 bg-brand-500/10"
-                                : "border-gray-700 bg-dark-900 hover:border-gray-600"
-                            }`}
+                            className={`hud-card hud-focus flex min-h-[52px] w-full items-center justify-between gap-3 px-4 py-3 text-left transition ${selected ? "hud-card-sel" : "hover:border-hud-muted"}`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                selected ? "bg-brand-400 border-brand-400" : "border-gray-600"
-                              }`}>
-                                {selected && <span className="text-black text-xs font-semibold">✓</span>}
-                              </div>
-                              <span className={`text-sm font-medium ${selected ? "text-white" : "text-gray-300"}`}>
-                                {service.name}
+                            <span className="flex min-w-0 items-center gap-3">
+                              <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] ${selected ? "gold-fill" : "border-[1.5px] border-[var(--hud-text-3)]"}`}>
+                                {selected && <Icon nome="check" tamanho={14} traco={3.5} />}
                               </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-400">
-                              <span>{service.duration}min</span>
-                              <span className="text-brand-400 font-semibold">R$ {service.price.toFixed(2)}</span>
-                            </div>
+                              <span className={`truncate text-sm font-semibold ${selected ? "text-hud-text" : "text-hud-soft"}`}>{service.name}</span>
+                            </span>
+                            <span className="flex shrink-0 items-center gap-3 text-xs text-hud-muted">
+                              <span>{service.duration} min</span>
+                              <span className="font-bold text-hud-light">{brl(service.price)}</span>
+                            </span>
                           </button>
                         );
                       })}
@@ -881,110 +916,108 @@ export default function BarberPage() {
                 </>
               );
             })()}
-            <button
-              onClick={handleSubmitServices}
-              disabled={selectedServices.length === 0}
-              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-40 press-scale"
-            >
-              {selectedServices.length > 0
-                ? `Continuar · R$ ${totalPrice.toFixed(2)} · ${totalDuration}min`
-                : "Selecione um serviço"}
-            </button>
+
+            {/* Rodapé fixo: resumo + botão */}
+            <div className="fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[var(--hud-bg)] via-[color-mix(in_srgb,var(--hud-bg)_92%,transparent)] to-transparent pb-[max(16px,env(safe-area-inset-bottom))] pt-8">
+              <div className="mx-auto max-w-lg px-4">
+                {selectedServices.length > 0 && (
+                  <p className="mb-2 flex justify-between text-sm text-hud-muted">
+                    <span>{selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""} · {totalDuration} min</span>
+                    <span className="gold-text font-display text-xl tabular-nums">{brl(totalPrice)}</span>
+                  </p>
+                )}
+                <GoldButton cheio onClick={handleSubmitServices} disabled={selectedServices.length === 0}>
+                  {selectedServices.length > 0 ? "Continuar" : "Selecione um serviço"}
+                </GoldButton>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Step: Barber */}
+        {/* Etapa: Profissional */}
         {step === "barber" && shop && (
           <div className="space-y-5">
             <div>
-              <button onClick={() => setStep("services")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-semibold">Escolha o profissional</h2>
-              <p className="text-gray-400 mt-1">Com quem você prefere ser atendido?</p>
+              {voltar("services")}
+              {titulo("Escolha o profissional", "Com quem você prefere ser atendido?")}
             </div>
             <div className="grid grid-cols-2 gap-3">
               {shop.barbers.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => handleSelectBarber(b)}
-                  className="flex flex-col items-center gap-3 p-5 bg-dark-900 border border-gray-700 rounded-2xl hover:border-brand-400 hover:bg-brand-500/5 transition"
-                >
+                <HudCard key={b.id} onClick={() => handleSelectBarber(b)} className="flex flex-col items-center gap-3 p-5" rotulo={`Agendar com ${b.name}`}>
                   {b.imageUrl ? (
-                    <img src={b.imageUrl} alt={b.name} className="w-14 h-14 rounded-full object-cover border border-brand-500/30" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.imageUrl} alt="" className="h-16 w-16 rounded-full border-2 border-hud-accent object-cover" />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-2xl font-semibold">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-hud-accent font-display text-2xl text-hud-light bg-[color-mix(in_srgb,var(--hud-accent)_12%,transparent)]">
                       {b.name.charAt(0).toUpperCase()}
-                    </div>
+                    </span>
                   )}
-                  <span className="font-semibold text-white">{b.name}</span>
-                </button>
+                  <span className="text-center font-semibold text-hud-text">{b.name}</span>
+                </HudCard>
               ))}
             </div>
           </div>
         )}
 
-        {/* Step: Date */}
+        {/* Etapa: Data */}
         {step === "date" && (
           <div className="space-y-5">
             <div>
-              <button onClick={() => setStep(shop!.barbers.length > 1 ? "barber" : "services")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-semibold">Escolha a data</h2>
-              <p className="text-gray-400 mt-1">Quando você prefere vir?</p>
+              {voltar(shop!.barbers.length > 1 ? "barber" : "services")}
+              {titulo("Escolha a data", "Quando você prefere vir?")}
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {getAvailableDates().map((date) => (
-                <button
-                  key={date}
-                  onClick={() => handleSelectDate(date)}
-                  className="flex flex-col items-center px-2 py-3 bg-dark-900 border border-gray-700 rounded-xl hover:border-brand-400 hover:bg-brand-500/5 transition"
-                >
-                  <span className="text-gray-400 text-xs">
-                    {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short" })}
-                  </span>
-                  <span className="font-semibold text-white text-lg">
-                    {new Date(date + "T12:00:00").getDate()}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { month: "short" })}
-                  </span>
-                </button>
-              ))}
+              {getAvailableDates().map((date) => {
+                const d = new Date(date + "T12:00:00");
+                return (
+                  <button
+                    key={date}
+                    type="button"
+                    onClick={() => handleSelectDate(date)}
+                    aria-label={d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+                    className="hud-card hud-focus flex min-h-[72px] flex-col items-center justify-center py-2.5 transition hover:border-hud-accent"
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-hud-muted">{d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</span>
+                    <span className="font-display text-2xl leading-tight text-hud-text tabular-nums">{d.getDate()}</span>
+                    <span className="text-[11px] text-hud-muted">{d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Step: Time */}
+        {/* Etapa: Horário */}
         {step === "time" && (
           <div className="space-y-5">
             <div>
-              <button onClick={() => setStep("date")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-semibold">Escolha o horário</h2>
-              <p className="text-gray-400 mt-1">{formatDate(selectedDate)}</p>
+              {voltar("date")}
+              {titulo("Escolha o horário", <span className="inline-block first-letter:uppercase">{formatDate(selectedDate)}</span>)}
             </div>
             {slotsLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-7 h-7 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
-              </div>
+              <div className="flex justify-center py-12"><Spinner rotulo="Buscando horários…" /></div>
             ) : availableSlots.length === 0 ? (
               <div className="space-y-4">
-                <div className="text-center py-6 space-y-3">
-                  <p className="text-2xl">📅</p>
-                  <p className="text-gray-400">{slotsMessage || "Nenhum horário disponível neste dia"}</p>
-                  <button onClick={() => setStep("date")} className="text-brand-400 underline text-sm">
-                    Escolher outra data
-                  </button>
-                </div>
-                <div className="border border-brand-500/30 bg-brand-500/5 rounded-2xl p-5 space-y-3">
+                <EmptyState
+                  icone="agenda"
+                  titulo="Sem horários neste dia"
+                  texto={slotsMessage || "Nenhum horário disponível neste dia."}
+                  acao={{ rotulo: "Escolher outra data", onClick: () => setStep("date") }}
+                />
+                <HudCard variante="destaque" className="space-y-3 p-5">
                   {waitlistJoined ? (
-                    <div className="text-center space-y-2">
-                      <p className="text-2xl">✅</p>
-                      <p className="text-white font-semibold">Você está na lista de espera!</p>
-                      <p className="text-sm text-gray-400">Te avisamos pelo WhatsApp se abrir um horário neste dia.</p>
+                    <div className="space-y-1.5 text-center">
+                      <span className="inline-flex text-hud-ok"><Icon nome="sucesso" tamanho={32} /></span>
+                      <p className="font-display text-xl text-hud-text">Você está na lista de espera!</p>
+                      <p className="text-sm text-hud-muted">Te avisamos pelo WhatsApp se abrir um horário neste dia.</p>
                     </div>
                   ) : (
                     <>
-                      <p className="text-sm font-semibold text-brand-400">Entrar na lista de espera</p>
-                      <p className="text-xs text-gray-400">Se alguém cancelar, você recebe um WhatsApp automaticamente.</p>
-                      <button
+                      <p className="hud-eyebrow">Lista de espera</p>
+                      <p className="text-sm text-hud-soft">Se alguém cancelar, você recebe um WhatsApp automaticamente.</p>
+                      <GoldButton
+                        cheio
+                        carregando={waitlistLoading}
                         onClick={async () => {
                           setWaitlistLoading(true);
                           try {
@@ -1004,136 +1037,108 @@ export default function BarberPage() {
                           } catch { /* ignore */ }
                           setWaitlistLoading(false);
                         }}
-                        disabled={waitlistLoading}
-                        className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition disabled:opacity-50 press-scale"
                       >
-                        {waitlistLoading ? "Aguarde..." : "🔔 Quero ser avisado"}
-                      </button>
+                        <Icon nome="sino" tamanho={18} /> Quero ser avisado
+                      </GoldButton>
                     </>
                   )}
-                </div>
+                </HudCard>
               </div>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
-                {availableSlots.map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => handleSelectTime(time)}
-                    className="py-3 bg-dark-900 border border-gray-700 rounded-xl text-sm font-medium text-white hover:border-brand-400 hover:bg-brand-500/5 transition"
-                  >
-                    {time}
-                  </button>
+              <div className="space-y-5">
+                {periodos.map((p) => (
+                  <div key={p.rotulo} className="space-y-2">
+                    <SectionLabel>{p.rotulo} · {p.horarios.length} horário{p.horarios.length > 1 ? "s" : ""}</SectionLabel>
+                    <div className="grid grid-cols-4 gap-2">
+                      {p.horarios.map((time) => (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => handleSelectTime(time)}
+                          className="hud-card hud-focus min-h-[48px] text-sm font-bold text-hud-text tabular-nums transition hover:border-hud-accent hover:text-hud-light"
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Step: Confirm */}
+        {/* Etapa: Confirmar (ticket) */}
         {step === "confirm" && shop && (
           <div className="space-y-5">
             <div>
-              <button onClick={() => setStep("time")} className="text-sm text-brand-400 mb-4 block">← Voltar</button>
-              <h2 className="text-2xl font-semibold">Confirmar agendamento</h2>
-              <p className="text-gray-400 mt-1">Revise os detalhes abaixo</p>
+              {voltar("time")}
+              {titulo("Confirmar agendamento", "Revise os detalhes abaixo")}
             </div>
-            <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Cliente</span>
-                <span className="font-medium">{clientName}</span>
+            <HudCard variante="destaque" className="space-y-3 p-5">
+              <div className="flex items-center gap-2 text-hud-light">
+                <Icon nome="ticket" tamanho={18} />
+                <span className="hud-eyebrow">Seu horário</span>
               </div>
-              {selectedBarber && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Profissional</span>
-                  <span className="font-medium">{selectedBarber.name}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Serviços</span>
-                <span className="font-medium text-right max-w-[60%]">
-                  {shop.services.filter((s) => selectedServices.includes(s.id)).map((s) => s.name).join(", ")}
-                </span>
+              {linhaTicket("Cliente", clientName)}
+              {selectedBarber && linhaTicket("Profissional", selectedBarber.name)}
+              {linhaTicket("Serviços", <span className="max-w-[60%]">{shop.services.filter((s) => selectedServices.includes(s.id)).map((s) => s.name).join(", ")}</span>)}
+              {linhaTicket("Data", <span className="inline-block first-letter:uppercase">{formatDate(selectedDate)}</span>)}
+              {linhaTicket("Horário", selectedTime)}
+              <div className="flex items-end justify-between border-t border-dashed border-hud-border pt-3">
+                <span className="text-sm text-hud-muted">Total</span>
+                <span className="gold-text gold-glow font-display text-3xl tabular-nums">{brl(totalPrice)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Data</span>
-                <span className="font-medium">{formatDate(selectedDate)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Horário</span>
-                <span className="font-medium">{selectedTime}</span>
-              </div>
-              <div className="border-t border-gray-800 pt-3 flex justify-between">
-                <span className="text-gray-400 text-sm">Total</span>
-                <span className="font-semibold text-brand-400 text-lg">R$ {totalPrice.toFixed(2)}</span>
-              </div>
-            </div>
-            {bookError && (
-              <p className="text-red-400 text-sm text-center">{bookError}</p>
-            )}
-            <button
-              onClick={handleBook}
-              className="w-full bg-brand-500 hover:bg-brand-400 text-dark-900 font-semibold rounded-xl py-3 transition press-scale"
-            >
-              Confirmar agendamento
-            </button>
+            </HudCard>
+            {bookError && <Alert tom="err">{bookError}</Alert>}
+            <GoldButton cheio onClick={handleBook}>Confirmar agendamento</GoldButton>
           </div>
         )}
 
-        {/* Step: Booking (loading) */}
+        {/* Agendando */}
         {step === "booking" && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-10 h-10 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-400">Confirmando seu agendamento...</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-20">
+            <Spinner tamanho={40} />
+            <p className="text-hud-muted">Confirmando seu agendamento…</p>
           </div>
         )}
 
-        {/* Step: Pix */}
+        {/* Pix manual */}
         {step === "pix" && pixKey && shop && (
           <div className="space-y-5">
-            <div>
-              <h2 className="text-2xl font-semibold text-yellow-400">Pagamento antecipado</h2>
-              <p className="text-gray-400 mt-1">Para confirmar seu horário, é necessário pagar 50% via Pix antecipado.</p>
-            </div>
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-5 space-y-4">
-              <div className="flex justify-between">
-                <span className="text-yellow-400 font-semibold">Entrada via Pix (50%)</span>
-                <span className="text-yellow-400 font-semibold text-lg">R$ {(totalPrice / 2).toFixed(2)}</span>
+            {titulo("Pagamento antecipado", "Para confirmar seu horário, é necessário pagar 50% via Pix antecipado.")}
+            <HudCard variante="destaque" className="space-y-4 p-5">
+              <div className="flex items-end justify-between gap-3">
+                <span className="text-sm font-semibold text-hud-soft">Entrada via Pix (50%)</span>
+                <span className="gold-text font-display text-3xl tabular-nums">{brl(totalPrice / 2)}</span>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-2">Chave Pix</p>
+                <p className="hud-label mb-1.5">Chave Pix</p>
                 <button
+                  type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(pixKey);
                     setPixCopied(true);
                     setTimeout(() => setPixCopied(false), 2000);
                   }}
-                  className="w-full flex items-center justify-between bg-black/40 rounded-xl p-3 hover:bg-black/60 transition"
+                  className="hud-focus flex min-h-[52px] w-full items-center justify-between gap-3 rounded border border-hud-border px-3.5 text-left bg-[color-mix(in_srgb,var(--hud-bg)_70%,transparent)]"
                 >
-                  <span className="text-white font-semibold break-all text-left">{pixKey}</span>
-                  <span className="ml-3 shrink-0 text-sm font-semibold text-yellow-400">
-                    {pixCopied ? "✓ Copiado!" : "📋 Copiar"}
+                  <span className="break-all font-semibold text-hud-text">{pixKey}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-sm font-bold text-hud-light" aria-live="polite">
+                    <Icon nome={pixCopied ? "check" : "copiar"} tamanho={16} /> {pixCopied ? "Copiado!" : "Copiar"}
                   </span>
                 </button>
               </div>
-              <p className="text-xs text-gray-400">Após o pagamento, envie o comprovante via WhatsApp para a barbearia.</p>
-            </div>
-            <button
-              onClick={handlePixConfirm}
-              disabled={pixSending}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-xl py-3 transition disabled:opacity-50"
-            >
-              {pixSending ? "Aguarde..." : "✓ Já enviei o comprovante"}
-            </button>
-            <button
-              onClick={resetFlow}
-              className="w-full border border-gray-700 text-gray-400 rounded-xl py-3 text-sm hover:text-white transition"
-            >
-              Voltar ao início
-            </button>
+              <p className="text-xs text-hud-muted">Após o pagamento, envie o comprovante via WhatsApp para a barbearia.</p>
+            </HudCard>
+            <GoldButton cheio carregando={pixSending} onClick={handlePixConfirm}>
+              Já enviei o comprovante
+            </GoldButton>
+            <GoldButton cheio variante="neutro" onClick={resetFlow}>Voltar ao início</GoldButton>
           </div>
         )}
 
-        {/* Step: Pix automático (Mercado Pago) — confirma sozinho */}
+        {/* Pix automático (Mercado Pago) — confirma sozinho */}
         {step === "pix_auto" && pixAuto && (
           <PixAutomatico
             pix={pixAuto}
@@ -1144,102 +1149,61 @@ export default function BarberPage() {
           />
         )}
 
-        {/* Step: Pix enviado — aguardando confirmação do barbeiro */}
+        {/* Pix enviado — aguardando confirmação do barbeiro */}
         {step === "pix_sent" && (
-          <div className="space-y-5 text-center">
-            <div className="py-6">
-              <div className="text-6xl mb-4">⏳</div>
-              <h2 className="text-2xl font-semibold text-yellow-400">Aguardando confirmação</h2>
-              <p className="text-gray-400 mt-2">
+          <div className="space-y-5">
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-hud-warn text-hud-warn bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)]">
+                <Icon nome="relogio" tamanho={38} />
+              </span>
+              <h2 className="font-display text-[28px] leading-tight text-hud-text">Aguardando confirmação</h2>
+              <p className="text-sm text-hud-muted">
                 Seu agendamento foi registrado e o barbeiro foi avisado. Assim que ele confirmar o Pix, seu horário está garantido.
               </p>
-              <div className="mt-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 px-4 py-3 text-left flex items-start gap-3">
-                <span className="text-lg mt-0.5">⏳</span>
-                <p className="text-sm text-yellow-300 leading-snug">
-                  O horário fica reservado para você enquanto o barbeiro confirma.
-                  <span className="block text-yellow-200/70 text-xs mt-1">
-                    Se ele não confirmar em até 6 horas de expediente, o horário volta a ficar disponível — nesse caso, fale com a barbearia.
-                  </span>
-                </p>
-              </div>
             </div>
+            <Alert tom="warn" titulo="Horário reservado">
+              O horário fica reservado para você enquanto o barbeiro confirma. Se ele não confirmar em até 6 horas de expediente, o horário volta a ficar disponível — nesse caso, fale com a barbearia.
+            </Alert>
             {bookingResult && (
-              <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 text-left space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Data</span>
-                  <span className="font-medium">{formatDate(bookingResult.date)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Horário</span>
-                  <span className="font-medium">{bookingResult.startTime}</span>
-                </div>
-              </div>
+              <HudCard className="space-y-2 p-5">
+                {linhaTicket("Data", <span className="inline-block first-letter:uppercase">{formatDate(bookingResult.date)}</span>)}
+                {linhaTicket("Horário", bookingResult.startTime)}
+              </HudCard>
             )}
-            <button
-              onClick={resetFlow}
-              className="w-full border border-gray-700 text-gray-400 rounded-xl py-3 text-sm hover:text-white transition"
-            >
-              Voltar ao início
-            </button>
+            <GoldButton cheio variante="neutro" onClick={resetFlow}>Voltar ao início</GoldButton>
           </div>
         )}
 
-        {/* Step: Done */}
+        {/* Agendado! */}
         {step === "done" && bookingResult && (
-          <div className="space-y-5 text-center">
-            <div className="py-6">
-              <div className="text-6xl mb-4">✅</div>
-              <h2 className="text-2xl font-semibold text-white">Agendado!</h2>
-              <p className="text-gray-400 mt-2">
-                Até {formatDate(bookingResult.date)} às {bookingResult.startTime}. Nos vemos lá! 💈
+          <div className="space-y-5">
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <span className="gold-fill gold-glow flex h-20 w-20 items-center justify-center rounded-full">
+                <Icon nome="check" tamanho={40} traco={3} />
+              </span>
+              <h2 className="gold-text font-display text-4xl leading-tight">Agendado!</h2>
+              <p className="text-sm text-hud-muted">
+                Até <span className="inline-block first-letter:uppercase">{formatDate(bookingResult.date)}</span> às {bookingResult.startTime}. Nos vemos lá!
               </p>
             </div>
-            <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 text-left space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Barbearia</span>
-                <span className="font-medium">{shop?.name}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Data</span>
-                <span className="font-medium">{formatDate(bookingResult.date)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Horário</span>
-                <span className="font-medium">{bookingResult.startTime}</span>
-              </div>
-            </div>
+            <HudCard variante="destaque" className="space-y-2 p-5">
+              {linhaTicket("Barbearia", shop?.name)}
+              {linhaTicket("Data", <span className="inline-block first-letter:uppercase">{formatDate(bookingResult.date)}</span>)}
+              {linhaTicket("Horário", bookingResult.startTime)}
+            </HudCard>
             {/* Aviso de possível atraso — gestão de expectativa */}
-            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 flex items-start gap-3 text-left">
-              <span className="text-xl mt-0.5">⏱️</span>
-              <p className="text-sm text-amber-300 leading-snug">
-                Um pedido: pode haver um atraso de até <span className="font-semibold">15 minutos</span> no seu horário.
-                <span className="block text-amber-200/70 font-normal text-xs mt-1">
-                  É que cada cliente merece o tempo certo na cadeira — inclusive você. Agradecemos a compreensão e a paciência! 🙏
-                </span>
-              </p>
-            </div>
+            <Alert tom="warn" titulo="Um pedido">
+              Pode haver um atraso de até <b>15 minutos</b> no seu horário. É que cada cliente merece o tempo certo na cadeira — inclusive você. Agradecemos a compreensão e a paciência!
+            </Alert>
             {/* Lembrete de próximo corte */}
-            <div className="rounded-2xl border border-brand-500/25 bg-brand-500/10 px-4 py-3 flex items-start gap-3">
-              <span className="text-xl mt-0.5">🗓️</span>
-              <p className="text-sm text-brand-400 font-medium leading-snug">
-                Não se esqueça de deixar o próximo corte agendado!<br />
-                <span className="text-gray-400 font-normal text-xs">Volte aqui quando quiser marcar seu próximo horário.</span>
-              </p>
-            </div>
-
+            <Alert tom="info" titulo="Próximo corte">
+              Não se esqueça de deixar o próximo corte agendado! Volte aqui quando quiser marcar seu próximo horário.
+            </Alert>
             <div className="flex gap-3">
-              <button
-                onClick={resetFlow}
-                className="flex-1 border border-gray-700 text-gray-400 rounded-xl py-3 text-sm hover:text-white transition"
-              >
-                Novo agendamento
-              </button>
-              <button
-                onClick={() => router.push(`/${slug}/meus-agendamentos`)}
-                className="flex-1 bg-brand-500 text-dark-900 font-semibold rounded-xl py-3 text-sm hover:bg-brand-400 transition"
-              >
+              <GoldButton variante="neutro" className="flex-1" onClick={resetFlow}>Novo agendamento</GoldButton>
+              <GoldButton variante="secundario" className="flex-1" onClick={() => router.push(`/${slug}/meus-agendamentos`)}>
                 Meus agendamentos
-              </button>
+              </GoldButton>
             </div>
           </div>
         )}

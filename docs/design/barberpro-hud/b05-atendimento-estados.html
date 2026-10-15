@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Estados do atendimento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:2060px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 24px;display:flex;flex-direction:column;gap:12px">
+
+    <div style="font-family:'Marcellus',Georgia,serif;font-size:26px;line-height:1.1">Estados do atendimento</div>
+    <div style="font-size:12px;line-height:1.5;color:#8B8FA3">Todos os cartões da Agenda e do Início usam estes estados. A cor da borda e a etiqueta mudam; o layout é o mesmo.</div>
+
+    <!-- 1 pagamento expandido -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:6px">1 · Confirmar pagamento (expandido)</div>
+    <div style="padding:14px 16px;border:1px solid rgba(245,183,49,0.55);background:rgba(245,183,49,0.07);border-radius:4px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">10:30 – 11:15</div><div style="margin-top:3px;font-size:17px;font-weight:700">Carlos Mendes</div><div style="margin-top:1px;font-size:12px;color:#8B8FA3">Rafa · (15) 99999-9999</div></div>
+        <span style="padding:3px 8px;border:1px solid rgba(245,183,49,0.6);border-radius:3px;font-size:10px;font-weight:700;color:#F5B731">Confirmado</span>
+      </div>
+      <div style="margin:12px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">O que foi feito</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.1);border-radius:4px"><span style="width:20px;height:20px;border-radius:3px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);display:flex;align-items:center;justify-content:center;color:#0B0B14"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span><span style="flex:1;font-size:14px;font-weight:600">Corte Degradê</span><span style="font-size:13px;font-variant-numeric:tabular-nums;color:#C9CCD6">R$ 35,00</span></div>
+        <div style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.1);border-radius:4px"><span style="width:20px;height:20px;border-radius:3px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);display:flex;align-items:center;justify-content:center;color:#0B0B14"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span><span style="flex:1;font-size:14px;font-weight:600">Barba</span><span style="font-size:13px;font-variant-numeric:tabular-nums;color:#C9CCD6">R$ 25,00</span></div>
+        <div style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.8);border-radius:4px"><span style="width:20px;height:20px;border-radius:3px;border:1.5px solid #4A4E66"></span><span style="flex:1;font-size:14px;color:#8B8FA3">Sobrancelha</span><span style="font-size:13px;font-variant-numeric:tabular-nums;color:#6E7289">R$ 10,00</span></div>
+      </div>
+      <div style="margin:12px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Valor cobrado</div>
+      <div style="height:52px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 14px;border:1px solid #F5B731;background:rgba(11,11,20,0.7);border-radius:4px;box-shadow:0 0 0 3px rgba(245,183,49,0.12)"><span style="color:#8B8FA3;font-size:15px">R$</span><span style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">60,00</span></div>
+      <div style="margin:12px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Forma de pagamento</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-size:12px;font-weight:700;color:#F9DA8A">Pix</span>
+        <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.8);border-radius:4px;font-size:12px;font-weight:600;color:#C9CCD6">Dinheiro</span>
+        <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.8);border-radius:4px;font-size:12px;font-weight:600;color:#C9CCD6">Crédito</span>
+        <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.8);border-radius:4px;font-size:12px;font-weight:600;color:#C9CCD6">Débito</span>
+      </div>
+      <button type="button" style="margin-top:14px;width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">Confirmar R$ 60,00</button>
+    </div>
+
+    <!-- 2 menu ⋯ -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">2 · Menu ⋯ e comanda (produtos)</div>
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:170px;flex-shrink:0;border:1px solid #2A2D42;background:#161625;border-radius:4px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5)">
+        <div style="min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:13px;font-weight:600;border-bottom:1px solid #2A2D42"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Adicionar produto</div>
+        <div style="min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:13px;font-weight:600;border-bottom:1px solid #2A2D42"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path></svg>Lembrar cliente</div>
+        <div style="min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:13px;font-weight:600;color:#F87171"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6M9 9l6 6"></path></svg>Cliente não veio</div>
+      </div>
+      <div style="flex:1;min-width:0;padding:12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.92);border-radius:4px">
+        <div style="font-size:13px;font-weight:700">Comanda</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span>Pomada 80g</span><span style="font-variant-numeric:tabular-nums;color:#C9CCD6">R$ 40,00</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;border-radius:4px;font-size:16px">−</span><span style="width:24px;text-align:center;font-weight:700">1</span><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #F5B731;border-radius:4px;font-size:16px;color:#F5B731">+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 pix expirado -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">3 · Pix aguardando / expirado</div>
+    <div style="padding:14px 16px;border:1px solid rgba(251,146,60,0.5);background:rgba(251,146,60,0.07);border-radius:4px">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">11:30 – 12:00</div><div style="margin-top:3px;font-size:16px;font-weight:700">Pedro Alves</div></div><span style="padding:3px 8px;border:1px solid rgba(251,146,60,0.6);border-radius:3px;font-size:10px;font-weight:700;color:#FB923C;align-self:flex-start">Aguarda Pix</span></div>
+      <div style="margin-top:8px;font-size:12px;color:#FDBA74">Expira em 5h 12min · cliente ainda não pagou</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button type="button" style="flex:1;height:44px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px;color:#F5F5F7;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Lembrar</button><button type="button" style="flex:1;height:44px;border:0;border-radius:4px;background:#FB923C;color:#0B0B14;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer">✓ Confirmar Pix</button></div>
+    </div>
+    <div style="padding:14px 16px;border:1px solid rgba(248,113,113,0.5);background:rgba(248,113,113,0.06);border-radius:4px">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">14:00 – 14:30</div><div style="margin-top:3px;font-size:16px;font-weight:700">João Teles</div></div><span style="padding:3px 8px;border:1px solid rgba(248,113,113,0.6);border-radius:3px;font-size:10px;font-weight:700;color:#F87171;align-self:flex-start">Pix expirado</span></div>
+      <div style="margin-top:8px;font-size:12px;color:#FCA5A5">Horário liberado automaticamente.</div>
+    </div>
+
+    <!-- 4 pago com produtos -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">4 · Pago (com produtos)</div>
+    <div style="padding:12px 16px;border:1px solid rgba(74,222,128,0.4);background:rgba(74,222,128,0.05);border-radius:4px">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">09:00 – 09:45</div><div style="margin-top:3px;font-size:16px;font-weight:700">Lucas Prado</div><div style="margin-top:1px;font-size:12px;color:#8B8FA3">Corte + Barba · + Pomada 80g</div></div><div style="text-align:right"><span style="padding:3px 8px;border:1px solid rgba(74,222,128,0.5);background:rgba(74,222,128,0.08);border-radius:3px;font-size:10px;font-weight:700;color:#4ADE80">Pago (Pix)</span><div style="margin-top:8px;font-family:'Marcellus',Georgia,serif;font-size:20px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">R$ 100,00</div></div></div>
+    </div>
+
+    <!-- 5 cancelado / não veio -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">5 · Cancelado e “não veio”</div>
+    <div style="padding:12px 16px;border:1px solid #2A2D42;background:rgba(22,22,37,0.5);border-radius:4px;opacity:0.7">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-size:13px;font-weight:700;text-decoration:line-through;font-variant-numeric:tabular-nums">15:00 – 15:30</div><div style="margin-top:3px;font-size:15px;font-weight:700">Rui Campos</div></div><span style="padding:3px 8px;border:1px solid #4A4E66;border-radius:3px;font-size:10px;font-weight:700;color:#8B8FA3;align-self:flex-start">Cancelado</span></div>
+    </div>
+    <div style="padding:12px 16px;border:1px solid rgba(248,113,113,0.35);background:rgba(248,113,113,0.04);border-radius:4px;opacity:0.85">
+      <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">16:00 – 16:30</div><div style="margin-top:3px;font-size:15px;font-weight:700">Tiago Reis</div></div><span style="padding:3px 8px;border:1px solid rgba(248,113,113,0.5);border-radius:3px;font-size:10px;font-weight:700;color:#F87171;align-self:flex-start">Não veio</span></div>
+    </div>
+
+    <!-- 6 modal cancelar -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">6 · Modal “Cancelar agendamento”</div>
+    <div style="position:relative;padding:18px 16px 16px;border:1px solid #2A2D42;background:#161625;border-radius:4px;box-shadow:0 14px 40px rgba(0,0,0,0.55)">
+      <div style="font-family:'Marcellus',Georgia,serif;font-size:22px">Cancelar este horário?</div>
+      <p style="margin:6px 0 12px;font-size:13px;line-height:1.5;color:#8B8FA3">Carlos Mendes · Qua 14, 10:30. O cliente será avisado pelo WhatsApp.</p>
+      <div style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 12px;border:1px solid #2A2D42;background:rgba(11,11,20,0.6);border-radius:4px">
+        <span style="flex:1;font-size:13px;line-height:1.35">Avisar a lista de espera deste horário</span>
+        <span style="position:relative;width:46px;height:26px;border-radius:13px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08)"><span style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0B14"></span></span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button type="button" style="flex:1;height:48px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px;color:#F5F5F7;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Manter</button><button type="button" style="flex:1;height:48px;border:0;border-radius:4px;background:#F87171;color:#0B0B14;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Cancelar horário</button></div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

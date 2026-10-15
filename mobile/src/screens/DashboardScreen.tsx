@@ -306,7 +306,7 @@ export default function DashboardScreen({ token, onBack }: Props) {
           {/* ── HORÁRIO DE PICO ───────────────────────────────────────── */}
           {data.peakHour && (
             <View style={styles.peakCard}>
-              <Text style={styles.peakLabel}>⚡ Horário de pico</Text>
+              <Text style={styles.peakLabel}>Horário de pico</Text>
               <Text style={styles.peakValue}>{data.peakHour}</Text>
             </View>
           )}

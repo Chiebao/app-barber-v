@@ -457,7 +457,7 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
                 <Text style={styles.profilePhone}>{barber.phone}</Text>
                 <View style={[styles.roleBadge, barber.role === "owner" && styles.roleBadgeOwner]}>
                   <Text style={styles.roleBadgeText}>
-                    {barber.role === "owner" ? "👑 Dono" : "✂️ Barbeiro"}
+                    {barber.role === "owner" ? "Dono" : "Barbeiro"}
                   </Text>
                 </View>
               </View>
@@ -466,17 +466,17 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
 
           {/* Link de agendamento */}
           <AppCard style={{ gap: spacing.md }}>
-            <Text style={styles.cardTitle}>🔗 Link de Agendamento</Text>
+            <Text style={styles.cardTitle}>Link de agendamento</Text>
             <Text style={styles.cardSubtitle}>{barber.shopName}</Text>
             <View style={styles.linkBox}>
               <Text style={styles.linkText} numberOfLines={1}>{bookingLink}</Text>
             </View>
             <View style={styles.linkActions}>
               <TouchableOpacity style={styles.linkBtn} onPress={copyLink}>
-                <Text style={styles.linkBtnText}>📋 Copiar</Text>
+                <Text style={styles.linkBtnText}>Copiar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.linkBtn, styles.linkBtnShare]} onPress={shareLink}>
-                <Text style={styles.linkBtnShareText}>↗ Compartilhar</Text>
+                <Text style={styles.linkBtnShareText}>Compartilhar</Text>
               </TouchableOpacity>
             </View>
           </AppCard>
@@ -484,7 +484,7 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
           {/* Configurações da barbearia (só owner) */}
           {barber.role === "owner" && (
             <AppCard style={{ gap: spacing.md }}>
-              <Text style={styles.cardTitle}>🏪 Configurações da Barbearia</Text>
+              <Text style={styles.cardTitle}>Configurações da barbearia</Text>
 
               {loadingShop ? (
                 <ActivityIndicator color={colors.brand[400]} style={{ marginVertical: spacing.xl }} />
@@ -556,7 +556,7 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
                   }}>
                     <View style={{ flex: 1, marginRight: spacing.md }}>
                       <Text style={{ fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.white }}>
-                        {chatbotOn ? "🤖 Chatbot ativo" : "📋 Etapas clássico"}
+                        {chatbotOn ? "Chatbot ativo" : "Etapas clássico"}
                       </Text>
                       <Text style={{ fontSize: fontSize.micro, color: colors.gray[500], marginTop: 2 }}>
                         {chatbotOn ? "Clientes agendam via conversa com IA" : "Clientes seguem etapas passo a passo"}
@@ -587,7 +587,7 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
               style={styles.cardTitleRow}
               onPress={() => setShowPwdForm((v) => !v)}
             >
-              <Text style={styles.cardTitle}>🔑 Alterar Senha</Text>
+              <Text style={styles.cardTitle}>Alterar senha</Text>
               <Text style={styles.collapseArrow}>{showPwdForm ? "▲" : "▼"}</Text>
             </TouchableOpacity>
 
@@ -626,7 +626,7 @@ export default function SobreScreen({ token, barber, onBack, onLogout }: Props) 
 
           {/* Paletas de cor */}
           <AppCard style={{ gap: spacing.md }}>
-            <Text style={styles.cardTitle}>🎨 Paleta de Cores</Text>
+            <Text style={styles.cardTitle}>Paleta de cores</Text>
             <Text style={[styles.cardSubtitle, { marginBottom: spacing.md }]}>Personalize o visual do app</Text>
             <View style={themePickerStyles.grid}>
               {PALETTES.map((p) => {

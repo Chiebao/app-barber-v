@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from "react-native";
 import { useColors } from "../utils/useColors";
-import { fontSize, fontFamily, fontWeight, spacing } from "../utils/tokens";
+import { fontSize, fontWeight, spacing } from "../utils/tokens";
 
 interface Props {
   title: string;
@@ -10,24 +10,23 @@ interface Props {
   style?: ViewStyle;
 }
 
+/** Rótulo de seção HUD: maiúsculas espaçadas, na cor clara do destaque. */
 export default function SectionHeader({ title, subtitle, action, style }: Props) {
   const colors = useColors();
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.textBlock}>
-        <Text style={[styles.title, { color: colors.white }]}>{title}</Text>
-        {subtitle && (
-          <Text style={[styles.subtitle, { color: colors.gray[400] }]}>
-            {subtitle}
-          </Text>
-        )}
+        <Text style={[styles.title, { color: colors.brand[400] }]}>{title}</Text>
+        {subtitle && <Text style={[styles.subtitle, { color: colors.gray[400] }]}>{subtitle}</Text>}
       </View>
       {action && (
-        <TouchableOpacity onPress={action.onPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={[styles.actionText, { color: colors.brand[400] }]}>
-            {action.label}
-          </Text>
+        <TouchableOpacity
+          onPress={action.onPress}
+          accessibilityRole="button"
+          style={styles.action}
+        >
+          <Text style={[styles.actionText, { color: colors.brand[400] }]}>{action.label}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -43,19 +42,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     marginBottom: spacing.md,
   },
-  textBlock: {
-    flex: 1,
-  },
+  textBlock: { flex: 1 },
   title: {
-    fontSize: fontSize.h3,
-    fontFamily: fontFamily.serif,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
   },
-  subtitle: {
-    fontSize: fontSize.bodySmall,
-    marginTop: 2,
-  },
-  actionText: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
-  },
+  subtitle: { fontSize: fontSize.bodySmall, marginTop: 4 },
+  action: { minHeight: 44, justifyContent: "center", paddingLeft: spacing.md },
+  actionText: { fontSize: fontSize.body, fontWeight: fontWeight.bold },
 });

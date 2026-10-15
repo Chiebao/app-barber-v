@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import HudIcon from "../components/HudIcon";
 import {
   View,
   Text,
@@ -120,7 +121,7 @@ function PhotoPicker({
 
   return (
     <TouchableOpacity style={photoStyles.empty} onPress={handlePick}>
-      <Text style={photoStyles.emptyIcon}>📷</Text>
+      <HudIcon nome="camera" size={28} color="#F9DA8A" />
       <Text style={photoStyles.emptyLabel}>{label}</Text>
     </TouchableOpacity>
   );
@@ -422,7 +423,7 @@ export default function ProductsScreen({ token, role, onBack }: Props) {
     if (role !== "owner") return;
     showAlert(p.name, "O que deseja fazer?", [
       {
-        text: "✏️ Editar",
+        text: "Editar",
         onPress: () => {
           setEditProduct(p);
           setEditName(p.name);
@@ -431,7 +432,7 @@ export default function ProductsScreen({ token, role, onBack }: Props) {
         },
       },
       {
-        text: "🗑️ Excluir",
+        text: "Excluir",
         style: "destructive",
         onPress: () => {
           showAlert("Excluir produto", `Excluir "${p.name}"?`, [

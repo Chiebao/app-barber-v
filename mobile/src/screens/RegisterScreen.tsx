@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
+  Image,
 } from "react-native";
 import { useColors } from "../utils/useColors";
 import { api } from "../services/api";
@@ -41,11 +42,10 @@ const makeStyles = (colors: ReturnType<typeof useColors>) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: "transparent" },
     content: { padding: spacing["2xl"], paddingTop: spacing.screenTop },
-    logo: {
-      fontSize: fontSize.display,
-      fontWeight: fontWeight.bold,
-      color: colors.brand[400],
-      textAlign: "center",
+    logoImg: {
+      width: 110,
+      height: 142,
+      alignSelf: "center",
     },
     subtitle: {
       fontSize: fontSize.bodyLarge,
@@ -315,7 +315,7 @@ export default function RegisterScreen({ onRegister, onGoToLogin }: Props) {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.logo}>BarberPro</Text>
+        <Image source={require("../../assets/logo.png")} style={styles.logoImg} resizeMode="contain" accessibilityLabel="BarberPro App" />
         <Text style={styles.subtitle}>
           {step === 1 ? "Dados da barbearia" : "Serviços oferecidos"}
         </Text>

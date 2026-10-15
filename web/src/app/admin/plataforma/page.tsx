@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 
 /**
@@ -55,18 +56,18 @@ interface Resumo {
 }
 
 const ASSINATURA_VISUAL: Record<string, { label: string; cor: string }> = {
-  trial:     { label: "Teste",     cor: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-  ativa:     { label: "Pagando",   cor: "bg-green-500/15 text-green-400 border-green-500/30" },
-  carencia:  { label: "Atrasada",  cor: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
-  bloqueada: { label: "Bloqueada", cor: "bg-red-500/15 text-red-400 border-red-500/30" },
-  cortesia:  { label: "Cortesia",  cor: "bg-brand-500/15 text-brand-400 border-brand-400/30" },
-  cancelada: { label: "Cancelada", cor: "bg-gray-700/40 text-gray-400 border-gray-600" },
+  trial:     { label: "Teste",     cor: "bg-[color-mix(in_srgb,var(--hud-info)_15%,transparent)] text-hud-info border-[color-mix(in_srgb,var(--hud-info)_30%,transparent)]" },
+  ativa:     { label: "Pagando",   cor: "bg-[color-mix(in_srgb,var(--hud-ok)_15%,transparent)] text-hud-ok border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)]" },
+  carencia:  { label: "Atrasada",  cor: "bg-[color-mix(in_srgb,var(--hud-warn)_15%,transparent)] text-hud-warn border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)]" },
+  bloqueada: { label: "Bloqueada", cor: "bg-[color-mix(in_srgb,var(--hud-err)_15%,transparent)] text-hud-err border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)]" },
+  cortesia:  { label: "Cortesia",  cor: "bg-[color-mix(in_srgb,var(--hud-accent)_15%,transparent)] text-hud-light border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)]" },
+  cancelada: { label: "Cancelada", cor: "bg-[color-mix(in_srgb,var(--hud-surface)_40%,transparent)] text-hud-muted border-hud-border" },
 };
 
 const SITUACAO = {
-  ativa:    { label: "Ativa",    cor: "bg-green-500/15 text-green-400 border-green-500/30" },
-  em_risco: { label: "Em risco", cor: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
-  sem_uso:  { label: "Sem uso",  cor: "bg-red-500/15 text-red-400 border-red-500/30" },
+  ativa:    { label: "Ativa",    cor: "bg-[color-mix(in_srgb,var(--hud-ok)_15%,transparent)] text-hud-ok border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)]" },
+  em_risco: { label: "Em risco", cor: "bg-[color-mix(in_srgb,var(--hud-warn)_15%,transparent)] text-hud-warn border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)]" },
+  sem_uso:  { label: "Sem uso",  cor: "bg-[color-mix(in_srgb,var(--hud-err)_15%,transparent)] text-hud-err border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)]" },
 } as const;
 
 /** Ordem dos cartoes de cobranca: quem esta perto de bloquear vem primeiro. */
@@ -86,10 +87,10 @@ const ORIGEM: Record<string, string> = {
 };
 
 const STATUS_FATURA: Record<string, { label: string; cor: string }> = {
-  pendente:  { label: "em aberto", cor: "text-yellow-400" },
-  paga:      { label: "paga",      cor: "text-green-400" },
-  cancelada: { label: "cancelada", cor: "text-gray-500" },
-  vencida:   { label: "vencida",   cor: "text-red-400" },
+  pendente:  { label: "em aberto", cor: "text-hud-warn" },
+  paga:      { label: "paga",      cor: "text-hud-ok" },
+  cancelada: { label: "cancelada", cor: "text-hud-muted" },
+  vencida:   { label: "vencida",   cor: "text-hud-err" },
 };
 
 const MODELO_WHATSAPP: Record<string, string> = {
@@ -123,12 +124,12 @@ export default function PlataformaPage() {
 
   if (!dados) {
     return (
-      <main className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
+      <main className="min-h-screen hud-bg flex items-center justify-center p-4">
         <div className="max-w-sm w-full space-y-4">
           <div className="text-center space-y-1">
-            <div className="text-4xl">📊</div>
-            <h1 className="text-xl font-bold text-white">Painel da Plataforma</h1>
-            <p className="text-sm text-gray-500">Visão geral de todas as barbearias</p>
+            <div className="text-4xl"><Icon nome="grafico" tamanho={18} /></div>
+            <h1 className="text-xl font-bold text-hud-text">Painel da Plataforma</h1>
+            <p className="text-sm text-hud-muted">Visão geral de todas as barbearias</p>
           </div>
           <input
             type="password"
@@ -136,12 +137,12 @@ export default function PlataformaPage() {
             onChange={(e) => setSecret(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") carregar(); }}
             placeholder="Senha-mestra"
-            className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none"
           />
           <button
             onClick={carregar}
             disabled={loading}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all"
           >
             {loading ? "Carregando..." : "Entrar"}
           </button>
@@ -163,10 +164,10 @@ export default function PlataformaPage() {
     );
 
   const saude = [
-    { v: String(r.barbearias), l: "Barbearias", cor: "text-white" },
-    { v: String(r.ativas), l: "Ativas", cor: "text-green-400" },
-    { v: String(r.emRisco), l: "Em risco (30d+ paradas)", cor: "text-yellow-400" },
-    { v: String(r.semUso), l: "Nunca agendaram", cor: "text-red-400" },
+    { v: String(r.barbearias), l: "Barbearias", cor: "text-hud-text" },
+    { v: String(r.ativas), l: "Ativas", cor: "text-hud-ok" },
+    { v: String(r.emRisco), l: "Em risco (30d+ paradas)", cor: "text-hud-warn" },
+    { v: String(r.semUso), l: "Nunca agendaram", cor: "text-hud-err" },
   ];
 
   const volume = [
@@ -177,16 +178,16 @@ export default function PlataformaPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-dark-900 text-white px-4 py-8">
+    <main className="min-h-screen hud-bg text-hud-text px-4 py-8">
       <div className="max-w-5xl mx-auto space-y-8">
-        <header className="flex items-end justify-between gap-4 border-b border-gray-800 pb-4">
+        <header className="flex items-end justify-between gap-4 border-b border-hud-border pb-4">
           <div>
-            <h1 className="text-2xl font-bold text-brand-400">Painel da Plataforma</h1>
-            <p className="text-sm text-gray-500">Como o BarberPro está indo, no total</p>
+            <h1 className="font-display text-[28px] leading-tight text-hud-text">Painel da Plataforma</h1>
+            <p className="text-sm text-hud-muted">Como o BarberPro está indo, no total</p>
           </div>
           <button
             onClick={carregar}
-            className="text-sm text-gray-400 border border-gray-700 rounded-lg px-3 py-1.5 hover:text-white transition"
+            className="hud-focus min-h-[44px] text-sm text-hud-muted border border-hud-border rounded px-3 py-1.5 hover:text-hud-text transition"
           >
             Atualizar
           </button>
@@ -195,9 +196,9 @@ export default function PlataformaPage() {
         {/* Saúde da base */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {saude.map((k) => (
-            <div key={k.l} className="rounded-xl bg-dark-800 border border-gray-700 p-4">
+            <div key={k.l} className="hud-card p-4">
               <p className={"text-3xl font-bold " + k.cor}>{k.v}</p>
-              <p className="text-xs text-gray-500 mt-1">{k.l}</p>
+              <p className="text-xs text-hud-muted mt-1">{k.l}</p>
             </div>
           ))}
         </section>
@@ -205,45 +206,45 @@ export default function PlataformaPage() {
         {/* Volume */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {volume.map((k) => (
-            <div key={k.l} className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <p className="text-xl font-bold text-brand-400">{k.v}</p>
-              <p className="text-xs text-gray-500 mt-1">{k.l}</p>
+            <div key={k.l} className="hud-card p-4">
+              <p className="text-xl font-bold text-hud-light">{k.v}</p>
+              <p className="text-xs text-hud-muted mt-1">{k.l}</p>
             </div>
           ))}
         </section>
 
         {/* Dinheiro da plataforma — o que o BarberPro fatura, não as barbearias */}
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Assinaturas</h2>
+          <h2 className="font-display text-[28px] leading-tight text-hud-text">Assinaturas</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4">
-              <p className="text-3xl font-bold text-brand-400 tabular-nums">
+            <div className="rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] p-4">
+              <p className="text-3xl font-bold text-hud-light tabular-nums">
                 {dados.assinaturas.mrr.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </p>
               {/* Semestral e anual são cobrados de uma vez; aqui entram pela
                   fatia mensal, senão o número pula e não serve de termômetro */}
-              <p className="text-xs text-gray-500 mt-1">Por mês (MRR)</p>
+              <p className="text-xs text-hud-muted mt-1">Por mês (MRR)</p>
             </div>
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <p className="text-3xl font-bold text-green-400 tabular-nums">{dados.assinaturas.pagantes}</p>
-              <p className="text-xs text-gray-500 mt-1">Pagantes</p>
+            <div className="hud-card p-4">
+              <p className="text-3xl font-bold text-hud-ok tabular-nums">{dados.assinaturas.pagantes}</p>
+              <p className="text-xs text-hud-muted mt-1">Pagantes</p>
             </div>
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <p className="text-3xl font-bold text-blue-400 tabular-nums">{dados.assinaturas.porEstado.trial || 0}</p>
-              <p className="text-xs text-gray-500 mt-1">Em teste grátis</p>
+            <div className="hud-card p-4">
+              <p className="text-3xl font-bold text-hud-info tabular-nums">{dados.assinaturas.porEstado.trial || 0}</p>
+              <p className="text-xs text-hud-muted mt-1">Em teste grátis</p>
             </div>
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <p className="text-3xl font-bold text-yellow-400 tabular-nums">
+            <div className="hud-card p-4">
+              <p className="text-3xl font-bold text-hud-warn tabular-nums">
                 {dados.assinaturas.valorPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-hud-muted mt-1">
                 {dados.assinaturas.cobrancasPendentes} cobrança{dados.assinaturas.cobrancasPendentes !== 1 ? "s" : ""} em aberto
               </p>
             </div>
           </div>
           {((dados.assinaturas.porEstado.carencia || 0) + (dados.assinaturas.porEstado.bloqueada || 0)) > 0 && (
-            <p className="text-sm text-yellow-400">
-              ⚠️ {dados.assinaturas.porEstado.carencia || 0} atrasada(s) e{" "}
+            <p className="text-sm text-hud-warn flex items-start gap-1.5">
+              <Icon nome="alerta" tamanho={16} className="mt-0.5 shrink-0" /> {dados.assinaturas.porEstado.carencia || 0} atrasada(s) e{" "}
               {dados.assinaturas.porEstado.bloqueada || 0} bloqueada(s) — vale uma mensagem antes de virar cancelamento.
             </p>
           )}
@@ -255,8 +256,8 @@ export default function PlataformaPage() {
         {acompanhar.length > 0 && (
           <section className="space-y-3">
             <div>
-              <h2 className="text-lg font-semibold">Cobrança, passo a passo</h2>
-              <p className="text-xs text-gray-500">Fatura gerada → aviso no WhatsApp → link aberto → pagamento</p>
+              <h2 className="font-display text-[28px] leading-tight text-hud-text">Cobrança, passo a passo</h2>
+              <p className="text-xs text-hud-muted">Fatura gerada → aviso no WhatsApp → link aberto → pagamento</p>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {acompanhar.map((b) => (
@@ -271,7 +272,7 @@ export default function PlataformaPage() {
           {/* O que prova numa conversa que o produto e usado — nao so
               cadastrado. Barbearia que nao lanca comanda nem recebe
               agendamento pelo link e caderno digital. */}
-          <h2 className="text-lg font-semibold">Uso do produto</h2>
+          <h2 className="font-display text-[28px] leading-tight text-hud-text">Uso do produto</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metrica n={dados.uso.agendamentos.hoje} rotulo="Agendamentos hoje" destaque />
             <Metrica n={dados.uso.agendamentos.sete} rotulo="Nos últimos 7 dias" />
@@ -280,19 +281,19 @@ export default function PlataformaPage() {
           </div>
 
           {dados.uso.porMes.length > 0 && (
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <p className="text-xs text-gray-500 mb-3">Agendamentos por mês</p>
+            <div className="hud-card p-4">
+              <p className="text-xs text-hud-muted mb-3">Agendamentos por mês</p>
               <div className="flex items-end gap-2 h-28">
                 {dados.uso.porMes.map((m) => {
                   const maior = Math.max(...dados.uso.porMes.map((x) => x.n), 1);
                   return (
                     <div key={m.mes} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-gray-400 tabular-nums">{m.n}</span>
+                      <span className="text-[10px] text-hud-muted tabular-nums">{m.n}</span>
                       <div
-                        className="w-full rounded-t bg-brand-500"
+                        className="w-full rounded-t gold-fill"
                         style={{ height: `${Math.max(4, (m.n / maior) * 72)}px` }}
                       />
-                      <span className="text-[10px] text-gray-500">{m.mes.slice(5)}/{m.mes.slice(2, 4)}</span>
+                      <span className="text-[10px] text-hud-muted">{m.mes.slice(5)}/{m.mes.slice(2, 4)}</span>
                     </div>
                   );
                 })}
@@ -322,13 +323,13 @@ export default function PlataformaPage() {
             <Metrica n={`${dados.uso.taxaCancelamento}%`} rotulo={`Taxa de cancelamento (${dados.uso.cancelados})`} />
           </div>
 
-          <h2 className="text-lg font-semibold">Barbearias</h2>
+          <h2 className="font-display text-[28px] leading-tight text-hud-text">Barbearias</h2>
           {dados.barbearias.length === 0 ? (
-            <p className="text-gray-500 py-8 text-center">Nenhuma barbearia cadastrada ainda.</p>
+            <p className="text-hud-muted py-8 text-center">Nenhuma barbearia cadastrada ainda.</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-gray-700">
+            <div className="overflow-x-auto rounded border border-hud-border">
               <table className="w-full text-sm">
-                <thead className="bg-dark-800 text-gray-400">
+                <thead className="bg-hud-surface text-hud-muted">
                   <tr>
                     <th className="text-left px-4 py-3 font-medium">Barbearia</th>
                     <th className="text-center px-3 py-3 font-medium">Situação</th>
@@ -339,12 +340,12 @@ export default function PlataformaPage() {
                     <th className="text-right px-4 py-3 font-medium">Último uso</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800">
+                <tbody className="divide-y divide-hud-border">
                   {dados.barbearias.map((b) => (
-                    <tr key={b.id} className="bg-dark-900 hover:bg-dark-800/60 transition">
+                    <tr key={b.id} className="bg-hud-bg hover:bg-[color-mix(in_srgb,var(--hud-bg)_60%,transparent)] transition">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-white">{b.nome}</p>
-                        <p className="text-xs text-gray-600">/{b.slug}</p>
+                        <p className="font-medium text-hud-text">{b.nome}</p>
+                        <p className="text-xs text-hud-faint">/{b.slug}</p>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span className={"text-xs px-2 py-1 rounded-full border " + SITUACAO[b.situacao].cor}>
@@ -352,22 +353,22 @@ export default function PlataformaPage() {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-center whitespace-nowrap">
-                        <span className={"text-xs px-2 py-1 rounded-full border " + (ASSINATURA_VISUAL[b.assinatura.estado]?.cor || "border-gray-700 text-gray-400")}>
+                        <span className={"text-xs px-2 py-1 rounded-full border " + (ASSINATURA_VISUAL[b.assinatura.estado]?.cor || "border-hud-border text-hud-muted")}>
                           {ASSINATURA_VISUAL[b.assinatura.estado]?.label || b.assinatura.estado}
                         </span>
                         {b.assinatura.estado !== "cortesia" && (
-                          <p className="text-[10px] text-gray-600 mt-1 tabular-nums">
+                          <p className="text-[10px] text-hud-faint mt-1 tabular-nums">
                             {b.assinatura.diasRestantes}d · {moeda(b.assinatura.valorCiclo)}
                           </p>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-right tabular-nums text-gray-300">{b.barbeiros}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-gray-300">{b.agendamentosTotal}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-brand-400">{moeda(b.receitaMes)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">
+                      <td className="px-3 py-3 text-right tabular-nums text-hud-soft">{b.barbeiros}</td>
+                      <td className="px-3 py-3 text-right tabular-nums text-hud-soft">{b.agendamentosTotal}</td>
+                      <td className="px-3 py-3 text-right tabular-nums text-hud-light">{moeda(b.receitaMes)}</td>
+                      <td className="px-4 py-3 text-right text-hud-muted">
                         {fmtData(b.ultimoAgendamento)}
                         {b.diasParado !== null && b.diasParado > 7 && (
-                          <span className="block text-xs text-yellow-500">{b.diasParado} dias atrás</span>
+                          <span className="block text-xs text-hud-warn">{b.diasParado} dias atrás</span>
                         )}
                       </td>
                     </tr>
@@ -387,12 +388,12 @@ function Metrica({ n, rotulo, destaque }: { n: number | string; rotulo: string; 
   return (
     <div
       className={
-        "rounded-xl border p-4 " +
-        (destaque ? "bg-brand-500/10 border-brand-400/30" : "bg-dark-800 border-gray-700")
+        "rounded border p-4 " +
+        (destaque ? "bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)]" : "bg-hud-surface border-hud-border")
       }
     >
-      <p className={`text-2xl font-bold tabular-nums ${destaque ? "text-brand-400" : "text-white"}`}>{n}</p>
-      <p className="text-xs text-gray-500 mt-1">{rotulo}</p>
+      <p className={`text-2xl font-bold tabular-nums ${destaque ? "text-hud-light" : "text-hud-text"}`}>{n}</p>
+      <p className="text-xs text-hud-muted mt-1">{rotulo}</p>
     </div>
   );
 }
@@ -451,14 +452,14 @@ function CartaoCobranca({ b }: { b: Barbearia }) {
   let proximo: ReactNode;
   if (paga.feito) {
     proximo = p.proximaFatura
-      ? <>Pago. A próxima fatura sai <b className="text-white">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
+      ? <>Pago. A próxima fatura sai <b className="text-hud-text">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
       : <>Pago.</>;
   } else if (semRodada) {
     proximo = p.proximaFatura
-      ? <>A fatura e o WhatsApp saem <b className="text-white">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
+      ? <>A fatura e o WhatsApp saem <b className="text-hud-text">{quandoSai(p.proximaFatura)}</b>, por volta das 9h.</>
       : <>Nenhuma cobrança prevista.</>;
   } else if (aviso.falhou) {
-    proximo = <span className="text-red-300">O WhatsApp não saiu. Vale chamar {b.dono.nome} direto.</span>;
+    proximo = <span className="text-hud-err">O WhatsApp não saiu. Vale chamar {b.dono.nome} direto.</span>;
   } else if (!aberta.feito) {
     proximo = <>Esperando {b.dono.nome} abrir o link.</>;
   } else {
@@ -477,22 +478,22 @@ function CartaoCobranca({ b }: { b: Barbearia }) {
   };
 
   const estilo = (e: Etapa, i: number) =>
-    e.feito ? "border-green-500 bg-green-500 text-dark-900"
-    : e.falhou ? "border-red-500 bg-dark-800 text-red-400"
-    : i === atual ? "border-brand-400 bg-dark-800 text-brand-400 ring-4 ring-brand-500/15"
-    : "border-gray-700 bg-dark-800 text-gray-600";
+    e.feito ? "border-hud-ok bg-hud-ok text-[var(--hud-on-accent)]"
+    : e.falhou ? "border-hud-err bg-hud-surface text-hud-err"
+    : i === atual ? "border-hud-accent bg-hud-surface text-hud-light ring-4 ring-[color-mix(in_srgb,var(--hud-accent)_15%,transparent)]"
+    : "border-hud-border bg-hud-surface text-hud-faint";
 
   return (
-    <article className="space-y-4 rounded-xl border border-gray-700 bg-dark-800 p-4">
+    <article className="hud-card space-y-4 p-4">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-white">{b.nome}</p>
-          <p className="text-xs text-gray-500">
+          <p className="truncate font-semibold text-hud-text">{b.nome}</p>
+          <p className="text-xs text-hud-muted">
             {b.dono.nome} · {plano(b.assinatura.plano)} {reais(b.assinatura.valorCiclo)}
             {situacao && ` · ${situacao}`}
           </p>
         </div>
-        <span className={"shrink-0 rounded-full border px-2 py-1 text-xs " + (visual?.cor || "border-gray-700 text-gray-400")}>
+        <span className={"shrink-0 rounded-full border px-2 py-1 text-xs " + (visual?.cor || "border-hud-border text-hud-muted")}>
           {visual?.label || b.assinatura.estado}
         </span>
       </header>
@@ -505,14 +506,14 @@ function CartaoCobranca({ b }: { b: Barbearia }) {
               {i < 3 && (
                 <span
                   aria-hidden
-                  className={"absolute left-1/2 top-3.5 h-0.5 w-full " + (proximoFeito ? "bg-green-500/60" : "bg-gray-700")}
+                  className={"absolute left-1/2 top-3.5 h-0.5 w-full " + (proximoFeito ? "bg-[color-mix(in_srgb,var(--hud-ok)_60%,transparent)]" : "bg-[var(--hud-track)]")}
                 />
               )}
               <span className={"relative z-10 grid h-7 w-7 place-items-center rounded-full border text-xs font-bold " + estilo(e, i)}>
                 {e.feito ? "✓" : e.falhou ? "✕" : e.pulado ? "–" : i + 1}
               </span>
-              <span className="mt-2 text-[11px] leading-tight text-gray-300">{PASSO[e.chave]}</span>
-              <span className={"mt-0.5 text-[10px] tabular-nums " + (e.falhou ? "text-red-400" : "text-gray-500")}>
+              <span className="mt-2 text-[11px] leading-tight text-hud-soft">{PASSO[e.chave]}</span>
+              <span className={"mt-0.5 text-[10px] tabular-nums " + (e.falhou ? "text-hud-err" : "text-hud-muted")}>
                 {legenda(e, i)}
               </span>
             </li>
@@ -520,33 +521,33 @@ function CartaoCobranca({ b }: { b: Barbearia }) {
         })}
       </ol>
 
-      <p className="text-sm text-gray-300">{proximo}</p>
+      <p className="text-sm text-hud-soft">{proximo}</p>
 
       {p.faturaAberta && !paga.feito && (
         <a
           href={chamarNoWhatsapp(b, p.faturaAberta)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-400 transition hover:bg-green-500/20"
+          className="inline-flex items-center gap-2 rounded border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-hud-ok transition hover:bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)]"
         >
           Chamar {b.dono.nome} no WhatsApp
         </a>
       )}
 
       {!semRodada && (
-        <ul className="space-y-1 border-t border-gray-700/60 pt-3 text-[11px] text-gray-500">
+        <ul className="space-y-1 border-t border-hud-border pt-3 text-[11px] text-hud-muted">
           {p.rodada.map((f) => {
-            const st = STATUS_FATURA[f.status] ?? { label: f.status, cor: "text-gray-400" };
+            const st = STATUS_FATURA[f.status] ?? { label: f.status, cor: "text-hud-muted" };
             const zap = f.avisoWhatsapp
               ? f.avisoWhatsapp === "falhou" ? "WhatsApp falhou" : `WhatsApp: ${MODELO_WHATSAPP[f.avisoWhatsapp] ?? f.avisoWhatsapp}`
               : null;
             return (
               <li key={f.id} className="flex flex-wrap gap-x-1.5">
-                <span className="tabular-nums text-gray-400">{diaHora(f.criadaEm)}</span>
+                <span className="tabular-nums text-hud-muted">{diaHora(f.criadaEm)}</span>
                 <span>·</span>
-                <span className="text-gray-300">{plano(f.plano)} {reais(f.valor)}</span>
+                <span className="text-hud-soft">{plano(f.plano)} {reais(f.valor)}</span>
                 {f.origem && <><span>·</span><span>{ORIGEM[f.origem] ?? f.origem}</span></>}
-                {zap && <><span>·</span><span className={f.avisoWhatsapp === "falhou" ? "text-red-400" : ""}>{zap}</span></>}
+                {zap && <><span>·</span><span className={f.avisoWhatsapp === "falhou" ? "text-hud-err" : ""}>{zap}</span></>}
                 <span>·</span>
                 <span className={st.cor}>{st.label}</span>
               </li>

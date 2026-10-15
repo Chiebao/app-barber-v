@@ -29,10 +29,10 @@ export function useColors() {
       700: palette.border,
     },
     white: palette.textPrimary,
-    green: "#22c55e",
-    red: "#ef4444",
-    blue: "#3b82f6",
+    green: "#4ADE80",
+    red: "#F87171",
+    blue: "#60A5FA",
     /** Alias semântico de red — ações destrutivas. */
-    error: "#ef4444",
+    error: "#F87171",
   }), [palette]);
 }

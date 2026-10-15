@@ -123,3 +123,193 @@ body > * {
     transform: scale(0.97);
   }
 }
+
+/* ══ Ouro HUD ═══════════════════════════════════════════════════════════
+   Visual novo (docs/design/barberpro-hud). Tudo aqui sai de VARIAVEIS: a
+   cor de destaque e a da barbearia (paletteToVars), e as pontas do
+   gradiente metalico sao derivadas dela com color-mix. Nada de dourado fixo.
+
+   Os derivados ficam em ":root, .hud-scope" e nao so no :root porque
+   variavel customizada e calculada onde e declarada: um trecho que troca a
+   cor de destaque (a vitrine mostra as 5 paletas lado a lado) precisa
+   recalcular as pontas ali mesmo, senao herdaria o gradiente da raiz. */
+:root {
+  --hud-accent: #F5B731;
+  --hud-on-accent: #0B0B14;
+  --hud-mix-claro: 55%;
+  --hud-mix-escuro: 72%;
+  --hud-tint-mix: 62%;
+  --hud-ok: #4ADE80;
+  --hud-warn: #FB923C;
+  --hud-err: #F87171;
+  --hud-info: #60A5FA;
+  --hud-shadow: rgba(0, 0, 0, 0.55);
+}
+
+:root, .hud-scope {
+  --hud-bg: var(--dark-900);
+  --hud-surface: var(--dark-800);
+  --hud-border: var(--border-color);
+  --hud-text: var(--text-primary);
+  --hud-text-2: var(--text-secondary);
+  --hud-text-soft: color-mix(in srgb, var(--text-primary) 78%, var(--text-secondary));
+  --hud-text-3: color-mix(in srgb, var(--text-secondary) 78%, var(--dark-900));
+  --hud-g1: color-mix(in srgb, var(--hud-accent) var(--hud-mix-claro), white);
+  --hud-g3: color-mix(in srgb, var(--hud-accent) var(--hud-mix-escuro), black);
+  --hud-gradient: linear-gradient(135deg, var(--hud-g1) 0%, var(--hud-accent) 45%, var(--hud-g3) 100%);
+  --hud-gradient-h: linear-gradient(90deg, var(--hud-g1), var(--hud-accent), var(--hud-g3));
+  --hud-ring: color-mix(in srgb, var(--hud-accent) 40%, transparent);
+  --hud-track: color-mix(in srgb, var(--hud-border) 70%, var(--hud-text-2));
+  --hud-disabled-bg: color-mix(in srgb, var(--hud-surface) 88%, var(--hud-text));
+  --hud-disabled-text: color-mix(in srgb, var(--hud-text-2) 55%, var(--hud-bg));
+}
+
+@layer components {
+  /* Fundo: base + grade do destaque a 5% a cada 28px + brilho no canto. */
+  .hud-bg {
+    background-color: var(--hud-bg);
+    background-image:
+      radial-gradient(circle at 100% 0, color-mix(in srgb, var(--hud-accent) 16%, transparent), transparent 420px),
+      linear-gradient(color-mix(in srgb, var(--hud-accent) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--hud-accent) 5%, transparent) 1px, transparent 1px);
+    background-size: auto, 28px 28px, 28px 28px;
+    color: var(--hud-text);
+  }
+
+  /* Texto metalico. Brilho com drop-shadow (text-shadow apareceria por
+     cima do texto transparente). */
+  .gold-text {
+    background-image: var(--hud-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .gold-glow {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--hud-accent) 35%, transparent));
+  }
+  .gold-fill {
+    background-image: var(--hud-gradient);
+    color: var(--hud-on-accent);
+  }
+
+  .hud-card {
+    border-radius: 4px;
+    border: 1px solid var(--hud-border);
+    background-color: color-mix(in srgb, var(--hud-surface) 85%, transparent);
+  }
+  .hud-card-sel {
+    border-color: var(--hud-accent);
+    background-color: color-mix(in srgb, var(--hud-accent) 12%, var(--hud-surface));
+  }
+
+  /* Cantoneiras: dois "L" de 10px. Só em 1 cartão de destaque por tela,
+     ou no item selecionado. */
+  .hud-corners { position: relative; }
+  .hud-corners::before,
+  .hud-corners::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+  }
+  .hud-corners::before {
+    top: -1px; left: -1px;
+    border-top: 2px solid var(--hud-g1);
+    border-left: 2px solid var(--hud-g1);
+  }
+  .hud-corners::after {
+    bottom: -1px; right: -1px;
+    border-bottom: 2px solid var(--hud-g1);
+    border-right: 2px solid var(--hud-g1);
+  }
+
+  /* Canto chanfrado do botao principal. O clip-path corta tambem o anel de
+     foco — entao, com foco de teclado, o chanfro sai e o anel aparece. */
+  .hud-chamfer {
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+  .hud-chamfer:focus-visible {
+    clip-path: none;
+    border-radius: 4px;
+  }
+
+  .hud-focus:focus-visible {
+    outline: 3px solid var(--hud-ring);
+    outline-offset: 2px;
+  }
+
+  .hud-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--hud-text-2);
+  }
+  .hud-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--hud-g1);
+  }
+
+  .hud-input {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 4px;
+    border: 1px solid var(--hud-border);
+    background-color: color-mix(in srgb, var(--hud-surface) 90%, transparent);
+    color: var(--hud-text);
+    font-size: 16px;
+    padding: 0 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .hud-input::placeholder { color: var(--hud-text-3); }
+  .hud-input:focus {
+    outline: none;
+    border-color: var(--hud-accent);
+    background-color: color-mix(in srgb, var(--hud-bg) 70%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hud-accent) 14%, transparent);
+  }
+  .hud-input[aria-invalid="true"] {
+    border-color: var(--hud-err);
+    background-color: color-mix(in srgb, var(--hud-err) 6%, transparent);
+  }
+  .hud-input:disabled { background-color: var(--hud-disabled-bg); color: var(--hud-disabled-text); }
+  textarea.hud-input { padding: 12px 14px; min-height: 88px; font-size: 14px; line-height: 1.5; }
+  select.hud-input { appearance: none; padding-right: 40px; }
+
+  .hud-skeleton {
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--hud-surface), color-mix(in srgb, var(--hud-surface) 90%, var(--hud-text)), var(--hud-surface));
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .hud-spin { animation: hud-spin 0.8s linear infinite; }
+}
+
+@keyframes hud-spin { to { transform: rotate(360deg); } }
+@keyframes hud-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes hud-pop-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-skeleton { animation: none; }
+  /* O giro e a unica pista de que algo esta acontecendo: fica, mais lento. */
+  .hud-spin { animation-duration: 2s; }
+  .hud-anim { animation: none !important; transition: none !important; }
+}
+
+/* Modo de alto contraste do sistema: o texto metalico (transparente) sumiria. */
+@media (forced-colors: active) {
+  .gold-text { -webkit-text-fill-color: CanvasText; color: CanvasText; background: none; }
+}
+
+/* Tira rolável (datas, serviços) sem barra de rolagem aparente: o dedo
+   arrasta, e a barra dourada de 6px parecia um elemento quebrado. */
+@layer utilities {
+  .hud-noscroll { scrollbar-width: none; }
+  .hud-noscroll::-webkit-scrollbar { display: none; }
+}

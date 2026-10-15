@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 
 export default function AdminResetPage() {
@@ -50,48 +51,48 @@ export default function AdminResetPage() {
   };
 
   return (
-    <main className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
+    <main className="min-h-screen hud-bg flex items-center justify-center p-4">
       <div className="max-w-sm w-full space-y-5">
         <div className="text-center space-y-1">
-          <div className="text-4xl">🔐</div>
-          <h1 className="text-xl font-bold text-white">Reset de Senha (Admin)</h1>
-          <p className="text-sm text-gray-500">Uso interno — redefine a senha de qualquer conta pelo telefone.</p>
+          <div className="text-4xl"><Icon nome="cadeado" tamanho={18} /></div>
+          <h1 className="text-xl font-bold text-hud-text">Reset de Senha (Admin)</h1>
+          <p className="text-sm text-hud-muted">Uso interno — redefine a senha de qualquer conta pelo telefone.</p>
         </div>
 
-        <div className="bg-dark-800 border border-gray-700 rounded-2xl p-5 space-y-4">
+        <div className="hud-card p-5 space-y-4">
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Senha-mestra</label>
+            <label className="text-xs text-hud-muted mb-1 block">Senha-mestra</label>
             <input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="Sua senha-mestra"
-              className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none" />
+              className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Telefone da pessoa (que veio no WhatsApp)</label>
+            <label className="text-xs text-hud-muted mb-1 block">Telefone da pessoa (que veio no WhatsApp)</label>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ex: 15997767794"
-              className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none" />
+              className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Nova senha</label>
+            <label className="text-xs text-hud-muted mb-1 block">Nova senha</label>
             <div className="flex gap-2">
               <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres"
-                className="flex-1 rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none" />
-              <button onClick={genPassword} title="Gerar senha" className="shrink-0 rounded-xl border border-gray-700 px-4 text-gray-300 hover:text-brand-400 hover:border-brand-400/50 transition">🎲</button>
+                className="flex-1 rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+              <button onClick={genPassword} title="Gerar senha" aria-label="Gerar senha" className="hud-focus shrink-0 min-h-[52px] rounded border border-hud-border px-4 text-hud-soft hover:text-hud-light hover:border-hud-accent transition"><Icon nome="cadeado" tamanho={18} /></button>
             </div>
           </div>
           <button onClick={handleReset} disabled={loading}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
             {loading ? "Redefinindo..." : "Redefinir senha"}
           </button>
         </div>
 
         {result && (
-          <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-5 space-y-3 text-center">
-            <p className="text-green-400 font-semibold">
-              ✅ Senha de {result.name || "conta"} ({result.role}) redefinida!
+          <div className="bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] rounded p-5 space-y-3 text-center">
+            <p className="text-hud-ok font-semibold">
+              <Icon nome="sucesso" tamanho={18} className="mr-1.5 inline-block align-[-4px]" />Senha de {result.name || "conta"} ({result.role}) redefinida!
             </p>
-            <p className="text-sm text-gray-300">Nova senha: <span className="font-mono font-bold text-white">{newPassword}</span></p>
+            <p className="text-sm text-hud-soft">Nova senha: <span className="font-mono font-bold text-hud-text">{newPassword}</span></p>
             <button onClick={copyMessage}
-              className="w-full rounded-xl bg-green-500 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition">
-              📋 Copiar mensagem pro WhatsApp
+              className="hud-focus min-h-[44px] w-full rounded bg-hud-ok py-2.5 text-sm font-semibold text-hud-text hover:brightness-110 transition">
+              <Icon nome="copiar" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Copiar mensagem pro WhatsApp
             </button>
           </div>
         )}

@@ -254,11 +254,11 @@ export default function ClientsScreen({ token, onBack }: Props) {
 
                 <View style={styles.cardMeta}>
                   <View style={styles.metaItem}>
-                    <Text style={styles.metaText}>📅 Desde {formatDate(c.firstDate)}</Text>
+                    <Text style={styles.metaText}>Desde {formatDate(c.firstDate)}</Text>
                   </View>
                   {c.noShowCount > 0 && (
                     <View style={styles.noShowBadge}>
-                      <Text style={styles.noShowText}>⚠️ {c.noShowCount} no-show{c.noShowCount !== 1 ? "s" : ""}</Text>
+                      <Text style={styles.noShowText}>{c.noShowCount} no-show{c.noShowCount !== 1 ? "s" : ""}</Text>
                     </View>
                   )}
                 </View>

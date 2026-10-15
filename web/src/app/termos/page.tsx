@@ -7,30 +7,30 @@ export const metadata: Metadata = {
 
 export default function TermosPage() {
   return (
-    <main className="min-h-screen bg-dark-900 text-gray-300 px-4 py-12 sm:px-8">
+    <main className="min-h-screen hud-bg text-hud-soft px-4 py-12 sm:px-8">
       <article className="mx-auto max-w-3xl space-y-8">
         <header>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-hud-text mb-2">
             Termos de Uso
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-hud-muted">
             Versão 2.1 — em vigor desde 30 de agosto de 2026
           </p>
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             1. Aceitação dos termos
           </h2>
           <p>
-            Ao acessar ou utilizar o <strong className="text-white">BarberPro</strong>{" "}
+            Ao acessar ou utilizar o <strong className="text-hud-text">BarberPro</strong>{" "}
             (aplicativo mobile e/ou site), você concorda integralmente com estes
             Termos de Uso. Caso não concorde, não utilize a plataforma.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             2. Descrição do serviço
           </h2>
           <p>
@@ -49,7 +49,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             3. Cadastro e conta
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -72,7 +72,7 @@ export default function TermosPage() {
             <li>
               Você pode excluir sua conta a qualquer momento pelo app ou painel
               web. A exclusão remove permanentemente seus dados conforme nossa{" "}
-              <a href="/privacidade" className="text-brand-400 underline">
+              <a href="/privacidade" className="text-hud-light underline">
                 Política de Privacidade
               </a>
               .
@@ -81,7 +81,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             4. Uso aceitável
           </h2>
           <p>Ao utilizar o BarberPro, você se compromete a:</p>
@@ -97,13 +97,13 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             5. Agendamentos e pagamentos
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
               O BarberPro facilita o agendamento entre clientes e barbearias,
-              mas <strong className="text-gray-200">não é parte</strong> da
+              mas <strong className="text-hud-soft">não é parte</strong> da
               relação comercial entre eles.
             </li>
             <li>
@@ -123,46 +123,46 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             6. Planos, assinatura, teste gratis e inadimplência
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-gray-200">Teste gratis:</strong> toda barbearia
-              nova comeca com <strong className="text-gray-200">14 dias de acesso
+              <strong className="text-hud-soft">Teste gratis:</strong> toda barbearia
+              nova comeca com <strong className="text-hud-soft">14 dias de acesso
               completo e gratuito</strong>, sem necessidade de informar forma de
               pagamento. Não ha cobranca automática ao fim do teste: se você não
               contratar um plano, o acesso simplesmente deixa de aceitar novos
               agendamentos.
             </li>
             <li>
-              <strong className="text-gray-200">Planos:</strong> mensal, semestral ou
+              <strong className="text-hud-soft">Planos:</strong> mensal, semestral ou
               anual, com preço fixo por barbearia, independentemente da quantidade de
               barbeiros cadastrados. Os valores vigentes são exibidos no painel, na
               tela de assinatura, antes da contratação.
             </li>
             <li>
-              <strong className="text-gray-200">Troca de plano:</strong> passa a valer
+              <strong className="text-hud-soft">Troca de plano:</strong> passa a valer
               a partir da próxima cobranca. O período já pago não e reprecificado,
               para nenhuma das partes.
             </li>
             <li>
-              <strong className="text-gray-200">Cancelamento:</strong> pode ser feito a
+              <strong className="text-hud-soft">Cancelamento:</strong> pode ser feito a
               qualquer momento pelo painel, sem multa. O acesso permanece integral até
               o fim do período já pago — não ha corte imediato nem devolução
               proporcional do período em curso.
             </li>
             <li>
-              <strong className="text-gray-200">Planos de compromisso pagos mensalmente:</strong>{" "}
+              <strong className="text-hud-soft">Planos de compromisso pagos mensalmente:</strong>{" "}
               nos planos semestral e anual com pagamento mês a mês, o desconto e{" "}
-              <strong className="text-gray-200">antecipado</strong>: você paga o preço reduzido
+              <strong className="text-hud-soft">antecipado</strong>: você paga o preço reduzido
               desde a primeira cobranca, em contrapartida ao período contratado. Se a assinatura
               for cancelada ou bloqueada antes de completar esse período, fica em aberto a{" "}
-              <strong className="text-gray-200">diferença entre o preço pago e o preço do plano
+              <strong className="text-hud-soft">diferença entre o preço pago e o preço do plano
               mensal</strong>, multiplicada apenas pelos meses efetivamente utilizados.
             </li>
             <li>
-              Essa diferença <strong className="text-gray-200">não e multa</strong> e não e cobrada
+              Essa diferença <strong className="text-hud-soft">não e multa</strong> e não e cobrada
               de forma automática: corresponde exatamente ao desconto já usufruido e só e exigida
               caso você opte por reativar a assinatura, sendo somada a primeira cobranca da
               reativação. Se você nunca reativar, nada e cobrado.
@@ -173,33 +173,33 @@ export default function TermosPage() {
               contagem.
             </li>
             <li>
-              <strong className="text-gray-200">Reajuste:</strong> mudancas de preço não
+              <strong className="text-hud-soft">Reajuste:</strong> mudancas de preço não
               afetam o período já contratado e serão comunicadas com pelo menos 30 dias
               de antecedência da renovação.
             </li>
           </ul>
 
-          <h3 className="text-lg font-semibold text-white pt-2">
+          <h3 className="text-lg font-semibold text-hud-text pt-2">
             6.1. O que acontece se o pagamento atrasar
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-hud-muted">
             Descrevemos abaixo exatamente o comportamento do sistema, para que não haja
             surpresa:
           </p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
-              <strong className="text-gray-200">Até 7 dias após o vencimento</strong>{" "}
+              <strong className="text-hud-soft">Até 7 dias após o vencimento</strong>{" "}
               (carência): acesso permanece completo, com aviso no painel.
             </li>
             <li>
-              <strong className="text-gray-200">Após a carência:</strong> o painel entra
-              em <strong className="text-gray-200">modo somente leitura</strong>. Você
+              <strong className="text-hud-soft">Após a carência:</strong> o painel entra
+              em <strong className="text-hud-soft">modo somente leitura</strong>. Você
               continua vendo a agenda, o histórico e os relatórios, e continua podendo
               confirmar pagamentos já realizados — mas não cria nem edita serviços,
               produtos, barbeiros ou bloqueios de horário.
             </li>
             <li>
-              A página pública de agendamento <strong className="text-gray-200">deixa
+              A página pública de agendamento <strong className="text-hud-soft">deixa
               de aceitar novos agendamentos</strong>. Os agendamentos já marcados não
               são cancelados e continuam visíveis para você e para os clientes.
             </li>
@@ -209,11 +209,11 @@ export default function TermosPage() {
               agendamentos online no momento.
             </li>
             <li>
-              <strong className="text-gray-200">Regularizado o pagamento</strong>, o
+              <strong className="text-hud-soft">Regularizado o pagamento</strong>, o
               acesso e restabelecido imediatamente, sem taxa de reativação.
             </li>
             <li>
-              Seus dados são preservados por <strong className="text-gray-200">60 dias
+              Seus dados são preservados por <strong className="text-hud-soft">60 dias
               </strong> a contar do bloqueio, para reativação ou exportação. Após esse
               prazo, podem ser excluidos definitivamente.
             </li>
@@ -222,15 +222,15 @@ export default function TermosPage() {
 
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             7. Dados dos clientes da barbearia
           </h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
               Os dados dos clientes atendidos pela barbearia pertencem a relação
               entre a barbearia e o cliente dela. Nos termos da LGPD, a{" "}
-              <strong className="text-gray-200">barbearia e a controladora</strong>{" "}
-              desses dados e o <strong className="text-gray-200">BarberPro e o
+              <strong className="text-hud-soft">barbearia e a controladora</strong>{" "}
+              desses dados e o <strong className="text-hud-soft">BarberPro e o
               operador</strong>, tratando-os apenas para operar a plataforma.
             </li>
             <li>
@@ -240,7 +240,7 @@ export default function TermosPage() {
               qualquer momento.
             </li>
             <li>
-              <strong className="text-gray-200">Bloqueio de clientes:</strong> a
+              <strong className="text-hud-soft">Bloqueio de clientes:</strong> a
               plataforma permite que a barbearia impeca um telefone de agendar,
               opcionalmente com uma anotação interna do motivo. Essa decisão e da
               barbearia, que responde por ela como controladora dos dados. O bloqueio
@@ -254,7 +254,7 @@ export default function TermosPage() {
             </li>
             <li>
               Detalhes completos na{" "}
-              <a href="/privacidade" className="text-brand-400 underline">
+              <a href="/privacidade" className="text-hud-light underline">
                 Política de Privacidade
               </a>
               .
@@ -263,7 +263,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             8. Propriedade intelectual
           </h2>
           <p>
@@ -278,7 +278,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             9. Disponibilidade do serviço
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -298,7 +298,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             10. Limitação de responsabilidade
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -322,7 +322,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             11. Rescisão
           </h2>
           <ul className="list-disc pl-6 space-y-2">
@@ -336,7 +336,7 @@ export default function TermosPage() {
             </li>
             <li>
               Após a rescisão, seus dados serão tratados conforme a{" "}
-              <a href="/privacidade" className="text-brand-400 underline">
+              <a href="/privacidade" className="text-hud-light underline">
                 Política de Privacidade
               </a>
               .
@@ -345,7 +345,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             12. Alterações nos termos
           </h2>
           <p>
@@ -356,7 +356,7 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             13. Legislação aplicável
           </h2>
           <p>
@@ -367,18 +367,18 @@ export default function TermosPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="font-display text-2xl leading-tight text-hud-text">
             14. Contato
           </h2>
           <p>Para dúvidas sobre estes termos ou sobre sua assinatura:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              <strong className="text-gray-200">WhatsApp:</strong>{" "}
+              <strong className="text-hud-soft">WhatsApp:</strong>{" "}
               <a
                 href="https://wa.me/5515997767794"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-400 underline"
+                className="text-hud-light underline"
               >
                 (15) 99776-7794
               </a>{" "}
@@ -388,11 +388,11 @@ export default function TermosPage() {
           </ul>
         </section>
 
-        <footer className="border-t border-gray-800 pt-6 text-sm text-gray-500">
+        <footer className="border-t border-hud-border pt-6 text-sm text-hud-muted">
           <p>
             Ao utilizar o BarberPro, você declara que leu, compreendeu e
             concorda com estes Termos de Uso e com a{" "}
-            <a href="/privacidade" className="text-brand-400 underline">
+            <a href="/privacidade" className="text-hud-light underline">
               Política de Privacidade
             </a>
             .

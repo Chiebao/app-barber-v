@@ -75,14 +75,15 @@ export const spacing = {
 
 // ── Border Radius ────────────────────────────────────────────────────────────
 export const radius = {
-  /** 8px — Badges, chips */
-  sm: 8,
-  /** 12px — Inputs, botões */
-  md: 12,
-  /** 16px — Cards */
-  lg: 16,
-  /** 24px — Bottom sheets */
-  xl: 24,
+  // Ouro HUD: cantos de 4px em tudo que é retângulo; 3px nas etiquetas.
+  /** 3px — Badges */
+  sm: 3,
+  /** 4px — Inputs, botões */
+  md: 4,
+  /** 4px — Cards */
+  lg: 4,
+  /** 14px — Bottom sheets (topo) */
+  xl: 14,
   /** 9999px — Avatares, pills */
   full: 9999,
 } as const;
@@ -113,14 +114,15 @@ export const hitSlop = {
 
 // ── Feedback Colors (invariáveis entre temas) ────────────────────────────────
 export const feedback = {
-  success: "#22c55e",
-  successBg: "#22c55e14",
-  error: "#ef4444",
-  errorBg: "#ef444414",
-  warning: "#f59e0b",
-  warningBg: "#f59e0b14",
-  info: "#3b82f6",
-  infoBg: "#3b82f614",
+  // Cores de estado do Ouro HUD (iguais às do site)
+  success: "#4ADE80",
+  successBg: "#4ADE8014",
+  error: "#F87171",
+  errorBg: "#F8717114",
+  warning: "#FB923C",
+  warningBg: "#FB923C14",
+  info: "#60A5FA",
+  infoBg: "#60A5FA14",
 } as const;
 
 // ── Animation Durations ──────────────────────────────────────────────────────

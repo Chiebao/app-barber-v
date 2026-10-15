@@ -593,6 +593,42 @@ app_barber/
 - `primeiroNome()` existe porque o `split(/s+/)` solto no cron perdeu a barra
   e cortava na LETRA s ("Elias" virava "Elia") — no WhatsApp de cobranca
 
+### Visual "Ouro HUD" (redesign de out/2026)
+- Referências em `docs/design/barberpro-hud/`, cobertura tela a tela em
+  `docs/design/COBERTURA.md`. Kit em `web/src/app/components/hud/`
+- Toda cor nova sai de VARIÁVEL (`--hud-*` em `globals.css`, montadas por
+  `paletteToVars`): o destaque é a cor da barbearia e as pontas do gradiente
+  metálico são derivadas dela com `color-mix`. Nada de dourado fixo — os
+  `brand-*` do Tailwind são fixos e nenhuma tela os usa mais
+- Paletas CLARAS invertem o gradiente (cor → escuro) e põem texto branco nos
+  botões: a ponta clara sumia no fundo creme e o texto escuro media 1,8:1
+- Modal e toast são "ilha escura" (`components/hud/tema.ts`): ficam escuros
+  mesmo em paleta clara, com o destaque da paleta
+- `Modal` ganhou `gaveta` (sobe de baixo no celular) para formulário de
+  cadastro/edição; confirmação continua modal centralizado
+- Ícones são SVG de linha desenhados à mão (`Icon`), sem biblioteca. No app,
+  Feather do `@expo/vector-icons` (já vem com o Expo)
+- Mensagem de WhatsApp (texto que vai para o cliente) NÃO entra no redesign,
+  mesmo com emoji
+- Logo oficial (BarberPro App, retrato): `web/public/logo-completo.webp`
+  (telas), `logo.png` (quadrado, fallback de barbearia sem logo e cartão do
+  link), `favicon.ico`, `icon-192/512.png`, `apple-touch-icon.png`; no app,
+  `mobile/assets/icon.png`, `adaptive-icon.png`, `splash.png` e `logo.png`.
+  Fundo do splash/ícone adaptativo: `#020202` (a cor do fundo do logo)
+
+### Status do WhatsApp em 2 toques
+- O WhatsApp não tem API para postar no Status de ninguém. A solução: a
+  imagem do dia vem PRONTA (`/api/status/[slug]`, 1080×1920) e o botão
+  "Postar" do painel abre o compartilhar do celular — WhatsApp → Meu status,
+  com o link na legenda
+- Muda todo dia: horários LIVRES de hoje (mesma conta do agendamento, em
+  `/api/status/[slug]/dados`), data e uma frase que gira pelo dia do ano. Dia
+  lotado mostra os de amanhã
+- A imagem roda no Edge e busca os dados numa rota Node: o `ImageResponse` no
+  Node quebra no Windows (caminho da fonte do @vercel/og)
+- 7h de Brasília (`.github/workflows/status.yml` → `/api/cron/status-do-dia`):
+  push grátis, navegador + app, só para barbearia que aceita agendamento
+
 ### Rastro de auditoria
 - NAO existe tabela de log. O que da para reconstruir sai do proprio
   `Appointment`: `createdAt` (quando foi marcado), `status`, `cancelledAt` +
@@ -854,6 +890,8 @@ app_barber/
 | 63 | Janela da agenda no link publico (7, 15 ou 30 dias) | ✅ | — | ✅ |
 | 64 | Landing page de venda na raiz do site | ✅ | — | — |
 | 65 | Cobranca passo a passo no painel da plataforma (fatura → aviso → link → pago) | ✅ | — | ✅ |
+| 66 | Redesign visual "Ouro HUD" (site, painel, páginas públicas e app) | ✅ | ✅ | — |
+| 67 | Status do WhatsApp em 2 toques (imagem do dia + aviso às 7h) | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

@@ -92,41 +92,41 @@ export default function MercadoPago({ token }: { token: string | null }) {
   if (!s) return null;
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+    <div className="hud-card p-5 space-y-3">
       {dialogoConfirmacao}
       <div>
-        <h3 className="font-semibold text-white">💠 Pix automático (Mercado Pago)</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <h3 className="font-display text-xl text-hud-text">Pix automático (Mercado Pago)</h3>
+        <p className="text-xs text-hud-muted mt-1">
           Conecte sua conta e o sinal do cliente com histórico de falta é confirmado sozinho —
           você não precisa mais conferir o extrato.
         </p>
       </div>
 
       {!s.disponivel && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-hud-muted">
           Ainda não disponível nesta plataforma. Por enquanto, use a chave Pix manual acima.
         </p>
       )}
 
       {s.disponivel && s.conectado && (
         <>
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-3 py-2">
-            <span className="text-green-400 text-sm">
+          <div className="flex items-center gap-2 rounded bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] px-3 py-2">
+            <span className="text-hud-ok text-sm">
               ✓ Conectado
               {s.conectadoEm && (
-                <span className="text-gray-400">
+                <span className="text-hud-muted">
                   {" "}desde {new Date(s.conectadoEm).toLocaleDateString("pt-BR")}
                 </span>
               )}
             </span>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-hud-muted">
             O dinheiro cai direto na sua conta do Mercado Pago. O BarberPro só gera a cobrança.
           </p>
           <button
             onClick={desconectar}
             disabled={busy}
-            className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white disabled:opacity-50 transition"
+            className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2.5 text-sm text-hud-muted hover:text-hud-text disabled:opacity-50 transition"
           >
             {busy ? "..." : "Desconectar"}
           </button>
@@ -138,15 +138,15 @@ export default function MercadoPago({ token }: { token: string | null }) {
           <button
             onClick={conectar}
             disabled={busy}
-            className="w-full rounded-xl bg-[#009EE3] py-3 font-semibold text-white hover:bg-[#0088c7] disabled:opacity-50 transition-all"
+            className="hud-focus w-full rounded bg-[#009EE3] py-3 font-semibold text-hud-text hover:bg-[#0088c7] disabled:opacity-50 transition-all"
           >
             {busy ? "Abrindo..." : "Conectar Mercado Pago"}
           </button>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-hud-muted">
             Você vai autorizar no site do Mercado Pago e voltar para cá. Não temos acesso à sua
             senha nem ao seu saldo.
             {!s.temPixManual && (
-              <span className="block mt-1 text-yellow-500">
+              <span className="block mt-1 text-hud-warn">
                 Enquanto não conectar nem cadastrar uma chave Pix, o bloqueio por falta fica desligado.
               </span>
             )}

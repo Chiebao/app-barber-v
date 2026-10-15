@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler, Platform } from "react-native";
 import { useColors } from "../utils/useColors";
-import { fontSize, fontFamily, fontWeight, spacing } from "../utils/tokens";
+import { fontFamily, spacing } from "../utils/tokens";
+import HudIcon from "./HudIcon";
 
 interface Props {
   title: string;
@@ -9,6 +10,7 @@ interface Props {
   rightElement?: React.ReactNode;
 }
 
+/** Cabeçalho de subtela HUD: voltar (44px) + título Marcellus 28. */
 export default function ScreenHeader({ title, onBack, rightElement }: Props) {
   const colors = useColors();
 
@@ -23,12 +25,19 @@ export default function ScreenHeader({ title, onBack, rightElement }: Props) {
   }, [onBack]);
 
   return (
-    <View style={[styles.header, { borderBottomColor: colors.gray[700] + "40" }]}>
-      <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-        <Text style={[styles.backText, { color: colors.brand[400] }]}>← Voltar</Text>
+    <View style={styles.header}>
+      <TouchableOpacity
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        style={[styles.backBtn, { borderColor: colors.gray[700], backgroundColor: colors.dark[800] + "D9" }]}
+      >
+        <HudIcon nome="chevron-left" size={22} color={colors.brand[500]} />
       </TouchableOpacity>
-      <Text style={[styles.title, { color: colors.white }]}>{title}</Text>
-      {rightElement || <View style={styles.spacer} />}
+      <Text style={[styles.title, { color: colors.white }]} numberOfLines={1}>
+        {title}
+      </Text>
+      {rightElement || null}
     </View>
   );
 }
@@ -37,17 +46,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.md,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.screenTop,
     paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
   },
-  backBtn: { width: 70 },
-  backText: { fontSize: 15 },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
-    fontSize: fontSize.h2,
-    fontFamily: fontFamily.serifBold,
+    flex: 1,
+    fontSize: 28,
+    fontFamily: fontFamily.serif,
   },
-  spacer: { width: 70 },
 });

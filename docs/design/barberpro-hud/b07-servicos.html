@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Serviços (cadastro)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1180px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 0;display:flex;flex-direction:column;gap:14px">
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Voltar" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+      <h1 style="margin:0;flex:1;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:28px;line-height:1.1">Serviços</h1>
+      <button type="button" style="height:44px;padding:0 14px;display:flex;align-items:center;gap:6px;border:1px solid #F5B731;background:rgba(245,183,49,0.1);border-radius:4px;color:#F9DA8A;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Novo</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Cortes</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="padding:10px 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:center;gap:12px">
+        <div style="width:56px;height:56px;flex-shrink:0;border-radius:4px;background:linear-gradient(135deg,#2A2D42,#161625);border:1px solid #2A2D42;display:flex;align-items:center;justify-content:center;color:#F5B731"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"></path></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Corte Degradê</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3;font-variant-numeric:tabular-nums">R$ 35,00 · 30 min</div></div>
+        <span style="position:relative;width:46px;height:26px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08)"><span style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0B14"></span></span>
+      </div>
+      <div style="padding:10px 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:center;gap:12px">
+        <div style="width:56px;height:56px;flex-shrink:0;border-radius:4px;background:linear-gradient(135deg,#2A2D42,#161625);border:1px solid #2A2D42;display:flex;align-items:center;justify-content:center;color:#F5B731"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"></path></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Luzes</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3;font-variant-numeric:tabular-nums">R$ 120,00 · 90 min</div></div>
+        <span style="position:relative;width:46px;height:26px;flex-shrink:0;border-radius:13px;background:#2B2E40"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8B8FA3"></span></span>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-top:4px">Complementos</div>
+    <div style="padding:10px 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:center;gap:12px">
+      <div style="width:56px;height:56px;flex-shrink:0;border-radius:4px;background:linear-gradient(135deg,#2A2D42,#161625);border:1px solid #2A2D42;display:flex;align-items:center;justify-content:center;color:#F5B731;font-family:'Marcellus',Georgia,serif;font-size:22px">B</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">Barba</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3;font-variant-numeric:tabular-nums">R$ 25,00 · 15 min</div></div>
+      <span style="position:relative;width:46px;height:26px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08)"><span style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0B14"></span></span>
+    </div>
+
+    <!-- bottom sheet editor -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:12px">Editor (bottom sheet)</div>
+    <div style="position:relative;padding:10px 16px 18px;border:1px solid #2A2D42;border-top:2px solid #F5B731;background:#161625;border-radius:14px 14px 4px 4px;box-shadow:0 -10px 40px rgba(0,0,0,0.5)">
+      <div style="width:40px;height:4px;margin:0 auto 12px;border-radius:2px;background:#4A4E66"></div>
+      <div style="font-family:'Marcellus',Georgia,serif;font-size:22px;margin-bottom:12px">Editar serviço</div>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <div style="width:80px;height:80px;flex-shrink:0;border-radius:4px;border:1px dashed #F5B731;background:rgba(245,183,49,0.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#F9DA8A;font-size:10px;font-weight:700"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>Foto</div>
+        <div style="flex:1;font-size:12px;line-height:1.5;color:#8B8FA3">Foto opcional. Aparece nos cartões de serviço do cliente.</div>
+      </div>
+
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Nome</label>
+      <div style="height:48px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #F5B731;background:rgba(11,11,20,0.7);border-radius:4px;box-shadow:0 0 0 3px rgba(245,183,49,0.12);font-size:15px;margin-bottom:12px">Corte Degradê</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Preço</label><div style="height:48px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 14px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:15px"><span style="color:#8B8FA3">R$</span>35,00</div></div>
+        <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Duração</label><div style="height:48px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:15px">30 min<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B8FA3" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+      </div>
+
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Categoria</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <span style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-size:13px;font-weight:700;color:#F9DA8A">Corte</span>
+        <span style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.8);border-radius:4px;font-size:13px;font-weight:600;color:#C9CCD6">Complemento</span>
+      </div>
+
+      <button type="button" style="width:100%;height:52px;display:flex;align-items:center;justify-content:center;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">Salvar</button>
+      <button type="button" style="margin-top:8px;width:100%;height:44px;border:0;background:transparent;color:#F87171;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Excluir serviço</button>
+    </div>
+
+    <div style="padding:12px 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.6);border-radius:4px;font-size:12px;line-height:1.5;color:#8B8FA3">Barbeiros e Produtos usam exatamente este padrão: lista com interruptor + editor em bottom sheet.</div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

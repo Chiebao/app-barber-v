@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ILHA_ESCURA } from "@/app/components/hud/tema";
 
 /**
  * Modal do app.
@@ -27,6 +28,7 @@ export function Modal({
   children,
   largura = "max-w-sm",
   bloqueante = false,
+  gaveta = false,
 }: {
   aberto: boolean;
   onFechar: () => void;
@@ -34,6 +36,9 @@ export function Modal({
   largura?: string;
   /** Impede fechar por Esc ou clique fora — para quando a decisao e obrigatoria. */
   bloqueante?: boolean;
+  /** Sobe de baixo no celular (formulário de cadastro/edição, Kit Ouro HUD).
+   *  No computador continua centralizado. Confirmação NÃO usa: lá é modal. */
+  gaveta?: boolean;
 }) {
   const [montado, setMontado] = useState(false);
 
@@ -64,25 +69,40 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       onClick={bloqueante ? undefined : onFechar}
+      className={gaveta ? "items-end sm:items-center sm:p-4" : undefined}
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 9999,
         display: "flex",
-        alignItems: "center",
+        alignItems: gaveta ? undefined : "center",
         justifyContent: "center",
-        padding: 16,
-        background: bloqueante ? "rgba(0,0,0,0.9)" : "rgba(0,0,0,0.72)",
+        padding: gaveta ? 0 : 16,
+        background: bloqueante ? "rgba(0,0,0,0.9)" : "rgba(0,0,0,0.7)",
         overflowY: "auto",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full ${largura} rounded-2xl border border-gray-700 p-6 space-y-4 my-auto shadow-2xl`}
+        className={
+          gaveta
+            ? `hud-scope hud-anim w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-[14px] rounded-b-none sm:rounded border p-5 sm:p-6 space-y-4 sm:my-auto`
+            : `hud-scope w-full ${largura} rounded border p-6 space-y-4 my-auto`
+        }
         // Sólido de propósito: a classe de vidro deixaria o modal
         // semitransparente e o texto competindo com a página atrás.
-        style={{ backgroundColor: "#161625" }}
+        // Ilha escura (components/hud/tema): o conteúdo das telas ainda é
+        // texto branco, e num tema claro sumiria.
+        style={{
+          ...ILHA_ESCURA,
+          backgroundColor: "#161625",
+          borderColor: "#2A2D42",
+          boxShadow: "0 14px 40px rgba(0,0,0,0.55)",
+          color: "#F5F5F7",
+          ...(gaveta ? { borderTop: "2px solid var(--hud-accent)", animation: "hud-sheet-in 0.22s ease-out" } : {}),
+        }}
       >
+        {gaveta && <div aria-hidden="true" className="mx-auto -mt-2 mb-1 h-1 w-10 rounded-sm bg-[#4A4E66] sm:hidden" />}
         {children}
       </div>
     </div>,
@@ -144,9 +164,9 @@ export function useConfirmacao(): [
     <Modal aberto={!!pedido} onFechar={() => responder(false)}>
       {pedido && (
         <>
-          <h3 className="text-xl font-semibold text-white">{pedido.titulo}</h3>
+          <h3 className="font-display text-[22px] leading-tight text-hud-text">{pedido.titulo}</h3>
           {pedido.texto && (
-            <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
+            <p className="text-[13px] text-hud-muted whitespace-pre-line leading-relaxed">
               {pedido.texto}
             </p>
           )}
@@ -159,15 +179,15 @@ export function useConfirmacao(): [
             autoFocus
             className={
               pedido.perigo
-                ? "w-full rounded-xl bg-red-500 py-3 font-semibold text-white hover:bg-red-600 transition"
-                : "w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition"
+                ? "hud-focus w-full min-h-[46px] rounded bg-hud-err text-[13px] font-extrabold text-[#0B0B14] hover:brightness-110 transition"
+                : "hud-focus gold-fill w-full min-h-[46px] rounded text-[13px] font-extrabold hover:brightness-105 transition"
             }
           >
             {pedido.acao ?? "Confirmar"}
           </button>
           <button
             onClick={() => responder(false)}
-            className="w-full rounded-xl border border-gray-700 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition"
+            className="hud-focus w-full min-h-[46px] rounded border border-hud-border text-[13px] font-bold text-hud-text hover:border-hud-muted transition"
           >
             {pedido.cancelar ?? "Cancelar"}
           </button>

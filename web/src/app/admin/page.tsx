@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Icon } from "@/app/components/hud";
 import { useRouter } from "next/navigation";
 import { toast } from "@/app/lib/toast";
 import { Modal } from "@/app/lib/modal";
@@ -283,69 +284,69 @@ export default function AdminPage() {
   // o flash do login e justamente o que faz o barbeiro achar que deslogou.
   if (checandoSessao) {
     return (
-      <main className="min-h-screen bg-dark-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      <main className="min-h-screen hud-bg flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-hud-accent border-t-transparent rounded-full animate-spin" />
       </main>
     );
   }
 
   if (step === "done" && result) {
     return (
-      <main className="min-h-screen bg-dark-900 flex items-center justify-center p-6">
+      <main className="min-h-screen hud-bg flex items-center justify-center p-6">
         <div className="max-w-md w-full animate-slide-up text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
-            <span className="text-4xl text-green-400">✓</span>
+          <div className="w-20 h-20 mx-auto rounded-full bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] flex items-center justify-center">
+            <span className="text-4xl text-hud-ok">✓</span>
           </div>
-          <h1 className="text-3xl font-semibold text-brand-400">{result.shopName}</h1>
-          <p className="text-gray-400">Sua barbearia esta pronta!</p>
-          <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-3">
-            <p className="text-sm text-gray-400">Seu link de agendamento:</p>
-            <p className="text-brand-400 font-mono text-sm break-all">{result.link}</p>
+          <h1 className="gold-text font-display text-4xl leading-tight">{result.shopName}</h1>
+          <p className="text-hud-muted">Sua barbearia esta pronta!</p>
+          <div className="hud-card p-4 space-y-3">
+            <p className="text-sm text-hud-muted">Seu link de agendamento:</p>
+            <p className="text-hud-light font-mono text-sm break-all">{result.link}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => navigator.clipboard.writeText(result.link).then(() => toast.success("Link copiado!"))}
-                className="flex-1 rounded-lg border border-gray-700 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+                className="flex-1 rounded border border-hud-border py-2 text-sm text-hud-soft hover:text-hud-text transition-colors"
               >
                 Copiar Link
               </button>
               <a
                 href={result.link}
                 target="_blank"
-                className="flex-1 rounded-lg bg-brand-500 py-2 text-sm font-semibold text-dark-900 text-center hover:bg-brand-400 transition-colors"
+                className="flex-1 rounded gold-fill py-2 text-sm font-semibold text-[var(--hud-on-accent)] text-center hover:brightness-105 transition-colors"
               >
                 Abrir Link
               </a>
             </div>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-hud-muted">
             Envie esse link para seus clientes via WhatsApp, Instagram ou Status!
           </p>
 
           {result.recoveryCode && (
-            <div className="rounded-xl bg-brand-500/10 border-2 border-brand-400/50 p-5 space-y-3 text-left">
+            <div className="rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border-2 border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] p-5 space-y-3 text-left">
               <div className="text-center">
-                <p className="text-xs text-brand-300 font-semibold uppercase tracking-widest">
-                  🔑 Anote seu código de recuperação
+                <p className="hud-eyebrow inline-flex items-center gap-1.5">
+                  <Icon nome="cadeado" tamanho={14} /> Anote seu código de recuperação
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-hud-muted mt-1">
                   É com ele que você cria uma nova senha se esquecer a sua. Não mostraremos de novo.
                 </p>
               </div>
-              <p className="text-2xl font-mono font-semibold text-white text-center tracking-wider select-all">
+              <p className="text-2xl font-mono font-semibold text-hud-text text-center tracking-wider select-all">
                 {result.recoveryCode}
               </p>
               <button
                 onClick={() => navigator.clipboard.writeText(result.recoveryCode!).then(() => toast.success("Código copiado — guarde em um lugar seguro"))}
-                className="w-full rounded-lg bg-brand-500 py-2.5 text-sm font-semibold text-dark-900 hover:bg-brand-400 transition"
+                className="w-full rounded gold-fill min-h-[48px] text-sm font-bold hover:brightness-105 transition"
               >
-                📋 Copiar código
+                <Icon nome="copiar" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Copiar código
               </button>
             </div>
           )}
 
           <button
             onClick={() => router.push("/admin/painel")}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition-all"
+            className="hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 transition-all"
           >
             Já anotei — entrar no painel
           </button>
@@ -355,22 +356,22 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-dark-900 pb-12">
-      <header className="bg-dark-800 border-b border-gray-700 py-4 px-6 flex items-center justify-center">
-        <img src="/banner.png" alt="BarberPro" className="h-14 w-auto object-contain" />
+    <main className="min-h-screen hud-bg pb-12">
+      <header className="bg-hud-surface border-b border-hud-border py-4 px-6 flex items-center justify-center">
+        <img src="/logo-completo.webp" alt="BarberPro App" className="h-28 w-auto object-contain" />
       </header>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-700 bg-dark-800">
+      <div className="flex border-b border-hud-border bg-hud-surface">
         <button
           onClick={() => setStep("register")}
-          className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${step === "register" ? "border-brand-400 text-brand-400" : "border-transparent text-gray-400"}`}
+          className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${step === "register" ? "border-hud-accent text-hud-light" : "border-transparent text-hud-muted"}`}
         >
           Cadastrar
         </button>
         <button
           onClick={() => setStep("login")}
-          className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${step === "login" ? "border-brand-400 text-brand-400" : "border-transparent text-gray-400"}`}
+          className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${step === "login" ? "border-hud-accent text-hud-light" : "border-transparent text-hud-muted"}`}
         >
           Entrar
         </button>
@@ -379,17 +380,17 @@ export default function AdminPage() {
       <div className="max-w-lg mx-auto px-4 pt-6">
         {step === "login" && (
           <div className="animate-slide-up space-y-4">
-            <h2 className="text-lg font-semibold">Acesse sua conta</h2>
+            <h2 className="font-display text-[28px] leading-tight text-hud-text">Acesse sua conta</h2>
             <input type="tel" placeholder="Telefone" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)}
-              className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+              className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
             <input type="password" placeholder="Senha" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
-              className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+              className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
             <button onClick={handleLogin} disabled={loading}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all press-scale">
+              className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all press-scale">
               {loading ? "Entrando..." : "Entrar"}
             </button>
             <button onClick={openForgot}
-              className="w-full text-center text-sm text-gray-400 hover:text-brand-400 transition py-1">
+              className="hud-focus min-h-[44px] w-full text-center text-sm text-hud-muted hover:text-hud-light transition py-1">
               Esqueci minha senha
             </button>
           </div>
@@ -402,20 +403,20 @@ export default function AdminPage() {
               {!usarCodigoRecuperacao && forgotEtapa === "telefone" && (
                 <>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Esqueci minha senha</h3>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <h3 className="text-lg font-semibold text-hud-text">Esqueci minha senha</h3>
+                    <p className="text-sm text-hud-muted mt-1">
                       Vamos enviar um código para o seu WhatsApp.
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-400 mb-1 block">Telefone de cadastro</label>
+                    <label className="text-xs text-hud-muted mb-1 block">Telefone de cadastro</label>
                     <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)}
                       placeholder="(00) 00000-0000" autoFocus
                       onKeyDown={(e) => { if (e.key === "Enter") pedirCodigo(); }}
-                      className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                   </div>
                   <button onClick={pedirCodigo} disabled={enviandoCodigo}
-                    className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                    className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
                     {enviandoCodigo ? "Enviando..." : "Enviar código no WhatsApp"}
                   </button>
                 </>
@@ -424,40 +425,40 @@ export default function AdminPage() {
               {!usarCodigoRecuperacao && forgotEtapa === "código" && (
                 <>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Digite o código</h3>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <h3 className="text-lg font-semibold text-hud-text">Digite o código</h3>
+                    <p className="text-sm text-hud-muted mt-1">
                       Enviamos um código de 6 dígitos no WhatsApp do número informado. Ele vale por 10 minutos.
                     </p>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Código recebido</label>
+                      <label className="text-xs text-hud-muted mb-1 block">Código recebido</label>
                       <input type="text" inputMode="numeric" value={forgotOtp}
                         onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                         placeholder="000000" autoFocus maxLength={6}
-                        className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-600 text-center text-2xl font-mono tracking-[0.4em] focus:border-brand-400 focus:outline-none" />
+                        className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint text-center text-2xl font-mono tracking-[0.4em] focus:border-hud-accent focus:outline-none" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Nova senha</label>
+                      <label className="text-xs text-hud-muted mb-1 block">Nova senha</label>
                       <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)}
                         placeholder="Mínimo 6 caracteres"
                         onKeyDown={(e) => { if (e.key === "Enter") trocarSenhaComCodigo(); }}
-                        className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                        className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                     </div>
                   </div>
                   <button onClick={trocarSenhaComCodigo} disabled={recovering}
-                    className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                    className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
                     {recovering ? "Alterando..." : "Alterar minha senha"}
                   </button>
                   <button onClick={() => { setForgotEtapa("telefone"); setForgotOtp(""); }}
-                    className="w-full text-sm text-gray-400 hover:text-white transition py-1">
+                    className="w-full text-sm text-hud-muted hover:text-hud-text transition py-1">
                     Não recebi — enviar de novo
                   </button>
                   {/* Saida de emergencia: o codigo do WhatsApp pode simplesmente
                       nao chegar. Quem anotou o codigo de recuperacao resolve aqui
                       mesmo, sem depender de mensagem nenhuma. */}
                   <button onClick={() => { setUsarCodigoRecuperacao(true); setForgotOtp(""); }}
-                    className="w-full rounded-xl border border-brand-400/40 bg-brand-500/10 py-2.5 text-sm font-semibold text-brand-300 hover:bg-brand-500/20 transition">
+                    className="w-full rounded border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] py-2.5 text-sm font-semibold text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition">
                     Não chegou? Use seu código de recuperação
                   </button>
                 </>
@@ -467,97 +468,97 @@ export default function AdminPage() {
               {usarCodigoRecuperacao && (
                 <>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Usar código de recuperação</h3>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <h3 className="text-lg font-semibold text-hud-text">Usar código de recuperação</h3>
+                    <p className="text-sm text-hud-muted mt-1">
                       Aquele código que você anotou quando criou a conta (formato BARB-XXXX-XXXX).
                     </p>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Telefone de cadastro</label>
+                      <label className="text-xs text-hud-muted mb-1 block">Telefone de cadastro</label>
                       <input type="tel" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)} placeholder="(00) 00000-0000"
-                        className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                        className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Código de recuperação</label>
+                      <label className="text-xs text-hud-muted mb-1 block">Código de recuperação</label>
                       <input type="text" value={forgotCode} onChange={(e) => setForgotCode(e.target.value.toUpperCase())} placeholder="BARB-XXXX-XXXX"
                         autoCapitalize="characters" spellCheck={false}
-                        className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 font-mono tracking-wider focus:border-brand-400 focus:outline-none" />
+                        className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint font-mono tracking-wider focus:border-hud-accent focus:outline-none" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Nova senha</label>
+                      <label className="text-xs text-hud-muted mb-1 block">Nova senha</label>
                       <input type="password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres"
                         onKeyDown={(e) => { if (e.key === "Enter") handleRecover(); }}
-                        className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                        className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                     </div>
                   </div>
                   <button onClick={handleRecover} disabled={recovering}
-                    className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                    className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
                     {recovering ? "Alterando..." : "Alterar minha senha"}
                   </button>
                 </>
               )}
 
               {/* ─── Alternativas ─── */}
-              <div className="pt-3 border-t border-gray-700 space-y-2">
+              <div className="pt-3 border-t border-hud-border space-y-2">
                 {!usarCodigoRecuperacao ? (
                   <button onClick={() => setUsarCodigoRecuperacao(true)}
-                    className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white transition">
+                    className="w-full rounded border border-hud-border py-2.5 text-sm text-hud-muted hover:text-hud-text transition">
                     Não tenho acesso a esse WhatsApp
                   </button>
                 ) : canalWhatsApp !== false ? (
                   <button onClick={() => { setUsarCodigoRecuperacao(false); setForgotEtapa("telefone"); }}
-                    className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white transition">
+                    className="w-full rounded border border-hud-border py-2.5 text-sm text-hud-muted hover:text-hud-text transition">
                     Voltar para o código por WhatsApp
                   </button>
                 ) : null}
                 <button onClick={handleAskSupport}
-                  className="w-full rounded-xl border border-green-500/30 py-2.5 text-sm text-green-400 hover:bg-green-500/10 transition">
+                  className="hud-focus min-h-[44px] w-full rounded border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] py-2.5 text-sm text-hud-ok hover:bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] transition">
                   Falar com o suporte
                 </button>
               </div>
 
-              <button onClick={closeForgot} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
+              <button onClick={closeForgot} className="hud-focus min-h-[44px] w-full text-sm text-hud-muted hover:text-hud-soft transition py-1">
                 Voltar ao login
               </button>
             </>)}</Modal>
 
         {step === "register" && (
           <div className="animate-slide-up space-y-5">
-            <h2 className="text-lg font-semibold">Cadastre sua barbearia</h2>
+            <h2 className="font-display text-[28px] leading-tight text-hud-text">Cadastre sua barbearia</h2>
 
             {/* Dados basicos */}
             <div className="space-y-3">
               <input type="text" placeholder="Seu nome *" value={name} onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
               <input type="text" placeholder="Nome da Barbearia *" value={shopName} onChange={(e) => setShopName(e.target.value)}
-                className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
               <input type="tel" placeholder="WhatsApp (com DDD) *" value={phone} onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
               <input type="password" placeholder="Senha (min 6 caracteres) *" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
             </div>
 
             {/* Horario */}
             <div>
-              <p className="text-sm text-gray-400 mb-2">Horário de funcionamento</p>
+              <p className="text-sm text-hud-muted mb-2">Horário de funcionamento</p>
               <div className="flex gap-3">
                 <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)}
-                  className="flex-1 rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                  className="flex-1 rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
                 <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
-                  className="flex-1 rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/20 transition-colors" />
+                  className="flex-1 rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />
               </div>
             </div>
 
             {/* Dias */}
             <div>
-              <p className="text-sm text-gray-400 mb-2">Dias de trabalho</p>
+              <p className="text-sm text-hud-muted mb-2">Dias de trabalho</p>
               <div className="flex gap-2">
                 {DIAS.map((d) => (
                   <button key={d.value} onClick={() => toggleDay(d.value)}
-                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${workDays.includes(d.value)
-                      ? "border-brand-400 bg-brand-500/10 text-brand-400"
-                      : "border-gray-700 text-gray-400"}`}>
+                    className={`flex-1 py-2 rounded border text-sm font-medium transition-all ${workDays.includes(d.value)
+                      ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] text-hud-light"
+                      : "border-hud-border text-hud-muted"}`}>
                     {d.label}
                   </button>
                 ))}
@@ -566,15 +567,15 @@ export default function AdminPage() {
 
             {/* Cortes */}
             <div>
-              <p className="text-sm text-gray-400 mb-2">Cortes disponíveis</p>
+              <p className="text-sm text-hud-muted mb-2">Cortes disponíveis</p>
               <div className="grid grid-cols-2 gap-2">
                 {CORTES.map((c) => (
                   <button key={c.name} onClick={() => toggleCut(c.name)}
-                    className={`p-3 rounded-xl border text-left transition-all ${selectedCuts.includes(c.name)
-                      ? "border-brand-400 bg-brand-500/10"
-                      : "border-gray-700 bg-dark-800"}`}>
-                    <p className={`font-medium text-sm ${selectedCuts.includes(c.name) ? "text-brand-400" : "text-white"}`}>{c.name}</p>
-                    <p className="text-xs text-gray-400">{c.duration}min - R${c.price}</p>
+                    className={`p-3 rounded border text-left transition-all ${selectedCuts.includes(c.name)
+                      ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]"
+                      : "border-hud-border bg-hud-surface"}`}>
+                    <p className={`font-medium text-sm ${selectedCuts.includes(c.name) ? "text-hud-light" : "text-hud-text"}`}>{c.name}</p>
+                    <p className="text-xs text-hud-muted">{c.duration}min - R${c.price}</p>
                   </button>
                 ))}
               </div>
@@ -582,53 +583,53 @@ export default function AdminPage() {
 
             {/* Extras */}
             <div className="space-y-3">
-              <p className="text-sm text-gray-400">Serviços extras</p>
+              <p className="text-sm text-hud-muted">Serviços extras</p>
 
-              <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-3">
-                <span className="text-white">Faz barba?</span>
+              <div className="hud-card flex items-center justify-between p-3">
+                <span className="text-hud-text">Faz barba?</span>
                 <div className="flex items-center gap-3">
                   {fazBarba && <input type="number" value={precoBarba} onChange={(e) => setPrecoBarba(e.target.value)} placeholder="R$"
-                    className="w-20 rounded-lg bg-dark-900 border border-gray-700 px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-500/20 transition-colors" />}
+                    className="w-20 rounded bg-hud-bg border border-hud-border px-2 py-1 text-hud-text text-sm text-center focus:outline-none focus:border-hud-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />}
                   <button onClick={() => setFazBarba(!fazBarba)}
-                    className={`w-12 h-6 rounded-full transition-colors ${fazBarba ? "bg-brand-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors ${fazBarba ? "gold-fill" : "bg-[var(--hud-track)]"}`}>
                     <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${fazBarba ? "translate-x-6" : "translate-x-0.5"}`} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-3">
-                <span className="text-white">Faz sobrancelha?</span>
+              <div className="hud-card flex items-center justify-between p-3">
+                <span className="text-hud-text">Faz sobrancelha?</span>
                 <div className="flex items-center gap-3">
                   {fazSobrancelha && <input type="number" value={precoSobrancelha} onChange={(e) => setPrecoSobrancelha(e.target.value)} placeholder="R$"
-                    className="w-20 rounded-lg bg-dark-900 border border-gray-700 px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-500/20 transition-colors" />}
+                    className="w-20 rounded bg-hud-bg border border-hud-border px-2 py-1 text-hud-text text-sm text-center focus:outline-none focus:border-hud-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />}
                   <button onClick={() => setFazSobrancelha(!fazSobrancelha)}
-                    className={`w-12 h-6 rounded-full transition-colors ${fazSobrancelha ? "bg-brand-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors ${fazSobrancelha ? "gold-fill" : "bg-[var(--hud-track)]"}`}>
                     <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${fazSobrancelha ? "translate-x-6" : "translate-x-0.5"}`} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-3">
-                <span className="text-white">Faz pezinho?</span>
+              <div className="hud-card flex items-center justify-between p-3">
+                <span className="text-hud-text">Faz pezinho?</span>
                 <div className="flex items-center gap-3">
                   {fazPezinho && <input type="number" value={precoPezinho} onChange={(e) => setPrecoPezinho(e.target.value)} placeholder="R$"
-                    className="w-20 rounded-lg bg-dark-900 border border-gray-700 px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-500/20 transition-colors" />}
+                    className="w-20 rounded bg-hud-bg border border-hud-border px-2 py-1 text-hud-text text-sm text-center focus:outline-none focus:border-hud-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />}
                   <button onClick={() => setFazPezinho(!fazPezinho)}
-                    className={`w-12 h-6 rounded-full transition-colors ${fazPezinho ? "bg-brand-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors ${fazPezinho ? "gold-fill" : "bg-[var(--hud-track)]"}`}>
                     <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${fazPezinho ? "translate-x-6" : "translate-x-0.5"}`} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-3">
-                <span className="text-white">Faz luzes?</span>
+              <div className="hud-card flex items-center justify-between p-3">
+                <span className="text-hud-text">Faz luzes?</span>
                 <div className="flex items-center gap-3">
                   {fazLuzes && <input type="text" value={tipoLuzes} onChange={(e) => setTipoLuzes(e.target.value)} placeholder="Tipo"
-                    className="w-24 rounded-lg bg-dark-900 border border-gray-700 px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-500/20 transition-colors" />}
+                    className="w-24 rounded bg-hud-bg border border-hud-border px-2 py-1 text-hud-text text-sm text-center focus:outline-none focus:border-hud-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />}
                   {fazLuzes && <input type="number" value={precoLuzes} onChange={(e) => setPrecoLuzes(e.target.value)} placeholder="R$"
-                    className="w-20 rounded-lg bg-dark-900 border border-gray-700 px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-500/20 transition-colors" />}
+                    className="w-20 rounded bg-hud-bg border border-hud-border px-2 py-1 text-hud-text text-sm text-center focus:outline-none focus:border-hud-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] transition-colors" />}
                   <button onClick={() => setFazLuzes(!fazLuzes)}
-                    className={`w-12 h-6 rounded-full transition-colors ${fazLuzes ? "bg-brand-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors ${fazLuzes ? "gold-fill" : "bg-[var(--hud-track)]"}`}>
                     <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${fazLuzes ? "translate-x-6" : "translate-x-0.5"}`} />
                   </button>
                 </div>
@@ -637,35 +638,35 @@ export default function AdminPage() {
 
             {/* Aceite dos termos. Fica colado no botao de propria:
                 consentimento que exige rolar para achar nao vale muito. */}
-            <label className="flex items-start gap-3 rounded-xl border border-gray-700 bg-dark-800 p-4 cursor-pointer hover:border-brand-400/50 transition">
+            <label className="hud-card flex items-start gap-3 p-4 cursor-pointer hover:border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] transition">
               <input
                 type="checkbox"
                 checked={aceitouTermos}
                 onChange={(e) => setAceitouTermos(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-500 cursor-pointer"
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--hud-accent)] cursor-pointer"
               />
-              <span className="text-sm text-gray-300 leading-relaxed">
+              <span className="text-sm text-hud-soft leading-relaxed">
                 Li e aceito os{" "}
                 <a href="/termos" target="_blank" rel="noopener noreferrer"
-                  className="text-brand-400 underline hover:text-brand-300"
+                  className="text-hud-light underline hover:text-hud-light"
                   onClick={(e) => e.stopPropagation()}>
                   Termos de Uso
                 </a>{" "}
                 e a{" "}
                 <a href="/privacidade" target="_blank" rel="noopener noreferrer"
-                  className="text-brand-400 underline hover:text-brand-300"
+                  className="text-hud-light underline hover:text-hud-light"
                   onClick={(e) => e.stopPropagation()}>
                   Política de Privacidade
                 </a>
                 .
-                <span className="block text-xs text-gray-500 mt-1.5">
+                <span className="block text-xs text-hud-muted mt-1.5">
                   Sua barbearia começa com 14 dias grátis. Não pedimos cartão agora.
                 </span>
               </span>
             </label>
 
             <button onClick={handleRegister} disabled={loading || !aceitouTermos}
-              className="w-full rounded-xl bg-brand-500 py-3.5 font-semibold text-dark-900 text-lg hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all press-scale">
+              className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all press-scale">
               {loading ? "Cadastrando..." : "Cadastrar Barbearia"}
             </button>
           </div>

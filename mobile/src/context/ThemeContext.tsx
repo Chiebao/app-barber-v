@@ -41,9 +41,10 @@ export const PALETTES: ColorPalette[] = [
     bgPrimary: "#0B0B14",
     bgSecondary: "#161625",
     bgTertiary: "#0B0B14cc",
-    brand: "#c9a96e",
-    brandLight: "#e0c992",
-    brandDark: "#a68a4b",
+    // Ouro das referências Ouro HUD (claro → ouro → escuro)
+    brand: "#F5B731",
+    brandLight: "#F9DA8A",
+    brandDark: "#C47A08",
     textPrimary: "#F5F5F7",
     textSecondary: "#8B8FA3",
     textMuted: "#555870",

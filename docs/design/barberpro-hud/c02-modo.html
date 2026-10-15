@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Cliente — Como prefere agendar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:844px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:120px;left:50%;margin-left:-200px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.14),rgba(245,183,49,0) 65%)"></div>
+
+  <div style="position:relative;height:100%;box-sizing:border-box;padding:20px 20px 0;display:flex;flex-direction:column;gap:16px">
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Voltar" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.16em;color:#8B8FA3;text-transform:uppercase">Sua Barbearia</div>
+        <div style="margin-top:2px;font-size:13px;font-weight:600">Etapa <span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-weight:700">2</span> de 6 · Modo</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px">
+      <span style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span>
+      <span style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08);box-shadow:0 0 12px rgba(245,183,49,0.6)"></span>
+      <span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span>
+      <span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span>
+      <span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span>
+      <span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span>
+    </div>
+
+    <div>
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:32px;line-height:1.1">Como prefere agendar?</h1>
+      <p style="margin:6px 0 0;font-size:14px;line-height:1.5;color:#8B8FA3">Escolha a forma que preferir — você pode mudar sempre que quiser.</p>
+    </div>
+
+    <button type="button" style="position:relative;text-align:left;display:flex;align-items:center;gap:16px;padding:20px 16px;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px;color:#F5F5F7;font-family:inherit;cursor:pointer;box-shadow:0 0 22px rgba(245,183,49,0.12)">
+      <span style="position:absolute;top:-1px;left:-1px;width:10px;height:10px;border-top:2px solid #F9DA8A;border-left:2px solid #F9DA8A"></span>
+      <span style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-bottom:2px solid #F9DA8A;border-right:2px solid #F9DA8A"></span>
+      <span style="width:56px;height:56px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,183,49,0.6);border-radius:4px;background:rgba(11,11,20,0.5)">
+        <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F9DA8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11"></path><path d="M9 12h11"></path><path d="M9 18h11"></path><path d="M4 6h.01"></path><path d="M4 12h.01"></path><path d="M4 18h.01"></path></svg>
+      </span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:17px;font-weight:700"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Etapas clássico</span></span>
+        <span style="display:block;margin-top:3px;font-size:13px;line-height:1.45;color:#C9CCD6">Escolha serviço, barbeiro, data e hora passo a passo</span>
+      </span>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+    </button>
+
+    <button type="button" style="position:relative;text-align:left;display:flex;align-items:center;gap:16px;padding:20px 16px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#F5F5F7;font-family:inherit;cursor:pointer">
+      <span style="width:56px;height:56px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;border-radius:4px;background:rgba(11,11,20,0.5)">
+        <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"></rect><path d="M12 8V4"></path><circle cx="12" cy="3" r="1"></circle><path d="M9 14h.01"></path><path d="M15 14h.01"></path><path d="M2 14v2"></path><path d="M22 14v2"></path></svg>
+      </span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:17px;font-weight:700">Chatbot IA</span>
+        <span style="display:block;margin-top:3px;font-size:13px;line-height:1.45;color:#8B8FA3">Converse naturalmente e deixe a IA montar seu agendamento</span>
+      </span>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E7289" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+    </button>
+
+    <p style="margin:4px 0 0;font-size:12px;line-height:1.5;color:#6E7289;text-align:center">As duas formas levam ao mesmo agendamento e usam os mesmos horários.</p>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

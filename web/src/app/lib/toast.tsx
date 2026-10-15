@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon, type NomeIcone } from "@/app/components/hud/Icon";
 
 /* ──────────────────────────────────────────────────────────────
    Toast system — zero dependência externa.
@@ -42,10 +43,12 @@ export const toast = {
   info: (msg: string) => push("info", msg),
 };
 
-const STYLES: Record<ToastType, { bg: string; border: string; icon: string }> = {
-  success: { bg: "bg-green-500/15", border: "border-green-500/40", icon: "✓" },
-  error: { bg: "bg-red-500/15", border: "border-red-500/40", icon: "✕" },
-  info: { bg: "bg-blue-500/15", border: "border-blue-500/40", icon: "ℹ" },
+// Visual do Kit Ouro HUD: cartão escuro sólido, borda na cor do estado e
+// ícone de linha. O ícone diz o tipo junto com a cor — nunca só a cor.
+const STYLES: Record<ToastType, { cor: string; icone: NomeIcone; rotulo: string }> = {
+  success: { cor: "#4ADE80", icone: "check", rotulo: "Sucesso" },
+  error: { cor: "#F87171", icone: "erro", rotulo: "Erro" },
+  info: { cor: "#60A5FA", icone: "info", rotulo: "Aviso" },
 };
 
 export function Toaster() {
@@ -67,13 +70,21 @@ export function Toaster() {
         return (
           <div
             key={t.id}
-            className={`${s.bg} ${s.border} border rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm max-w-sm w-full flex items-center gap-3`}
-            style={{ pointerEvents: "auto", animation: "toastIn 0.2s ease-out" }}
+            role={t.type === "error" ? "alert" : "status"}
+            className="hud-anim max-w-sm w-full flex items-center gap-2.5 rounded border px-3.5 py-3"
+            style={{
+              pointerEvents: "auto",
+              animation: "toastIn 0.2s ease-out",
+              background: "#161625",
+              borderColor: `color-mix(in srgb, ${s.cor} 50%, transparent)`,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+            }}
           >
-            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${t.type === "success" ? "bg-green-500 text-white" : t.type === "error" ? "bg-red-500 text-white" : "bg-blue-500 text-white"}`}>
-              {s.icon}
+            <span className="shrink-0" style={{ color: s.cor }}>
+              <Icon nome={s.icone} tamanho={18} traco={2.5} />
             </span>
-            <p className="text-sm text-white flex-1">{t.message}</p>
+            <span className="sr-only">{s.rotulo}: </span>
+            <p className="text-[13px] flex-1" style={{ color: "#F5F5F7" }}>{t.message}</p>
           </div>
         );
       })}

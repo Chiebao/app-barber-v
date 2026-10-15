@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Agenda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:844px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:-140px;left:50%;margin-left:-190px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.14),rgba(245,183,49,0) 65%)"></div>
+
+  <div style="position:relative;height:100%;box-sizing:border-box;padding:20px 20px 0;display:flex;flex-direction:column;gap:14px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:32px;line-height:1.1;color:#F5F5F7">Agenda</h1>
+      <button type="button" style="height:44px;padding:0 16px;display:flex;align-items:center;gap:8px;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:#F5B731;box-shadow:0 0 8px #F5B731"></span><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Hoje</span></button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <button type="button" aria-label="Dia anterior" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <div style="flex:1;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Quarta</span>
+        <span style="font-family:'Marcellus',Georgia,serif;font-size:20px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">14 de outubro</span>
+      </div>
+      <button type="button" aria-label="Próximo dia" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#8B8FA3">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:linear-gradient(135deg,#F9DA8A,#C47A08)"></span>Atendimento</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:2px;border:1px dashed #4ADE80"></span>Livre</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:2px;border:1px solid #F87171;background:rgba(248,113,113,0.2)"></span>Bloqueado</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:2px;border:1px solid #3A3E54;background-image:repeating-linear-gradient(45deg,rgba(139,143,163,0.4),rgba(139,143,163,0.4) 2px,transparent 2px,transparent 4px)"></span>Fechado</span>
+    </div>
+
+    <div style="position:relative;height:504px">
+
+      <!-- linhas e rótulos de hora -->
+      <div style="position:absolute;left:52px;right:0;top:0;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:-8px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">09:00</div>
+      <div style="position:absolute;left:52px;right:0;top:72px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:64px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">10:00</div>
+      <div style="position:absolute;left:52px;right:0;top:144px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:136px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">11:00</div>
+      <div style="position:absolute;left:52px;right:0;top:216px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:208px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">12:00</div>
+      <div style="position:absolute;left:52px;right:0;top:288px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:280px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">13:00</div>
+      <div style="position:absolute;left:52px;right:0;top:360px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:352px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">14:00</div>
+      <div style="position:absolute;left:52px;right:0;top:432px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:424px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">15:00</div>
+      <div style="position:absolute;left:52px;right:0;top:503px;height:1px;background:#1E2033"></div><div style="position:absolute;left:0;top:496px;width:44px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#8B8FA3">16:00</div>
+
+      <!-- 09:00–09:30 concluído -->
+      <div style="position:absolute;left:56px;right:0;top:2px;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid #2A2D42;background:rgba(22,22,37,0.7);border-radius:4px;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#5B5F75"></span>
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B8FA3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+        <span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#8B8FA3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Lucas Prado · Corte</span>
+        <span style="font-size:11px;color:#8B8FA3">Pago</span>
+      </div>
+
+      <!-- 09:30–10:30 livre -->
+      <div style="position:absolute;left:56px;right:0;top:38px;height:68px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px dashed rgba(74,222,128,0.55);background:rgba(74,222,128,0.04);border-radius:4px">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        <span style="font-size:13px;font-weight:700;color:#4ADE80">1h livre</span>
+        <span style="font-size:12px;color:#8B8FA3">toque para bloquear</span>
+      </div>
+
+      <!-- 10:30–11:15 Carlos (próximo) -->
+      <div style="position:absolute;left:56px;right:0;top:110px;height:50px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 12px 0 14px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;overflow:hidden;box-shadow:0 0 18px rgba(245,183,49,0.12)">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#F9DA8A,#F5B731,#C47A08)"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Carlos Mendes</div>
+          <div style="font-size:11px;color:#C9CCD6">Corte + Barba · 45 min</div>
+        </div>
+        <span style="font-family:'Marcellus',Georgia,serif;font-size:18px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">R$ 60</span>
+      </div>
+
+      <!-- 11:30–12:00 Pedro -->
+      <div style="position:absolute;left:56px;right:0;top:182px;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;border:1px solid rgba(245,183,49,0.45);background:rgba(245,183,49,0.07);border-radius:4px;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#F9DA8A,#C47A08)"></span>
+        <span style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Pedro Alves · Barba</span>
+        <span style="font-size:11px;font-weight:700;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Aguarda Pix</span>
+      </div>
+
+      <!-- 12:00–13:00 fechado -->
+      <div style="position:absolute;left:56px;right:0;top:218px;height:68px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #2A2D42;border-radius:4px;background-image:repeating-linear-gradient(45deg,rgba(139,143,163,0.10),rgba(139,143,163,0.10) 6px,transparent 6px,transparent 12px)">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B8FA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        <span style="font-size:12px;font-weight:600;color:#8B8FA3">Fechado · todo dia</span>
+      </div>
+
+      <!-- 13:00–14:00 livre -->
+      <div style="position:absolute;left:56px;right:0;top:290px;height:68px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px dashed rgba(74,222,128,0.55);background:rgba(74,222,128,0.04);border-radius:4px">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        <span style="font-size:13px;font-weight:700;color:#4ADE80">1h livre</span>
+        <span style="font-size:12px;color:#8B8FA3">toque para bloquear</span>
+      </div>
+
+      <!-- 14:00–14:30 bloqueado -->
+      <div style="position:absolute;left:56px;right:0;top:362px;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid rgba(248,113,113,0.6);background:rgba(248,113,113,0.10);border-radius:4px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg>
+        <span style="flex:1;font-size:13px;font-weight:700;color:#F87171">Bloqueado</span>
+        <span style="font-size:11px;color:#F87171">Tocar para liberar</span>
+      </div>
+
+      <!-- 14:30–15:00 livre -->
+      <div style="position:absolute;left:56px;right:0;top:398px;height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px dashed rgba(74,222,128,0.55);background:rgba(74,222,128,0.04);border-radius:4px">
+        <span style="font-size:13px;font-weight:700;color:#4ADE80">30 min livre</span>
+      </div>
+
+      <!-- 15:00–15:45 André -->
+      <div style="position:absolute;left:56px;right:0;top:434px;height:50px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 12px 0 14px;border:1px solid rgba(245,183,49,0.45);background:rgba(245,183,49,0.07);border-radius:4px;overflow:hidden">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#F9DA8A,#C47A08)"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">André Souza</div>
+          <div style="font-size:11px;color:#8B8FA3">Corte + Barba · Confirmado</div>
+        </div>
+        <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:#C9CCD6">R$ 60</span>
+      </div>
+
+      <!-- linha do agora 10:18 -->
+      <div style="position:absolute;left:0;right:0;top:94px;height:0">
+        <span style="position:absolute;left:0;top:-9px;width:44px;height:18px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:3px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums">10:18</span>
+        <span style="position:absolute;left:44px;right:0;top:-1px;height:2px;background:linear-gradient(90deg,#F5B731,rgba(245,183,49,0.25));box-shadow:0 0 10px rgba(245,183,49,0.7)"></span>
+        <span style="position:absolute;right:6px;top:-18px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#F9DA8A">Agora</span>
+      </div>
+
+    </div>
+  </div>
+
+  <nav aria-label="Navegação principal" style="position:absolute;left:0;right:0;bottom:0;height:68px;box-sizing:border-box;display:flex;background:#0B0B14;border-top:1px solid #2A2D42">
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>Início
+    </button>
+    <button type="button" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#F5B731;font-family:inherit;font-size:11px;font-weight:700;padding:0;cursor:pointer">
+      <span style="position:absolute;top:-1px;left:25%;right:25%;height:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08);box-shadow:0 0 10px #F5B731"></span>
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Agenda</span>
+    </button>
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Financeiro
+    </button>
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg>Config
+    </button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

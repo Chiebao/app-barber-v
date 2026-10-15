@@ -71,8 +71,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   label: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.medium,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
     marginBottom: spacing.xs,
   },
   input: {
@@ -80,8 +82,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
-    fontSize: fontSize.body,
-    minHeight: minTouchTarget,
+    fontSize: fontSize.bodyLarge,
+    minHeight: 52,
   },
   error: {
     fontSize: fontSize.caption,

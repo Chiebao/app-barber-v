@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Fidelidade e listas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1120px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 0;display:flex;flex-direction:column;gap:14px">
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Voltar" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:28px;line-height:1.1">Fidelidade</h1>
+    </div>
+
+    <div style="padding:12px 14px;border:1px solid rgba(245,183,49,0.45);background:rgba(245,183,49,0.07);border-radius:4px;font-size:13px;line-height:1.5;color:#C9CCD6">A cada <b style="color:#F9DA8A">10 cortes</b>, o próximo é grátis. Quem está perto do brinde aparece primeiro.</div>
+
+    <!-- cliente 9/10 -->
+    <div style="padding:14px;border:1px solid #F5B731;background:rgba(245,183,49,0.07);border-radius:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:700">Carlos Mendes</div><span style="padding:3px 8px;border:1px solid rgba(245,183,49,0.6);border-radius:3px;font-size:10px;font-weight:700;color:#F5B731">Falta 1</span></div>
+      <div style="display:flex;gap:4px;margin-top:10px">
+        <span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#8B8FA3">9 de 10 · (15) 99999-1234</div>
+    </div>
+
+    <!-- cliente 4/10 -->
+    <div style="padding:14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:700">Pedro Alves</div><span style="font-size:12px;color:#8B8FA3">Faltam 6</span></div>
+      <div style="display:flex;gap:4px;margin-top:10px">
+        <span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span><span style="flex:1;height:8px;border-radius:2px;background:#2B2E40"></span>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#8B8FA3">4 de 10 · (15) 98888-4321</div>
+    </div>
+
+    <!-- brinde disponível -->
+    <div style="padding:14px;border:1px solid rgba(74,222,128,0.5);background:rgba(74,222,128,0.06);border-radius:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:700">Lucas Prado</div><span style="padding:3px 8px;border:1px solid rgba(74,222,128,0.5);border-radius:3px;font-size:10px;font-weight:700;color:#4ADE80">Brinde liberado</span></div>
+      <div style="margin-top:6px;font-size:12px;color:#8B8FA3">10 de 10 · próximo corte é grátis</div>
+    </div>
+
+    <!-- padrão compartilhado -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#F9DA8A;text-transform:uppercase;margin-top:10px">Mesmo padrão: Lista de espera, Sumidos, Mensagens</div>
+
+    <div style="font-family:'Marcellus',Georgia,serif;font-size:20px">Lista de espera</div>
+    <div style="padding:12px 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">Rui Campos</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3">Qui 15 · qualquer horário da tarde · Corte</div></div>
+      <button type="button" style="height:40px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.1);border-radius:4px;color:#F9DA8A;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Avisar</button>
+    </div>
+
+    <div style="font-family:'Marcellus',Georgia,serif;font-size:20px;margin-top:4px">Clientes sumidos</div>
+    <div style="padding:12px 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">João Teles</div><div style="margin-top:2px;font-size:12px;color:#8B8FA3">Sem vir há 47 dias · 12 visitas antes</div></div>
+      <button type="button" style="height:40px;padding:0 12px;display:flex;align-items:center;gap:6px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;color:#4ADE80;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">WhatsApp</button>
+    </div>
+
+    <div style="font-family:'Marcellus',Georgia,serif;font-size:20px;margin-top:4px">Mensagens</div>
+    <div style="padding:12px 14px;border:1px solid rgba(245,183,49,0.45);background:rgba(245,183,49,0.05);border-radius:4px;display:flex;align-items:flex-start;gap:12px">
+      <span style="width:8px;height:8px;margin-top:6px;border-radius:50%;background:#F5B731;box-shadow:0 0 8px #F5B731;flex-shrink:0"></span>
+      <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:14px;font-weight:700">Pedro Alves</span><span style="font-size:11px;color:#6E7289">10:12</span></div><div style="margin-top:2px;font-size:13px;line-height:1.4;color:#C9CCD6">Consigo remarcar pra sexta?</div></div>
+    </div>
+    <div style="padding:12px 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;align-items:flex-start;gap:12px">
+      <span style="width:8px;height:8px;margin-top:6px;flex-shrink:0"></span>
+      <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:14px;font-weight:600">Lucas Prado</span><span style="font-size:11px;color:#6E7289">Ontem</span></div><div style="margin-top:2px;font-size:13px;line-height:1.4;color:#8B8FA3">Valeu, ficou show!</div></div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -6,9 +6,24 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "../utils/useColors";
 import { fontSize, fontWeight, radius, spacing, minTouchTarget, feedback } from "../utils/tokens";
+import HudIcon, { iconeDoEmoji } from "./HudIcon";
+
+/**
+ * Botão do Ouro HUD.
+ *
+ * Primário: gradiente metálico derivado da cor da barbearia (claro → cor →
+ * escuro), texto escuro em maiúsculas. O canto chanfrado do site exigiria
+ * `react-native-svg`, que não está instalado — aqui o canto é reto de 4px,
+ * decisão registrada em docs/design/COBERTURA.md.
+ *
+ * `icon` aceita o nome de um ícone de linha (Feather) ou, por compatibilidade,
+ * um emoji antigo — que é trocado pelo ícone equivalente.
+ */
 
 type Variant = "primary" | "secondary" | "ghost" | "destructive";
 type Size = "sm" | "md" | "lg";
@@ -38,78 +53,72 @@ export default function AppButton({
 }: Props) {
   const colors = useColors();
 
-  const sizeMap: Record<Size, { py: number; px: number; fs: number }> = {
-    sm: { py: 8, px: 16, fs: fontSize.bodySmall },
-    md: { py: 12, px: spacing["2xl"], fs: fontSize.body },
-    lg: { py: 14, px: spacing["3xl"], fs: fontSize.bodyLarge },
-  };
-
-  const s = sizeMap[size];
+  const altura: Record<Size, number> = { sm: minTouchTarget, md: 52, lg: 56 };
+  const fs: Record<Size, number> = { sm: fontSize.bodySmall, md: fontSize.body, lg: 15 };
 
   const variantStyles: Record<Variant, { bg: string; border: string; text: string }> = {
-    primary: {
-      bg: colors.brand[500],
-      border: colors.brand[500],
-      text: colors.dark[900],
-    },
-    secondary: {
-      bg: "transparent",
-      border: colors.gray[700],
-      text: colors.gray[400],
-    },
-    ghost: {
-      bg: "transparent",
-      border: "transparent",
-      text: colors.gray[400],
-    },
-    destructive: {
-      bg: feedback.error,
-      border: feedback.error,
-      text: "#ffffff",
-    },
+    primary: { bg: "transparent", border: "transparent", text: "#0B0B14" },
+    secondary: { bg: colors.brand[500] + "14", border: colors.brand[500], text: colors.brand[400] },
+    ghost: { bg: "transparent", border: "transparent", text: colors.brand[400] },
+    destructive: { bg: feedback.error, border: feedback.error, text: "#0B0B14" },
   };
 
   const v = variantStyles[variant];
   const isDisabled = disabled || loading;
+  const primario = variant === "primary";
+  const nomeIcone = iconeDoEmoji(icon);
+
+  const conteudo = loading ? (
+    <ActivityIndicator color={primario ? "#0B0B14" : colors.brand[500]} size="small" />
+  ) : (
+    <View style={styles.row}>
+      {nomeIcone && <HudIcon nome={nomeIcone} size={18} color={isDisabled && primario ? "#4A4E66" : v.text} />}
+      <Text
+        style={[
+          styles.text,
+          {
+            color: isDisabled && primario ? "#4A4E66" : v.text,
+            fontSize: fs[size],
+            fontWeight: primario || variant === "destructive" ? fontWeight.bold : fontWeight.semibold,
+            letterSpacing: primario ? 1.4 : 0,
+            textTransform: primario ? "uppercase" : "none",
+          },
+          textStyle,
+        ]}
+      >
+        {!nomeIcone && icon ? `${icon}  ${title}` : title}
+      </Text>
+    </View>
+  );
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={[
         styles.base,
         {
-          backgroundColor: v.bg,
-          borderColor: v.border,
-          paddingVertical: s.py,
-          paddingHorizontal: s.px,
-          minHeight: minTouchTarget,
-          opacity: isDisabled ? 0.4 : 1,
+          backgroundColor: primario ? (isDisabled ? "#1B1D2E" : "transparent") : v.bg,
+          borderColor: primario ? (isDisabled ? colors.gray[700] : "transparent") : v.border,
+          minHeight: altura[size],
+          opacity: isDisabled && !primario ? 0.45 : 1,
         },
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === "primary" ? colors.dark[900] : colors.brand[500]}
-          size="small"
+      {primario && !isDisabled && (
+        <LinearGradient
+          colors={[colors.brand[400], colors.brand[500], colors.brand[600]]}
+          locations={[0, 0.45, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
         />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            {
-              color: v.text,
-              fontSize: s.fs,
-              fontWeight: variant === "primary" ? fontWeight.bold : fontWeight.semibold,
-            },
-            textStyle,
-          ]}
-        >
-          {icon ? `${icon}  ${title}` : title}
-        </Text>
       )}
+      <View style={{ paddingHorizontal: size === "sm" ? spacing.lg : spacing["2xl"] }}>{conteudo}</View>
     </TouchableOpacity>
   );
 }
@@ -120,9 +129,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
+    overflow: "hidden",
   },
-  text: {
-    textAlign: "center",
-  },
+  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  text: { textAlign: "center" },
 });

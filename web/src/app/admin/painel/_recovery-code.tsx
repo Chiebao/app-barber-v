@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 import { useConfirmacao } from "@/app/lib/modal";
 
@@ -65,31 +66,31 @@ export default function RecoveryCode({ token }: { token: string | null }) {
   };
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+    <div className="hud-card p-5 space-y-3">
       {dialogoConfirmacao}
       <div>
-        <h3 className="font-semibold text-white">🔑 Código de recuperação</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <h3 className="font-display text-xl text-hud-text">Código de recuperação</h3>
+        <p className="text-xs text-hud-muted mt-1">
           Se você esquecer a senha, usa este código na tela de login para criar uma nova —
           sem precisar falar com ninguém.
         </p>
       </div>
 
       {code ? (
-        <div className="rounded-xl bg-brand-500/10 border border-brand-400/40 p-4 space-y-3">
-          <p className="text-xs text-brand-300 font-semibold uppercase tracking-widest">
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] p-4 space-y-3">
+          <p className="text-xs text-hud-light font-semibold uppercase tracking-widest">
             Anote agora — não mostraremos de novo
           </p>
-          <p className="text-2xl font-mono font-bold text-white text-center tracking-wider select-all">
+          <p className="text-2xl font-mono font-bold text-hud-text text-center tracking-wider select-all">
             {code}
           </p>
           <button
             onClick={copy}
-            className="w-full rounded-lg bg-brand-500 py-2.5 text-sm font-semibold text-dark-900 hover:bg-brand-400 transition"
+            className="hud-focus min-h-[44px] w-full rounded gold-fill min-h-[48px] text-sm font-bold hover:brightness-105 transition"
           >
-            {copied ? "✓ Copiado!" : "📋 Copiar código"}
+            {copied ? "Copiado!" : "Copiar código"}
           </button>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-hud-muted">
             Guarde no bloco de notas do celular ou anote num papel. Vale uma vez: depois de usar,
             gere outro aqui.
           </p>
@@ -97,21 +98,21 @@ export default function RecoveryCode({ token }: { token: string | null }) {
       ) : (
         <>
           {hasCode === true && (
-            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-3 py-2">
-              <span className="text-green-400 text-sm">✓ Você já tem um código guardado</span>
+            <div className="flex items-center gap-2 rounded bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] px-3 py-2">
+              <span className="text-hud-ok text-sm">✓ Você já tem um código guardado</span>
             </div>
           )}
           {hasCode === false && (
-            <div className="flex items-start gap-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 px-3 py-2">
-              <span className="text-yellow-400 text-sm">
-                ⚠️ Você ainda não tem um código. Sem ele, só o suporte consegue redefinir sua senha.
+            <div className="flex items-start gap-2 rounded bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] px-3 py-2">
+              <span className="text-hud-warn text-sm">
+                <Icon nome="alerta" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Você ainda não tem um código. Sem ele, só o suporte consegue redefinir sua senha.
               </span>
             </div>
           )}
           <button
             onClick={generate}
             disabled={busy || hasCode === null}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all"
           >
             {busy ? "Gerando..." : hasCode ? "Gerar um novo código" : "Gerar meu código"}
           </button>

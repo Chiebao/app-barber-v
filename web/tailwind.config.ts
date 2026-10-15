@@ -21,6 +21,23 @@ const config: Config = {
           800: "#7D4510",
           900: "#663810",
         },
+        // Ouro HUD: sempre por variavel, para seguir a paleta da barbearia
+        // (os `brand-*` acima sao fixos e ficam so para o que ainda nao migrou).
+        hud: {
+          bg: "var(--hud-bg)",
+          surface: "var(--hud-surface)",
+          border: "var(--hud-border)",
+          text: "var(--hud-text)",
+          soft: "var(--hud-text-soft)",
+          muted: "var(--hud-text-2)",
+          faint: "var(--hud-text-3)",
+          accent: "var(--hud-accent)",
+          light: "var(--hud-g1)",
+          ok: "var(--hud-ok)",
+          warn: "var(--hud-warn)",
+          err: "var(--hud-err)",
+          info: "var(--hud-info)",
+        },
         dark: {
           700: "#1D1D32",
           800: "#161625",

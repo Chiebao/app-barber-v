@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import HudIcon from "../components/HudIcon";
 import {
   View,
   Text,
@@ -438,7 +439,7 @@ export default function AvailabilityScreen({ token, role, ownerName, ownerPhone,
       <ScreenBackground>
         <ScreenHeader title="Minha Agenda" onBack={onBack} />
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.setupContainer}>
-          <Text style={styles.setupIcon}>✂️</Text>
+          <HudIcon nome="scissors" size={36} color={colors.brand[400]} />
           <Text style={styles.setupTitle}>Configure sua agenda</Text>
           <Text style={styles.setupDesc}>
             Para gerenciar sua própria disponibilidade como barbeiro, crie seu perfil profissional.
@@ -635,7 +636,7 @@ export default function AvailabilityScreen({ token, role, ownerName, ownerPhone,
                       {time}
                     </Text>
                     {state === "booked" && <Text style={styles.slotBadge}>ag</Text>}
-                    {state === "blocked" && <Text style={styles.slotBadge}>🔒</Text>}
+                    {state === "blocked" && <HudIcon nome="lock" size={12} color="#F87171" />}
                   </TouchableOpacity>
                 );
               })}

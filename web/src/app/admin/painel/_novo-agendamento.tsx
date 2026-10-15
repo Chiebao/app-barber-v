@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 import { useConfirmacao } from "@/app/lib/modal";
 
@@ -231,16 +232,16 @@ export default function NovoAgendamento({
   }
 
   const campo =
-    "w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none";
+    "w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none";
 
   return (
     <div className="space-y-6">
       {dialogoConfirmacao}
 
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+      <div className="hud-card p-5 space-y-3">
         <div>
-          <h3 className="font-semibold text-white">Novo agendamento</h3>
-          <p className="text-xs text-gray-500 mt-1">
+          <h3 className="font-semibold text-hud-text">Novo agendamento</h3>
+          <p className="text-xs text-hud-muted mt-1">
             {recorrente
               ? "Se repete toda semana. Você cria uma vez e ele aparece sozinho na agenda até a data final."
               : "Marque um cliente direto na sua agenda, sem ele precisar usar o link."}
@@ -261,7 +262,7 @@ export default function NovoAgendamento({
         </div>
 
         <div>
-          <label className="text-xs text-gray-400 mb-1 block">Serviços *</label>
+          <label className="text-xs text-hud-muted mb-1 block">Serviços *</label>
           <div className="flex gap-2 flex-wrap">
             {ativos.map((s) => {
               const marcado = novo.serviceIds.includes(s.id);
@@ -276,8 +277,8 @@ export default function NovoAgendamento({
                         : [...p.serviceIds, s.id],
                     }))
                   }
-                  className={`px-3 py-2 rounded-lg text-sm border transition ${
-                    marcado ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"
+                  className={`px-3 py-2 rounded text-sm border transition ${
+                    marcado ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] text-hud-light" : "border-hud-border text-hud-muted"
                   }`}
                 >
                   {s.name}
@@ -286,7 +287,7 @@ export default function NovoAgendamento({
             })}
           </div>
           {novo.serviceIds.length > 0 && (
-            <p className="text-xs text-gray-500 mt-2">{duracao} min · R$ {valor.toFixed(2)}</p>
+            <p className="text-xs text-hud-muted mt-2">{duracao} min · R$ {valor.toFixed(2)}</p>
           )}
         </div>
 
@@ -295,7 +296,7 @@ export default function NovoAgendamento({
               atendimento acontece numa data. */}
           {recorrente ? (
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Dia da semana</label>
+              <label className="text-xs text-hud-muted mb-1 block">Dia da semana</label>
               <select
                 value={novo.weekday}
                 onChange={(e) => setNovo((p) => ({ ...p, weekday: Number(e.target.value) }))}
@@ -306,7 +307,7 @@ export default function NovoAgendamento({
             </div>
           ) : (
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Data *</label>
+              <label className="text-xs text-hud-muted mb-1 block">Data *</label>
               <input
                 type="date" value={dataAvulsa}
                 onChange={(e) => {
@@ -326,7 +327,7 @@ export default function NovoAgendamento({
               ocupado. */}
           {recorrente && (
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Horário</label>
+              <label className="text-xs text-hud-muted mb-1 block">Horário</label>
               <input
                 type="time" value={novo.startTime}
                 onChange={(e) => setNovo((p) => ({ ...p, startTime: e.target.value }))}
@@ -338,13 +339,13 @@ export default function NovoAgendamento({
 
         {!recorrente && (
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Horário *</label>
+            <label className="text-xs text-hud-muted mb-1 block">Horário *</label>
             {novo.serviceIds.length === 0 || !dataAvulsa ? (
-              <p className="text-xs text-gray-500 py-2">
+              <p className="text-xs text-hud-muted py-2">
                 Escolha o serviço e a data para ver os horários livres.
               </p>
             ) : buscandoHorarios ? (
-              <p className="text-xs text-gray-500 py-2">Procurando horários...</p>
+              <p className="text-xs text-hud-muted py-2">Procurando horários...</p>
             ) : horariosLivres && horariosLivres.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {horariosLivres.map((h) => (
@@ -353,8 +354,8 @@ export default function NovoAgendamento({
                     onClick={() => setNovo((p) => ({ ...p, startTime: h }))}
                     className={
                       novo.startTime === h
-                        ? "rounded-lg bg-brand-500 border border-brand-500 px-3 py-2 text-sm font-bold text-dark-900 tabular-nums"
-                        : "rounded-lg border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-300 hover:border-brand-400 hover:text-brand-400 transition tabular-nums"
+                        ? "rounded gold-fill border border-hud-accent px-3 py-2 text-sm font-bold text-[var(--hud-on-accent)] tabular-nums"
+                        : "rounded border border-hud-border px-3 py-2 text-sm font-semibold text-hud-soft hover:border-hud-accent hover:text-hud-light transition tabular-nums"
                     }
                   >
                     {h}
@@ -362,7 +363,7 @@ export default function NovoAgendamento({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-yellow-400 py-2">
+              <p className="text-xs text-hud-warn py-2">
                 {motivoSemHorario || "Nenhum horário livre nesse dia"}
               </p>
             )}
@@ -372,23 +373,23 @@ export default function NovoAgendamento({
         <button
           onClick={() => setRecorrente((v) => !v)}
           aria-pressed={recorrente}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-700 p-3 text-left hover:bg-white/5 transition"
+          className="flex w-full items-center justify-between gap-3 rounded border border-hud-border p-3 text-left hover:bg-white/5 transition"
         >
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-hud-text">
             Ativar recorrência
-            <span className="block text-xs font-normal text-gray-500 mt-0.5">
+            <span className="block text-xs font-normal text-hud-muted mt-0.5">
               Repete toda semana, no mesmo dia e horário
             </span>
           </span>
-          <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${recorrente ? "bg-brand-500" : "bg-gray-700"}`}>
-            <span className={`absolute top-1 h-5 w-5 rounded-full transition-all ${recorrente ? "left-6 bg-dark-900" : "left-1 bg-gray-400"}`} />
+          <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${recorrente ? "gold-fill" : "bg-[var(--hud-track)]"}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full transition-all ${recorrente ? "left-6 bg-hud-bg" : "left-1 bg-[var(--hud-text-2)]"}`} />
           </span>
         </button>
 
         {recorrente && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">De</label>
+              <label className="text-xs text-hud-muted mb-1 block">De</label>
               <input
                 type="date" value={novo.startDate}
                 onChange={(e) => setNovo((p) => ({ ...p, startDate: e.target.value }))}
@@ -396,7 +397,7 @@ export default function NovoAgendamento({
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Até</label>
+              <label className="text-xs text-hud-muted mb-1 block">Até</label>
               <input
                 type="date" value={novo.endDate} min={novo.startDate || undefined}
                 onChange={(e) => setNovo((p) => ({ ...p, endDate: e.target.value }))}
@@ -408,7 +409,7 @@ export default function NovoAgendamento({
 
         {ehDono && barbers.length > 1 && (
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Barbeiro</label>
+            <label className="text-xs text-hud-muted mb-1 block">Barbeiro</label>
             <select
               value={novo.barberId}
               onChange={(e) => setNovo((p) => ({ ...p, barberId: e.target.value }))}
@@ -423,7 +424,7 @@ export default function NovoAgendamento({
         <button
           onClick={salvar}
           disabled={!podeSalvar || salvando}
-          className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
+          className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all"
         >
           {salvando ? "Criando..." : recorrente ? "Criar corte fixo" : "Agendar"}
         </button>
@@ -431,39 +432,39 @@ export default function NovoAgendamento({
 
       {fixosLoading ? (
         <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-400 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-hud-accent border-t-transparent" />
         </div>
       ) : fixos.length === 0 ? (
-        <p className="text-center text-gray-500 py-6">Nenhum corte fixo cadastrado</p>
+        <p className="text-center text-hud-muted py-6">Nenhum corte fixo cadastrado</p>
       ) : (
         <div className="space-y-3">
           {fixos.map((f) => (
             <div
               key={f.id}
-              className={`rounded-xl border bg-dark-800 p-4 ${f.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}
+              className={`rounded border bg-hud-surface p-4 ${f.active ? "border-hud-border" : "border-hud-border opacity-60"}`}
             >
               <div className="flex items-start gap-3">
-                <span className="text-2xl">🔁</span>
+                <span className="text-hud-accent"><Icon nome="agenda" tamanho={22} /></span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">{f.clientName}</p>
-                  <p className="text-sm text-brand-400">{DIAS[f.weekday]} às {f.startTime}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="font-medium text-hud-text">{f.clientName}</p>
+                  <p className="text-sm text-hud-light">{DIAS[f.weekday]} às {f.startTime}</p>
+                  <p className="text-xs text-hud-muted mt-1">
                     {f.services.map((s) => s.name).join(", ")} · {f.totalDuration}min · R$ {f.totalPrice.toFixed(2)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-hud-muted mt-1">
                     {f.startDate.split("-").reverse().join("/")} até {f.endDate.split("-").reverse().join("/")}
                     {ehDono ? " · " + f.barberName : ""}
                   </p>
-                  {!f.active && <p className="text-xs text-gray-500 mt-1">encerrado</p>}
+                  {!f.active && <p className="text-xs text-hud-muted mt-1">encerrado</p>}
                 </div>
                 {f.active && (
                   <button
                     onClick={() => encerrar(f)}
                     disabled={encerrando === f.id}
                     title="Encerrar"
-                    className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-sm text-gray-400 hover:text-red-400 hover:border-red-500/50 disabled:opacity-40 transition"
+                    className="shrink-0 rounded border border-hud-border px-2.5 py-2 text-sm text-hud-muted hover:text-hud-err hover:border-[color-mix(in_srgb,var(--hud-err)_50%,transparent)] disabled:opacity-40 transition"
                   >
-                    {encerrando === f.id ? "…" : "⏹"}
+                    {encerrando === f.id ? "…" : <Icon nome="fechar" tamanho={16} />}
                   </button>
                 )}
               </div>

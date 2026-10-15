@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { BottomNav, EmptyState, Icon, ScreenHeader, SectionLabel, Spinner as HudSpinner, type NomeIcone } from "@/app/components/hud";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
@@ -67,16 +68,16 @@ interface SlotData { allSlots: string[]; blocked: string[]; allDay: boolean; boo
 
 const STATUS_LABELS: Record<string, string> = { confirmed: "Confirmado", cancelled: "Cancelado", completed: "Concluido", pending: "Pendente", pending_payment: "Aguardando Pix", no_show: "Não compareceu" };
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
-  cancelled: "bg-red-500/20 text-red-400 border border-red-500/30",
-  completed: "bg-green-500/20 text-green-400 border border-green-500/30",
-  pending: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
-  pending_payment: "bg-orange-500/20 text-orange-400 border border-orange-500/30",
-  no_show: "bg-gray-500/20 text-gray-400 border border-gray-500/30",
+  confirmed: "text-hud-accent border border-[color-mix(in_srgb,var(--hud-accent)_60%,transparent)]",
+  cancelled: "bg-[color-mix(in_srgb,var(--hud-err)_20%,transparent)] text-hud-err border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)]",
+  completed: "bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] text-hud-ok border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)]",
+  pending: "bg-[color-mix(in_srgb,var(--hud-warn)_20%,transparent)] text-hud-warn border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)]",
+  pending_payment: "bg-[color-mix(in_srgb,var(--hud-warn)_20%,transparent)] text-hud-warn border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)]",
+  no_show: "text-hud-muted border border-[var(--hud-text-3)]",
 };
-const PAYMENT_LABELS: Record<string, string> = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartao" };
+const PAYMENT_LABELS: Record<string, string> = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão" };
 const CATEGORY_LABELS: Record<string, string> = { corte: "Corte", barba: "Barba", sobrancelha: "Sobrancelha", pezinho: "Pezinho", luzes: "Luzes" };
-const CATEGORY_ICONS: Record<string, string> = { corte: "✂️", barba: "🪒", sobrancelha: "👁️", pezinho: "💈", luzes: "✨" };
+const CATEGORY_ICONS: Record<string, NomeIcone> = { corte: "tesoura", barba: "tesoura", sobrancelha: "olho", pezinho: "tesoura", luzes: "estrela" };
 // Duas letras cabem nas 7 colunas até em tela de 320px; três não cabiam e
 // a última letra ficava cortada.
 const WEEKDAYS = ["Do", "Se", "Te", "Qa", "Qi", "Sx", "Sa"];
@@ -84,14 +85,16 @@ const WEEKDAYS = ["Do", "Se", "Te", "Qa", "Qi", "Sx", "Sa"];
 type Tab = "home" | "agenda" | "financeiro" | "config";
 type ConfigView = null | "dados" | "horário" | "pagamento" | "aparencia" | "notificações" | "senha" | "banidos" | "assinatura";
 const CONFIG_TITULOS: Record<string, string> = {
-  dados: "🏠 Dados da barbearia",
-  horario: "🕐 Horário e dias",
-  pagamento: "💳 Pagamento",
-  aparencia: "🖼️ Aparência",
-  notificacoes: "🔔 Notificações",
-  senha: "🔒 Senha e recuperação",
-  banidos: "🚫 Clientes banidos",
-  assinatura: "⭐ Minha assinatura",
+  // As chaves seguem o ConfigView, COM acento: sem acento aqui, o título de
+  // "Horário" e de "Notificações" saía em branco.
+  dados: "Dados da barbearia",
+  "horário": "Horário e dias",
+  pagamento: "Pagamento",
+  aparencia: "Aparência",
+  "notificações": "Notificações",
+  senha: "Senha e recuperação",
+  banidos: "Clientes banidos",
+  assinatura: "Minha assinatura",
 };
 interface ResumoShop {
   horario: { openTime: string; closeTime: string; workDays: number[] };
@@ -157,6 +160,10 @@ export default function PainelPage() {
   // apertar "salvar" depois só cria o caso de escolher e não salvar.
   const [salvandoJanela, setSalvandoJanela] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [preparandoStatus, setPreparandoStatus] = useState(false);
+  // Chegou pelo aviso das 7h ("seu status de hoje está pronto"): o cartão
+  // ganha destaque para o barbeiro achar o botão de primeira.
+  const [vindoDoAviso] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("status"));
   const qrRef = useRef<HTMLDivElement>(null);
 
   // ── Home/Agenda state ──
@@ -1136,6 +1143,43 @@ export default function PainelPage() {
     }
   };
 
+  /**
+   * Status do WhatsApp em dois toques.
+   *
+   * Nenhum sistema pode postar no Status de alguém — o WhatsApp não tem API
+   * para isso. Então a imagem do dia vem pronta e o botão abre o compartilhar
+   * do celular: o barbeiro escolhe WhatsApp → Meu status, e o link vai junto
+   * na legenda. No computador (sem compartilhar arquivo) a imagem é baixada
+   * e o link copiado.
+   */
+  const postarStatus = async () => {
+    if (!user?.shopSlug) return;
+    setPreparandoStatus(true);
+    try {
+      const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+      const r = await fetch(`/api/status/${user.shopSlug}?d=${hoje}`);
+      if (!r.ok) throw new Error("imagem");
+      const blob = await r.blob();
+      const arquivo = new File([blob], `status-${hoje}.png`, { type: "image/png" });
+      const legenda = `Agende seu horário: ${bookingLink}`;
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [arquivo] })) {
+        await navigator.share({ files: [arquivo], text: legenda });
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = arquivo.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        await navigator.clipboard?.writeText(legenda).catch(() => {});
+        toast.info("Imagem baixada e link copiado. Poste no Status pelo WhatsApp do celular.");
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== "AbortError") toast.error("Não consegui preparar a imagem de hoje. Tente de novo.");
+    } finally {
+      setPreparandoStatus(false);
+    }
+  };
+
   const compartilharLink = async () => {
     const texto = `Agende seu horário na ${user?.shopName || "barbearia"} pelo link:`;
     const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
@@ -1166,20 +1210,20 @@ export default function PainelPage() {
   const formatDateLabel = (dateStr: string) => { const d = new Date(dateStr + "T12:00:00"); return { weekday: d.toLocaleDateString("pt-BR", { weekday: "short" }), day: d.toLocaleDateString("pt-BR", { day: "2-digit" }), month: d.toLocaleDateString("pt-BR", { month: "short" }) }; };
   const bookingLink = typeof window !== "undefined" && user?.shopSlug ? `${window.location.origin}/${user.shopSlug}` : "";
 
-  if (!token) return (<div className="flex min-h-screen items-center justify-center bg-dark-900"><div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-400 border-t-transparent" /></div>);
+  if (!token) return (<div className="flex min-h-screen items-center justify-center bg-hud-bg"><div className="h-10 w-10 animate-spin rounded-full border-4 border-hud-accent border-t-transparent" /></div>);
 
   // ── Quick Actions (like mobile) ──
   // Atalhos da home: so o que o barbeiro abre no dia a dia.
   const quickActions = [
-    { icon: "📅", label: "Agenda", onClick: () => setActiveTab("agenda") },
-    { icon: "💰", label: "Financeiro", onClick: () => setActiveTab("financeiro") },
-    { icon: "👥", label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
-    { icon: "🏆", label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
-    { icon: "🔍", label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
-    { icon: "➕", label: "Novo agendamento", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
-    { icon: "💬", label: msgsNaoLidas > 0 ? `Mensagens (${msgsNaoLidas})` : "Mensagens", onClick: () => { setSubView("mensagens"); setActiveTab("home"); } },
+    { icon: "agenda" as NomeIcone, label: "Agenda", onClick: () => setActiveTab("agenda") },
+    { icon: "dinheiro" as NomeIcone, label: "Financeiro", onClick: () => setActiveTab("financeiro") },
+    { icon: "usuarios" as NomeIcone, label: "Clientes", onClick: () => { setSubView("clientes"); setActiveTab("home"); } },
+    { icon: "presente" as NomeIcone, label: "Fidelidade", onClick: () => { setSubView("fidelidade"); setActiveTab("home"); } },
+    { icon: "busca" as NomeIcone, label: "Sumidos", onClick: () => { setSubView("sumidos"); setActiveTab("home"); } },
+    { icon: "mais" as NomeIcone, label: "Novo agendamento", onClick: () => { setSubView("fixos"); setActiveTab("home"); } },
+    { icon: "mensagem" as NomeIcone, label: msgsNaoLidas > 0 ? `Mensagens (${msgsNaoLidas})` : "Mensagens", onClick: () => { setSubView("mensagens"); setActiveTab("home"); } },
     ...(user?.role === "owner" ? [
-      { icon: "🕐", label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
+      { icon: "relogio" as NomeIcone, label: "Lista Espera", onClick: () => { setSubView("espera"); setActiveTab("home"); } },
     ] : []),
   ];
 
@@ -1189,7 +1233,7 @@ export default function PainelPage() {
   type Cartao = {
     view: Exclude<ConfigView, null> | null;
     sub?: SubView;
-    icon: string;
+    icon: NomeIcone;
     label: string;
     valor: string;
     pendente?: boolean;
@@ -1209,36 +1253,36 @@ export default function PainelPage() {
   };
 
   const cartoesCadastro: Cartao[] = user?.role === "owner" ? [
-    { view: null, sub: "serviços", icon: "\u{1F527}", label: "Serviços",
+    { view: null, sub: "serviços", icon: "tesoura", label: "Serviços",
       valor: resumo ? (resumo.servicos === 0 ? "nenhum" : `${resumo.servicos} ativo${resumo.servicos > 1 ? "s" : ""}`) : "—",
       pendente: !!resumo && resumo.servicos === 0 },
-    { view: null, sub: "produtos", icon: "\u{1F6CD}\u{FE0F}", label: "Produtos",
+    { view: null, sub: "produtos", icon: "presente", label: "Produtos",
       valor: resumo ? (resumo.produtos === 0 ? "nenhum" : `${resumo.produtos} ativo${resumo.produtos > 1 ? "s" : ""}`) : "—",
       pendente: !!resumo && resumo.produtos === 0 },
-    { view: null, sub: "barbeiros", icon: "\u{2702}\u{FE0F}", label: "Barbeiros",
+    { view: null, sub: "barbeiros", icon: "usuarios", label: "Barbeiros",
       valor: resumo ? (resumo.barbeirosSemFoto > 0 ? `${resumo.barbeirosSemFoto} sem foto` : `${resumo.barbeiros} com foto`) : "—",
       pendente: !!resumo && resumo.barbeirosSemFoto > 0 },
-    { view: "banidos", icon: "\u{1F6AB}", label: "Banidos",
+    { view: "banidos", icon: "bloqueio", label: "Banidos",
       valor: resumo ? (resumo.banidos === 0 ? "nenhum" : String(resumo.banidos)) : "—" },
   ] : [];
 
   const cartoesBarbearia: Cartao[] = user?.role === "owner" ? [
-    { view: "dados", icon: "\u{1F3E0}", label: "Dados da barbearia",
+    { view: "dados", icon: "inicio", label: "Dados da barbearia",
       valor: resumo ? (resumo.temEndereco ? "endereço ok" : "sem endereço") : "—",
       pendente: !!resumo && !resumo.temEndereco },
-    { view: "pagamento", icon: "\u{1F4B3}", label: "Pagamento",
+    { view: "pagamento", icon: "cartao", label: "Pagamento",
       valor: resumo ? (resumo.pagamento.mercadoPago ? "Pix automático" : resumo.pagamento.pixManual ? "Pix manual" : "sem Pix") : "—",
       pendente: !!resumo && !resumo.pagamento.mercadoPago && !resumo.pagamento.pixManual },
-    { view: "aparencia", icon: "\u{1F5BC}\u{FE0F}", label: "Aparência",
+    { view: "aparencia", icon: "paleta", label: "Aparência",
       valor: resumo ? (resumo.temLogo ? "logo enviada" : "sem logo") : "—",
       pendente: !!resumo && !resumo.temLogo },
   ] : [];
 
   const cartoesConta: Cartao[] = [
-    { view: "notificações", icon: "\u{1F514}", label: "Notificações",
+    { view: "notificações", icon: "sino", label: "Notificações",
       valor: resumo ? (resumo.notificacoes > 0 ? `${resumo.notificacoes} aparelho${resumo.notificacoes > 1 ? "s" : ""}` : "desligadas") : "—",
       pendente: !!resumo && resumo.notificacoes === 0 },
-    { view: "senha", icon: "\u{1F512}", label: "Senha", valor: "trocar e recuperar" },
+    { view: "senha", icon: "cadeado", label: "Senha", valor: "trocar e recuperar" },
   ];
 
   const abrirCartao = (c: Cartao) => {
@@ -1250,52 +1294,53 @@ export default function PainelPage() {
   // ── Render SubViews ──
   const renderSubView = () => {
     if (!subView) return null;
-    const backBtn = <button onClick={() => setSubView(null)} className="flex items-center gap-2 text-brand-400 mb-4 text-sm hover:text-brand-300"><span>←</span> Voltar</button>;
+    const TITULO_SUB: Record<string, string> = { barbeiros: "Barbeiros", "serviços": "Serviços", produtos: "Produtos", mensagens: "Mensagens", clientes: "Clientes", sumidos: "Clientes sumidos", fidelidade: "Fidelidade", espera: "Lista de espera", fixos: "Novo agendamento" };
+    const backBtn = <div className="mb-2"><ScreenHeader titulo={TITULO_SUB[subView] || ""} onVoltar={() => setSubView(null)} /></div>;
 
     // ─── BARBEIROS ───
     if (subView === "barbeiros") return (
       <div className="space-y-6">{backBtn}
-        <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-          <h3 className="font-semibold text-white">Adicionar barbeiro</h3>
-          <input type="text" placeholder="Nome *" value={newBarberName} onChange={e => setNewBarberName(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
-          <input type="tel" placeholder="Telefone (com DDD) *" value={newBarberPhone} onChange={e => setNewBarberPhone(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
-          <input type="email" placeholder="E-mail (opcional)" value={newBarberEmail} onChange={e => setNewBarberEmail(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
-          <input type="password" placeholder="Senha (min 6) *" value={newBarberPassword} onChange={e => setNewBarberPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+        <div className="hud-card p-5 space-y-3">
+          <h3 className="font-semibold text-hud-text">Adicionar barbeiro</h3>
+          <input type="text" placeholder="Nome *" value={newBarberName} onChange={e => setNewBarberName(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
+          <input type="tel" placeholder="Telefone (com DDD) *" value={newBarberPhone} onChange={e => setNewBarberPhone(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
+          <input type="email" placeholder="E-mail (opcional)" value={newBarberEmail} onChange={e => setNewBarberEmail(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
+          <input type="password" placeholder="Senha (min 6) *" value={newBarberPassword} onChange={e => setNewBarberPassword(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
           <div className="relative">
-            <input type="number" min="0" max="100" placeholder="Comissão (%)" value={newBarberCommission} onChange={e => setNewBarberCommission(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 pr-10 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
+            <input type="number" min="0" max="100" placeholder="Comissão (%)" value={newBarberCommission} onChange={e => setNewBarberCommission(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 pr-10 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-hud-muted text-sm">%</span>
           </div>
-          <button onClick={handleAddBarber} disabled={addingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingBarber ? "Adicionando..." : "Adicionar barbeiro"}</button>
+          <button onClick={handleAddBarber} disabled={addingBarber} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{addingBarber ? "Adicionando..." : "Adicionar barbeiro"}</button>
         </div>
-        {barbersLoading ? <Spinner /> : barbers.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum barbeiro cadastrado</p> : (
+        {barbersLoading ? <Spinner /> : barbers.length === 0 ? <p className="text-center text-hud-muted py-6">Nenhum barbeiro cadastrado</p> : (
           <div className="space-y-3">
             {barbers.map(b => (
-              <div key={b.id} className={`rounded-xl border bg-dark-800 p-4 ${b.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
+              <div key={b.id} className={`rounded border bg-hud-surface p-4 ${b.active ? "border-hud-border" : "border-hud-border opacity-60"}`}>
                 <div className="flex items-center gap-4">
                   {b.imageUrl
-                    ? <img src={b.imageUrl} alt={b.name} className="w-10 h-10 rounded-full object-cover border border-brand-500/30 shrink-0" />
-                    : <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-semibold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>}
+                    ? <img src={b.imageUrl} alt={b.name} className="w-10 h-10 rounded-full object-cover border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] shrink-0" />
+                    : <div className="w-10 h-10 rounded-full bg-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] flex items-center justify-center text-hud-light font-semibold text-lg shrink-0">{b.name.charAt(0).toUpperCase()}</div>}
                   <button onClick={() => abrirEdicaoBarbeiro(b)} className="flex-1 min-w-0 text-left group">
-                    <p className="font-medium text-white group-hover:text-brand-400 transition">
+                    <p className="font-medium text-hud-text group-hover:text-hud-light transition">
                       {b.name}
-                      {b.isOwnerProfile && <span className="ml-2 text-xs font-normal text-brand-400 border border-brand-400/40 rounded px-1.5 py-0.5">você</span>}
-                      {!b.imageUrl && <span className="ml-2 text-xs font-normal text-yellow-400">sem foto</span>}
+                      {b.isOwnerProfile && <span className="ml-2 text-xs font-normal text-hud-light border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] rounded px-1.5 py-0.5">você</span>}
+                      {!b.imageUrl && <span className="ml-2 text-xs font-normal text-hud-warn">sem foto</span>}
                     </p>
-                    <p className="text-sm text-gray-400">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-brand-400">· {b.commission}%</span>}</p>
+                    <p className="text-sm text-hud-muted">{b.phone}{(b.commission ?? 0) > 0 && <span className="ml-2 text-hud-light">· {b.commission}%</span>}</p>
                   </button>
-                  <button onClick={() => { setResetBarberId(resetBarberId === b.id ? null : b.id); setResetPassword(""); }} title="Redefinir senha" className="shrink-0 w-9 h-9 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 hover:text-brand-400 hover:border-brand-400/50 transition">🔑</button>
+                  <button onClick={() => { setResetBarberId(resetBarberId === b.id ? null : b.id); setResetPassword(""); }} title="Redefinir senha" aria-label="Redefinir senha" className="hud-focus shrink-0 w-11 h-11 rounded border border-hud-border flex items-center justify-center text-hud-muted hover:text-hud-light hover:border-hud-accent transition"><Icon nome="cadeado" tamanho={18} /></button>
                   {!b.isOwnerProfile && (
-                    <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                    <button onClick={() => handleToggleBarber(b.id, !b.active)} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${b.active ? "gold-fill" : "bg-[var(--hud-track)]"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${b.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
                   )}
                 </div>
                 {resetBarberId === b.id && (
-                  <div className="mt-3 pt-3 border-t border-gray-700 space-y-2">
-                    <p className="text-xs text-gray-400">Nova senha para <span className="text-white font-medium">{b.name}</span></p>
+                  <div className="mt-3 pt-3 border-t border-hud-border space-y-2">
+                    <p className="text-xs text-hud-muted">Nova senha para <span className="text-hud-text font-medium">{b.name}</span></p>
                     <div className="flex gap-2">
-                      <input type="text" value={resetPassword} onChange={e => setResetPassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="flex-1 rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                      <button onClick={() => handleResetBarberPassword(b.id)} disabled={resettingBarber} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition">{resettingBarber ? "..." : "Salvar"}</button>
+                      <input type="text" value={resetPassword} onChange={e => setResetPassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="flex-1 rounded bg-hud-bg border border-hud-border px-3 py-2 text-sm text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+                      <button onClick={() => handleResetBarberPassword(b.id)} disabled={resettingBarber} className="rounded gold-fill px-4 py-2 text-sm font-semibold text-[var(--hud-on-accent)] hover:brightness-105 disabled:opacity-50 transition">{resettingBarber ? "..." : "Salvar"}</button>
                     </div>
-                    <p className="text-xs text-gray-500">Anote e envie a nova senha para o barbeiro por WhatsApp.</p>
+                    <p className="text-xs text-hud-muted">Anote e envie a nova senha para o barbeiro por WhatsApp.</p>
                   </div>
                 )}
               </div>
@@ -1303,45 +1348,45 @@ export default function PainelPage() {
           </div>
         )}
 
-        <Modal aberto={!!editBarber} onFechar={() => setEditBarber(null)}>{editBarber && (<>
-              <h3 className="text-lg font-semibold text-white">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
+        <Modal gaveta largura="max-w-md" aberto={!!editBarber} onFechar={() => setEditBarber(null)}>{editBarber && (<>
+              <h3 className="font-display text-xl leading-tight text-hud-text">{editBarber.isOwnerProfile ? "Seu perfil de barbeiro" : "Editar barbeiro"}</h3>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Foto</label>
+                <label className="text-xs text-hud-muted mb-1 block">Foto</label>
                 <div className="flex items-center gap-3">
                   {editBarber.imageUrl
-                    ? <img src={editBarber.imageUrl} alt={editBarber.name} className="w-16 h-16 rounded-full object-cover border border-brand-500/30 shrink-0" />
-                    : <div className="w-16 h-16 rounded-full bg-brand-500/20 border border-gray-700 flex items-center justify-center text-2xl text-brand-400 font-semibold shrink-0">{editBarber.name.charAt(0).toUpperCase()}</div>}
+                    ? <img src={editBarber.imageUrl} alt={editBarber.name} className="w-16 h-16 rounded-full object-cover border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] shrink-0" />
+                    : <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] border border-hud-border flex items-center justify-center text-2xl text-hud-light font-semibold shrink-0">{editBarber.name.charAt(0).toUpperCase()}</div>}
                   <div className="flex-1 space-y-2">
-                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingBarberImg ? "opacity-50 pointer-events-none" : ""}`}>
+                    <label className={`block text-center rounded border border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] py-2 text-sm text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition cursor-pointer ${uploadingBarberImg ? "opacity-50 pointer-events-none" : ""}`}>
                       {uploadingBarberImg ? "Enviando..." : editBarber.imageUrl ? "Trocar foto" : "Enviar foto"}
                       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingBarberImg} onChange={e => trocarFotoBarbeiro(e.target.files?.[0] || null)} />
                     </label>
                     {editBarber.imageUrl && (
-                      <button onClick={removerFotoBarbeiro} disabled={uploadingBarberImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                      <button onClick={removerFotoBarbeiro} disabled={uploadingBarberImg} className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2 text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50">Remover foto</button>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">O cliente vê essa foto na hora de escolher o profissional.</p>
+                <p className="text-xs text-hud-muted mt-2">O cliente vê essa foto na hora de escolher o profissional.</p>
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
-                <input type="text" value={editBarber.name} onChange={e => setEditBarber(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">Nome</label>
+                <input type="text" value={editBarber.name} onChange={e => setEditBarber(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">E-mail</label>
-                <input type="email" value={editBarber.email} onChange={e => setEditBarber(p => p && ({ ...p, email: e.target.value }))} placeholder="opcional" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">E-mail</label>
+                <input type="email" value={editBarber.email} onChange={e => setEditBarber(p => p && ({ ...p, email: e.target.value }))} placeholder="opcional" className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Comissão (%)</label>
-                <input type="number" min="0" max="100" value={editBarber.commission} onChange={e => setEditBarber(p => p && ({ ...p, commission: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">Comissão (%)</label>
+                <input type="number" min="0" max="100" value={editBarber.commission} onChange={e => setEditBarber(p => p && ({ ...p, commission: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
               </div>
 
-              <button onClick={salvarBarbeiro} disabled={savingBarber} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingBarber ? "Salvando..." : "Salvar"}</button>
-              <button onClick={() => setEditBarber(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
+              <button onClick={salvarBarbeiro} disabled={savingBarber} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{savingBarber ? "Salvando..." : "Salvar"}</button>
+              <button onClick={() => setEditBarber(null)} className="w-full text-sm text-hud-muted hover:text-hud-soft transition py-1">Cancelar</button>
             </>)}</Modal>
       </div>
     );
@@ -1349,34 +1394,34 @@ export default function PainelPage() {
     // ─── SERVICOS ───
     if (subView === "serviços") return (
       <div className="space-y-6">{backBtn}
-        <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-          <h3 className="font-semibold text-white">Adicionar serviço</h3>
-          <input type="text" placeholder="Nome do serviço *" value={newService.name} onChange={e => setNewService(p => ({...p, name: e.target.value}))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+        <div className="hud-card p-5 space-y-3">
+          <h3 className="font-semibold text-hud-text">Adicionar serviço</h3>
+          <input type="text" placeholder="Nome do serviço *" value={newService.name} onChange={e => setNewService(p => ({...p, name: e.target.value}))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
           <div className="grid grid-cols-2 gap-3">
-            <input type="number" placeholder="Preço *" value={newService.price} onChange={e => setNewService(p => ({...p, price: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-            <input type="number" placeholder="Duração (min)" value={newService.duration} onChange={e => setNewService(p => ({...p, duration: e.target.value}))} className="rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            <input type="number" placeholder="Preço *" value={newService.price} onChange={e => setNewService(p => ({...p, price: e.target.value}))} className="rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+            <input type="number" placeholder="Duração (min)" value={newService.duration} onChange={e => setNewService(p => ({...p, duration: e.target.value}))} className="rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
           </div>
           <div className="flex gap-2 flex-wrap">
             {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-              <button key={key} onClick={() => setNewService(p => ({...p, category: key}))} className={`px-3 py-2 rounded-lg text-sm border transition ${newService.category === key ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>{CATEGORY_ICONS[key]} {label}</button>
+              <button key={key} onClick={() => setNewService(p => ({...p, category: key}))} className={`px-3 py-2 rounded text-sm border transition ${newService.category === key ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] text-hud-light" : "border-hud-border text-hud-muted"}`}><Icon nome={CATEGORY_ICONS[key] || "tesoura"} tamanho={14} className="mr-1 inline-block align-[-2px]" />{label}</button>
             ))}
           </div>
-          <button onClick={handleAddService} disabled={addingService} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingService ? "Adicionando..." : "Adicionar Serviço"}</button>
+          <button onClick={handleAddService} disabled={addingService} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{addingService ? "Adicionando..." : "Adicionar Serviço"}</button>
         </div>
-        {servicesLoading ? <Spinner /> : services.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum serviço cadastrado</p> : (
+        {servicesLoading ? <Spinner /> : services.length === 0 ? <p className="text-center text-hud-muted py-6">Nenhum serviço cadastrado</p> : (
           <div className="space-y-3">
             {services.map(s => (
-              <div key={s.id} className={`flex items-center gap-4 rounded-xl border bg-dark-800 p-4 ${s.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
-                <span className="text-2xl">{CATEGORY_ICONS[s.category] || "✂️"}</span>
+              <div key={s.id} className={`flex items-center gap-4 rounded border bg-hud-surface p-4 ${s.active ? "border-hud-border" : "border-hud-border opacity-60"}`}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-hud-border text-hud-accent"><Icon nome={CATEGORY_ICONS[s.category] || "tesoura"} /></span>
                 {/* Editar e apagar vivem no modal, que abre ao tocar no nome.
                     Com os dois botões aqui, ícone e toggle sobrando, o texto
                     era espremido a 28px numa tela de 320 — o nome do serviço
                     não cabia em lugar nenhum. */}
                 <button onClick={() => abrirEdicaoServico(s)} className="flex-1 min-w-0 text-left group">
-                  <p className="font-medium text-white group-hover:text-brand-400 transition truncate">{s.name}</p>
-                  <p className="text-sm text-gray-400 truncate">R$ {s.price.toFixed(2)} · {s.duration}min · {CATEGORY_LABELS[s.category] || s.category}</p>
+                  <p className="font-medium text-hud-text group-hover:text-hud-light transition truncate">{s.name}</p>
+                  <p className="text-sm text-hud-muted truncate">R$ {s.price.toFixed(2)} · {s.duration}min · {CATEGORY_LABELS[s.category] || s.category}</p>
                 </button>
-                <button onClick={() => toggleService(s.id, !s.active)} title={s.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${s.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${s.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                <button onClick={() => toggleService(s.id, !s.active)} title={s.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${s.active ? "gold-fill" : "bg-[var(--hud-track)]"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${s.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
               </div>
             ))}
           </div>
@@ -1384,38 +1429,38 @@ export default function PainelPage() {
 
         {/* Modal de edicao — 100vw/100vh inline porque position:fixed sozinho
             se dimensiona pelo documento, nao pela viewport, e o modal some */}
-        <Modal aberto={!!editService} onFechar={() => setEditService(null)}>{editService && (<>
-              <h3 className="text-lg font-semibold text-white">Editar serviço</h3>
+        <Modal gaveta largura="max-w-md" aberto={!!editService} onFechar={() => setEditService(null)}>{editService && (<>
+              <h3 className="font-display text-xl leading-tight text-hud-text">Editar serviço</h3>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
+                <label className="text-xs text-hud-muted mb-1 block">Nome</label>
                 <input type="text" value={editService.name} autoFocus
                   onChange={e => setEditService(p => p && ({ ...p, name: e.target.value }))}
-                  className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                  className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Preço (R$)</label>
+                  <label className="text-xs text-hud-muted mb-1 block">Preço (R$)</label>
                   <input type="number" inputMode="decimal" value={editService.price}
                     onChange={e => setEditService(p => p && ({ ...p, price: e.target.value }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                    className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Duração (min)</label>
+                  <label className="text-xs text-hud-muted mb-1 block">Duração (min)</label>
                   <input type="number" inputMode="numeric" value={editService.duration}
                     onChange={e => setEditService(p => p && ({ ...p, duration: e.target.value }))}
-                    className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                    className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Categoria</label>
+                <label className="text-xs text-hud-muted mb-1 block">Categoria</label>
                 <div className="flex gap-2 flex-wrap">
                   {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                     <button key={key} onClick={() => setEditService(p => p && ({ ...p, category: key }))}
-                      className={`px-3 py-2 rounded-lg text-sm border transition ${editService.category === key ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>
-                      {CATEGORY_ICONS[key]} {label}
+                      className={`px-3 py-2 rounded text-sm border transition ${editService.category === key ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] text-hud-light" : "border-hud-border text-hud-muted"}`}>
+                      <Icon nome={CATEGORY_ICONS[key] || "tesoura"} tamanho={14} className="mr-1 inline-block align-[-2px]" />{label}
                     </button>
                   ))}
                 </div>
@@ -1423,37 +1468,37 @@ export default function PainelPage() {
 
               {/* Foto do corte — e ela que o cliente ve na hora de escolher o servico */}
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Foto do corte</label>
+                <label className="text-xs text-hud-muted mb-1 block">Foto do corte</label>
                 <div className="flex items-center gap-3">
                   {editService.imageUrl ? (
-                    <img src={editService.imageUrl} alt={editService.name} className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                    <img src={editService.imageUrl} alt={editService.name} className="w-16 h-16 rounded object-cover border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 rounded-xl bg-dark-900 border border-gray-700 flex items-center justify-center text-2xl shrink-0">📷</div>
+                    <div className="w-16 h-16 rounded bg-hud-bg border border-hud-border flex items-center justify-center text-2xl shrink-0"><Icon nome="imagem" tamanho={18} /></div>
                   )}
                   <div className="flex-1 space-y-2">
-                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingServiceImg ? "opacity-50 pointer-events-none" : ""}`}>
+                    <label className={`block text-center rounded border border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] py-2 text-sm text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition cursor-pointer ${uploadingServiceImg ? "opacity-50 pointer-events-none" : ""}`}>
                       {uploadingServiceImg ? "Enviando..." : editService.imageUrl ? "Trocar foto" : "Enviar foto"}
                       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingServiceImg} onChange={e => trocarFotoServico(e.target.files?.[0] || null)} />
                     </label>
                     {editService.imageUrl && (
-                      <button onClick={removerFotoServico} disabled={uploadingServiceImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                      <button onClick={removerFotoServico} disabled={uploadingServiceImg} className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2 text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50">Remover foto</button>
                     )}
                   </div>
                 </div>
               </div>
 
               <button onClick={salvarEdicaoServico} disabled={savingService}
-                className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
                 {savingService ? "Salvando..." : "Salvar alterações"}
               </button>
 
-              <div className="pt-3 border-t border-gray-700 space-y-2">
+              <div className="pt-3 border-t border-hud-border space-y-2">
                 <button onClick={() => { const alvo = services.find(x => x.id === editService.id); if (alvo) excluirServico(alvo); }}
                   disabled={deletingService === editService.id}
-                  className="w-full rounded-xl border border-red-500/30 py-2.5 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition">
-                  {deletingService === editService.id ? "Apagando..." : "🗑️ Apagar este serviço"}
+                  className="w-full rounded border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] py-2.5 text-sm text-hud-err hover:bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] disabled:opacity-50 transition">
+                  {deletingService === editService.id ? "Apagando..." : "Apagar este serviço"}
                 </button>
-                <button onClick={() => setEditService(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">
+                <button onClick={() => setEditService(null)} className="w-full text-sm text-hud-muted hover:text-hud-soft transition py-1">
                   Cancelar
                 </button>
               </div>
@@ -1464,32 +1509,32 @@ export default function PainelPage() {
     // ─── PRODUTOS ───
     if (subView === "produtos") return (
       <div className="space-y-6">{backBtn}
-        <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-          <h3 className="font-semibold text-white">Adicionar produto</h3>
-          <input type="text" placeholder="Nome do produto *" value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+        <div className="hud-card p-5 space-y-3">
+          <h3 className="font-semibold text-hud-text">Adicionar produto</h3>
+          <input type="text" placeholder="Nome do produto *" value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
           <div className="grid grid-cols-2 gap-2">
-            <input type="number" inputMode="decimal" placeholder="Preço de venda *" value={newProduct.price} onChange={e => setNewProduct(p => ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            <input type="number" inputMode="decimal" placeholder="Preço de venda *" value={newProduct.price} onChange={e => setNewProduct(p => ({ ...p, price: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
             {/* Sem o custo nao ha margem — e margem de produto costuma ser
                 a surpresa que faz o dono mudar o que compra. */}
-            <input type="number" inputMode="decimal" placeholder="Quanto custou" value={newProduct.custo} onChange={e => setNewProduct(p => ({ ...p, custo: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+            <input type="number" inputMode="decimal" placeholder="Quanto custou" value={newProduct.custo} onChange={e => setNewProduct(p => ({ ...p, custo: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
           </div>
-          <input type="text" placeholder="Descrição (opcional)" value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-          <p className="text-xs text-gray-500">A foto você adiciona depois, tocando no produto.</p>
-          <button onClick={handleAddProduct} disabled={addingProduct} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{addingProduct ? "Adicionando..." : "Adicionar produto"}</button>
+          <input type="text" placeholder="Descrição (opcional)" value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+          <p className="text-xs text-hud-muted">A foto você adiciona depois, tocando no produto.</p>
+          <button onClick={handleAddProduct} disabled={addingProduct} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{addingProduct ? "Adicionando..." : "Adicionar produto"}</button>
         </div>
 
-        {productsLoading ? <Spinner /> : products.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum produto cadastrado</p> : (
+        {productsLoading ? <Spinner /> : products.length === 0 ? <p className="text-center text-hud-muted py-6">Nenhum produto cadastrado</p> : (
           <div className="space-y-3">
             {products.map(p => (
-              <div key={p.id} className={`flex items-center gap-3 rounded-xl border bg-dark-800 p-4 ${p.active ? "border-gray-700" : "border-gray-800 opacity-60"}`}>
+              <div key={p.id} className={`flex items-center gap-3 rounded border bg-hud-surface p-4 ${p.active ? "border-hud-border" : "border-hud-border opacity-60"}`}>
                 {p.imageUrl
-                  ? <img src={p.imageUrl} alt={p.name} className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                  : <div className="w-12 h-12 rounded-lg bg-dark-900 border border-gray-700 flex items-center justify-center text-xl shrink-0">📷</div>}
+                  ? <img src={p.imageUrl} alt={p.name} className="w-12 h-12 rounded object-cover shrink-0" />
+                  : <div className="w-12 h-12 rounded bg-hud-bg border border-hud-border flex items-center justify-center text-xl shrink-0"><Icon nome="imagem" tamanho={18} /></div>}
                 <button onClick={() => abrirEdicaoProduto(p)} className="flex-1 min-w-0 text-left group">
-                  <p className="font-medium text-white group-hover:text-brand-400 transition truncate">{p.name}</p>
-                  <p className="text-sm text-gray-400 truncate">R$ {p.price.toFixed(2)}{p.description ? ` · ${p.description}` : ""}</p>
+                  <p className="font-medium text-hud-text group-hover:text-hud-light transition truncate">{p.name}</p>
+                  <p className="text-sm text-hud-muted truncate">R$ {p.price.toFixed(2)}{p.description ? ` · ${p.description}` : ""}</p>
                 </button>
-                <button onClick={() => toggleProduct(p.id, !p.active)} title={p.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${p.active ? "bg-brand-500" : "bg-gray-700"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${p.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
+                <button onClick={() => toggleProduct(p.id, !p.active)} title={p.active ? "Desativar" : "Ativar"} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${p.active ? "gold-fill" : "bg-[var(--hud-track)]"}`}><div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${p.active ? "translate-x-6" : "translate-x-0.5"}`} /></button>
               </div>
             ))}
           </div>
@@ -1497,24 +1542,24 @@ export default function PainelPage() {
 
         {/* Modal de edição — 100vw/100vh inline porque position:fixed sozinho
             se dimensiona pelo documento, não pela viewport */}
-        <Modal aberto={!!editProduct} onFechar={() => setEditProduct(null)}>{editProduct && (<>
-              <h3 className="text-lg font-semibold text-white">Editar produto</h3>
+        <Modal gaveta largura="max-w-md" aberto={!!editProduct} onFechar={() => setEditProduct(null)}>{editProduct && (<>
+              <h3 className="font-display text-xl leading-tight text-hud-text">Editar produto</h3>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Nome</label>
-                <input type="text" value={editProduct.name} autoFocus onChange={e => setEditProduct(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">Nome</label>
+                <input type="text" value={editProduct.name} autoFocus onChange={e => setEditProduct(p => p && ({ ...p, name: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
               </div>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Preço (R$)</label>
-                <input type="number" inputMode="decimal" value={editProduct.price} onChange={e => setEditProduct(p => p && ({ ...p, price: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">Preço (R$)</label>
+                <input type="number" inputMode="decimal" value={editProduct.price} onChange={e => setEditProduct(p => p && ({ ...p, price: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Quanto custou</label>
-                <input type="number" inputMode="decimal" value={editProduct.custo} onChange={e => setEditProduct(p => p && ({ ...p, custo: e.target.value }))} placeholder="Deixe vazio se não souber" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                <label className="block text-xs text-hud-muted mb-1">Quanto custou</label>
+                <input type="number" inputMode="decimal" value={editProduct.custo} onChange={e => setEditProduct(p => p && ({ ...p, custo: e.target.value }))} placeholder="Deixe vazio se não souber" className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                 {editProduct.custo.trim() !== "" && parseFloat(editProduct.price) > 0 && parseFloat(editProduct.custo) >= 0 && (
-                  <p className="mt-1.5 text-xs text-gray-500">
+                  <p className="mt-1.5 text-xs text-hud-muted">
                     Margem de{" "}
-                    <span className="font-semibold text-green-400">
+                    <span className="font-semibold text-hud-ok">
                       {(parseFloat(editProduct.price) - parseFloat(editProduct.custo)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </span>{" "}
                     ({Math.round(((parseFloat(editProduct.price) - parseFloat(editProduct.custo)) / parseFloat(editProduct.price)) * 100)}%)
@@ -1522,33 +1567,33 @@ export default function PainelPage() {
                 )}
               </div>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Descrição</label>
-                <input type="text" value={editProduct.description} onChange={e => setEditProduct(p => p && ({ ...p, description: e.target.value }))} placeholder="Opcional" className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                <label className="text-xs text-hud-muted mb-1 block">Descrição</label>
+                <input type="text" value={editProduct.description} onChange={e => setEditProduct(p => p && ({ ...p, description: e.target.value }))} placeholder="Opcional" className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Foto do produto</label>
+                <label className="text-xs text-hud-muted mb-1 block">Foto do produto</label>
                 <div className="flex items-center gap-3">
                   {editProduct.imageUrl
-                    ? <img src={editProduct.imageUrl} alt={editProduct.name} className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
-                    : <div className="w-16 h-16 rounded-xl bg-dark-900 border border-gray-700 flex items-center justify-center text-2xl shrink-0">📷</div>}
+                    ? <img src={editProduct.imageUrl} alt={editProduct.name} className="w-16 h-16 rounded object-cover border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] shrink-0" />
+                    : <div className="w-16 h-16 rounded bg-hud-bg border border-hud-border flex items-center justify-center text-2xl shrink-0"><Icon nome="imagem" tamanho={18} /></div>}
                   <div className="flex-1 space-y-2">
-                    <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingProductImg ? "opacity-50 pointer-events-none" : ""}`}>
+                    <label className={`block text-center rounded border border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] py-2 text-sm text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition cursor-pointer ${uploadingProductImg ? "opacity-50 pointer-events-none" : ""}`}>
                       {uploadingProductImg ? "Enviando..." : editProduct.imageUrl ? "Trocar foto" : "Enviar foto"}
                       <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingProductImg} onChange={e => trocarFotoProduto(e.target.files?.[0] || null)} />
                     </label>
                     {editProduct.imageUrl && (
-                      <button onClick={removerFotoProduto} disabled={uploadingProductImg} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover foto</button>
+                      <button onClick={removerFotoProduto} disabled={uploadingProductImg} className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2 text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50">Remover foto</button>
                     )}
                   </div>
                 </div>
               </div>
 
-              <button onClick={salvarEdicaoProduto} disabled={savingProduct} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingProduct ? "Salvando..." : "Salvar alterações"}</button>
+              <button onClick={salvarEdicaoProduto} disabled={savingProduct} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{savingProduct ? "Salvando..." : "Salvar alterações"}</button>
 
-              <div className="pt-3 border-t border-gray-700 space-y-2">
-                <button onClick={() => { const alvo = products.find(x => x.id === editProduct.id); if (alvo) excluirProduto(alvo); }} disabled={deletingProduct === editProduct.id} className="w-full rounded-xl border border-red-500/30 py-2.5 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition">{deletingProduct === editProduct.id ? "Apagando..." : "🗑️ Apagar este produto"}</button>
-                <button onClick={() => setEditProduct(null)} className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1">Cancelar</button>
+              <div className="pt-3 border-t border-hud-border space-y-2">
+                <button onClick={() => { const alvo = products.find(x => x.id === editProduct.id); if (alvo) excluirProduto(alvo); }} disabled={deletingProduct === editProduct.id} className="w-full rounded border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] py-2.5 text-sm text-hud-err hover:bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] disabled:opacity-50 transition">{deletingProduct === editProduct.id ? "Apagando..." : "Apagar este produto"}</button>
+                <button onClick={() => setEditProduct(null)} className="w-full text-sm text-hud-muted hover:text-hud-soft transition py-1">Cancelar</button>
               </div>
             </>)}</Modal>
       </div>
@@ -1591,31 +1636,31 @@ export default function PainelPage() {
       const filtered = clients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.phone.includes(clientSearch));
       return (
         <div className="space-y-4">{backBtn}
-          <input type="text" placeholder="Buscar cliente..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="w-full rounded-xl bg-dark-800 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none transition-colors" />
+          <input type="text" placeholder="Buscar cliente..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="w-full rounded bg-hud-surface border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none transition-colors" />
           <div className="flex gap-2">
-            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-semibold text-white">{clients.length}</p><p className="text-xs text-gray-500">Total</p></div>
-            <div className="flex-1 rounded-xl bg-dark-800 border border-gray-700 p-3 text-center"><p className="text-lg font-semibold text-red-400">{clients.filter(c => c.noShowCount > 0).length}</p><p className="text-xs text-gray-500">Com faltas</p></div>
+            <div className="hud-card flex-1 p-3 text-center"><p className="text-lg font-semibold text-hud-text">{clients.length}</p><p className="text-xs text-hud-muted">Total</p></div>
+            <div className="hud-card flex-1 p-3 text-center"><p className="text-lg font-semibold text-hud-err">{clients.filter(c => c.noShowCount > 0).length}</p><p className="text-xs text-hud-muted">Com faltas</p></div>
           </div>
-          {clientsLoading ? <Spinner /> : filtered.length === 0 ? <p className="text-center text-gray-500 py-6">Nenhum cliente encontrado</p> : (
+          {clientsLoading ? <Spinner /> : filtered.length === 0 ? <p className="text-center text-hud-muted py-6">Nenhum cliente encontrado</p> : (
             <div className="space-y-3">
               {filtered.map(c => (
-                <div key={`${c.id}|${c.pessoa}`} className="rounded-xl border border-gray-700 bg-dark-800 p-4">
+                <div key={`${c.id}|${c.pessoa}`} className="hud-card p-4">
                   <div className="flex items-center justify-between">
-                    <div><p className="font-semibold text-white">{c.name}</p><p className="text-sm text-gray-400">{c.phone}</p></div>
-                    <div className="text-center"><p className="text-lg font-semibold text-brand-400">{c.totalAppointments}</p><p className="text-xs text-gray-500">visitas</p></div>
+                    <div><p className="font-semibold text-hud-text">{c.name}</p><p className="text-sm text-hud-muted">{c.phone}</p></div>
+                    <div className="text-center"><p className="text-lg font-semibold text-hud-light">{c.totalAppointments}</p><p className="text-xs text-hud-muted">visitas</p></div>
                   </div>
-                  {c.noShowCount > 0 && <p className="text-xs text-red-400 mt-2">⚠️ {c.noShowCount} falta(s)</p>}
-                  {c.notes && <p className="text-xs text-gray-500 mt-2 italic">📝 {c.notes}</p>}
-                  {estaBanido(c.phone) && <p className="text-xs text-red-400 mt-2">🚫 Banido — não consegue agendar aqui</p>}
-                  <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between gap-3">
+                  {c.noShowCount > 0 && <p className="text-xs text-hud-err mt-2 flex items-center gap-1"><Icon nome="alerta" tamanho={13} /> {c.noShowCount} falta(s)</p>}
+                  {c.notes && <p className="text-xs text-hud-muted mt-2 italic flex items-start gap-1"><Icon nome="editar" tamanho={13} className="mt-0.5 shrink-0" /> {c.notes}</p>}
+                  {estaBanido(c.phone) && <p className="text-xs text-hud-err mt-2"><Icon nome="bloqueio" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Banido — não consegue agendar aqui</p>}
+                  <div className="mt-3 pt-3 border-t border-hud-border flex items-center justify-between gap-3">
                     {user?.role === "owner" ? (
                       estaBanido(c.phone) ? (
-                        <button onClick={() => desbanirCliente(c.phone)} className="text-xs text-gray-500 hover:text-green-400 transition">✓ Liberar cliente</button>
+                        <button onClick={() => desbanirCliente(c.phone)} className="text-xs text-hud-muted hover:text-hud-ok transition">✓ Liberar cliente</button>
                       ) : (
-                        <button onClick={() => banirCliente(c.phone, c.name)} disabled={baningClient} className="text-xs text-gray-500 hover:text-red-400 transition disabled:opacity-50">🚫 Banir cliente</button>
+                        <button onClick={() => banirCliente(c.phone, c.name)} disabled={baningClient} className="text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50"><Icon nome="bloqueio" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Banir cliente</button>
                       )
                     ) : <span />}
-                    <button onClick={() => deleteClient(c.id, c.name)} disabled={deletingClientId === c.id} className="text-xs text-gray-500 hover:text-red-400 transition disabled:opacity-50">{deletingClientId === c.id ? "Excluindo..." : "🗑️ Excluir dados (LGPD)"}</button>
+                    <button onClick={() => deleteClient(c.id, c.name)} disabled={deletingClientId === c.id} className="hud-focus inline-flex min-h-[44px] items-center gap-1.5 text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50"><Icon nome="lixo" tamanho={14} />{deletingClientId === c.id ? "Excluindo..." : "Excluir dados (LGPD)"}</button>
                   </div>
                 </div>
               ))}
@@ -1635,16 +1680,16 @@ export default function PainelPage() {
     // ─── FIDELIDADE ───
     if (subView === "fidelidade") return (
       <div className="space-y-4">{backBtn}
-        <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4">
-          <p className="text-sm font-semibold text-brand-400 mb-1">Como funciona</p>
-          <p className="text-sm text-gray-400">A cada atendimento pago, o cliente ganha 1 ponto. Ao completar 10, ofereça uma recompensa!</p>
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] p-4">
+          <p className="text-sm font-semibold text-hud-light mb-1">Como funciona</p>
+          <p className="text-sm text-hud-muted">A cada atendimento pago, o cliente ganha 1 ponto. Ao completar 10, ofereça uma recompensa!</p>
         </div>
-        {loyaltyLoading ? <Spinner /> : loyalties.length === 0 ? <div className="text-center py-12"><p className="text-4xl mb-3">🏆</p><p className="text-gray-400">Nenhum cliente com pontos ainda.</p></div> : (
+        {loyaltyLoading ? <Spinner /> : loyalties.length === 0 ? <div className="text-center py-12"><p className="text-4xl mb-3"><Icon nome="presente" tamanho={18} /></p><p className="text-hud-muted">Nenhum cliente com pontos ainda.</p></div> : (
           <div className="space-y-3">{loyalties.map(item => (
-            <div key={item.clientPhone} className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-3">
-              <div className="flex items-center justify-between"><div><p className="font-semibold text-white">{item.clientName}</p><p className="text-xs text-gray-500">{item.clientPhone}</p></div><div className="text-center bg-brand-500/20 rounded-xl px-4 py-2"><p className="text-xl font-semibold text-brand-400">{item.count}</p><p className="text-xs text-gray-400">cortes</p></div></div>
-              <div className="flex gap-1.5">{Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`flex-1 h-2 rounded-full ${i < item.progress ? "bg-brand-500" : "bg-gray-700"}`} />))}</div>
-              <div className="flex items-center justify-between"><p className="text-xs text-gray-400">{item.progress}/10</p>{item.rewardsEarned > 0 && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">🏆 {item.rewardsEarned}</span>}</div>
+            <div key={item.clientPhone} className="hud-card p-4 space-y-3">
+              <div className="flex items-center justify-between"><div><p className="font-semibold text-hud-text">{item.clientName}</p><p className="text-xs text-hud-muted">{item.clientPhone}</p></div><div className="text-center bg-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] rounded px-4 py-2"><p className="text-xl font-semibold text-hud-light">{item.count}</p><p className="text-xs text-hud-muted">cortes</p></div></div>
+              <div className="flex gap-1.5">{Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`flex-1 h-2 rounded-full ${i < item.progress ? "gold-fill" : "bg-[var(--hud-track)]"}`} />))}</div>
+              <div className="flex items-center justify-between"><p className="text-xs text-hud-muted">{item.progress}/10</p>{item.rewardsEarned > 0 && <span className="text-xs bg-[color-mix(in_srgb,var(--hud-warn)_20%,transparent)] text-hud-warn px-2 py-1 rounded-full inline-flex items-center gap-1"><Icon nome="presente" tamanho={13} /> {item.rewardsEarned}</span>}</div>
             </div>
           ))}</div>
         )}
@@ -1654,21 +1699,21 @@ export default function PainelPage() {
     // ─── LISTA ESPERA ───
     if (subView === "espera") return (
       <div className="space-y-4">{backBtn}
-        <div className="rounded-xl bg-brand-500/10 border border-brand-400/30 p-4">
-          <p className="text-sm text-brand-400">🔔 Clientes aguardando vaga.</p>
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] p-4">
+          <p className="text-sm text-hud-light"><Icon nome="sino" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Clientes aguardando vaga.</p>
           {/* O barbeiro não vai limpar a fila à mão, e não limpava: uma
               cliente ficou uma semana esperando um dia que já tinha
               passado. Agora sai sozinho — mas ele precisa SABER disso,
               senão continua achando que a lista é problema dele. */}
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-hud-muted mt-1">
             Sai da lista sozinho quando o dia passa, e o cliente é avisado.
           </p>
         </div>
-        {waitlistLoading ? <Spinner /> : waitlist.length === 0 ? <div className="text-center py-12 text-gray-500"><p className="text-4xl mb-3">🕐</p><p>Nenhum cliente na lista</p></div> : (
+        {waitlistLoading ? <Spinner /> : waitlist.length === 0 ? <div className="text-center py-12 text-hud-muted"><p className="text-4xl mb-3"><Icon nome="relogio" tamanho={18} /></p><p>Nenhum cliente na lista</p></div> : (
           <div className="space-y-3">{waitlist.map(entry => (
-            <div key={entry.id} className="rounded-xl border border-gray-700 bg-dark-800 p-4 flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0"><p className="font-semibold text-white">{entry.clientName}</p><p className="text-sm text-gray-400">{entry.clientPhone}</p>{entry.preferredDate && <p className="text-xs text-brand-400 mt-1">📅 Prefere: {new Date(entry.preferredDate + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}{entry.preferredDate === hojeISO() && <span className="text-amber-400"> · último dia</span>}</p>}</div>
-              <button onClick={() => removeFromWaitlist(entry.id)} disabled={removingWaitId === entry.id} className="text-xs text-red-400 border border-red-500/30 rounded-lg px-3 py-1.5 hover:bg-red-500/10 disabled:opacity-50">{removingWaitId === entry.id ? "..." : "Remover"}</button>
+            <div key={entry.id} className="hud-card p-4 flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0"><p className="font-semibold text-hud-text">{entry.clientName}</p><p className="text-sm text-hud-muted">{entry.clientPhone}</p>{entry.preferredDate && <p className="text-xs text-hud-light mt-1 flex flex-wrap items-center gap-1"><Icon nome="agenda" tamanho={13} /> Prefere: {new Date(entry.preferredDate + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}{entry.preferredDate === hojeISO() && <span className="text-hud-warn"> · último dia</span>}</p>}</div>
+              <button onClick={() => removeFromWaitlist(entry.id)} disabled={removingWaitId === entry.id} className="text-xs text-hud-err border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] rounded px-3 py-1.5 hover:bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] disabled:opacity-50">{removingWaitId === entry.id ? "..." : "Remover"}</button>
             </div>
           ))}</div>
         )}
@@ -1679,37 +1724,38 @@ export default function PainelPage() {
   };
 
   return (
-    <main className="min-h-screen bg-dark-900 pb-20">
+    <main className="min-h-screen hud-bg pb-20">
       {/* ── Header ── */}
-      <header className="bg-dark-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+      <header className="border-b border-hud-border bg-[color-mix(in_srgb,var(--hud-bg)_88%,transparent)] backdrop-blur-md px-4 py-2.5 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <img src={shopSettings?.logoUrl || "/logo.png"} alt={user?.shopName || "BarberPro"} className="w-9 h-9 rounded-lg object-cover" />
+          <img src={shopSettings?.logoUrl || "/logo.png"} alt="" className="w-11 h-11 rounded-full border border-hud-accent object-cover" />
           <div>
-            <h1 className="text-lg font-semibold text-brand-400 leading-tight">{user?.shopName || "Painel"}</h1>
-            <p className="text-xs text-gray-400">{getGreeting()}, {user?.name || "proprietario"}</p>
+            <p className="text-xs text-hud-muted">{getGreeting()},</p>
+            <h1 className="font-display text-xl leading-tight text-hud-text">{user?.name?.split(" ")[0] || "proprietário"}</h1>
+            <p className="text-[11px] text-hud-muted truncate max-w-[52vw]">{user?.shopName || "Painel"}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowQR(v => !v)} className="text-xl p-2">📎</button>
-          <button onClick={() => { setActiveTab("config"); setSubView(null); }} className="text-xl p-2">⚙️</button>
+          <button onClick={() => setShowQR(v => !v)} aria-label="Link e QR code de agendamento" aria-expanded={showQR} className="hud-focus flex h-11 w-11 items-center justify-center rounded border border-hud-border text-hud-accent"><Icon nome="qr" /></button>
+          <button onClick={() => { setActiveTab("config"); setSubView(null); }} aria-label="Configurações" className="hud-focus flex h-11 w-11 items-center justify-center rounded border border-hud-border text-hud-muted hover:text-hud-text"><Icon nome="config" /></button>
         </div>
       </header>
 
       {/* ── QR/Link Panel ── */}
       {showQR && user?.shopSlug && (
-        <div className="mx-4 mt-3 rounded-2xl border border-brand-500/25 bg-dark-800 p-4 space-y-3">
+        <div className="hud-card hud-corners mx-auto mt-3 max-w-2xl p-4 space-y-3 [margin-inline:16px] sm:[margin-inline:auto]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-white text-sm">Link de agendamento</h3>
-              <span className="flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/40 px-2 py-0.5 text-[10px] font-semibold text-green-400 tracking-wide">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> ONLINE
+              <h3 className="font-semibold text-hud-text text-sm">Link de agendamento</h3>
+              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--hud-ok)_15%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_40%,transparent)] px-2 py-0.5 text-[10px] font-semibold text-hud-ok tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-hud-ok" /> ONLINE
               </span>
             </div>
-            <button onClick={() => setShowQR(false)} className="text-gray-500 hover:text-white text-lg">✕</button>
+            <button onClick={() => setShowQR(false)} aria-label="Fechar" className="hud-focus -mr-2 flex h-11 w-11 items-center justify-center rounded text-hud-muted hover:text-hud-text"><Icon nome="fechar" /></button>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-brand-400 truncate">{bookingLink}</div>
-            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded-lg border border-gray-700 text-gray-300 font-semibold px-3 py-2 text-sm hover:text-white transition whitespace-nowrap">{linkCopied ? "✓" : "Copiar"}</button>
+            <div className="flex-1 bg-hud-bg border border-hud-border rounded px-3 py-2 text-sm text-hud-light truncate">{bookingLink}</div>
+            <button onClick={() => { navigator.clipboard.writeText(bookingLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} className="rounded border border-hud-border text-hud-soft font-semibold px-3 py-2 text-sm hover:text-hud-text transition whitespace-nowrap">{linkCopied ? "Copiado" : "Copiar"}</button>
           </div>
 
           {/* O barbeiro pediu aqui, colado no link: é a tela que ele abre
@@ -1720,16 +1766,16 @@ export default function PainelPage() {
               contratado. Mostrar para ele seria oferecer um botão que dá
               erro. */}
           {user?.role === "owner" && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-dark-900 px-3 py-2">
+          <div className="flex items-center justify-between gap-3 rounded border border-hud-border bg-hud-bg px-3 py-2">
             <div>
-              <p className="text-sm text-gray-300">Agenda aberta até:</p>
-              <p className="text-[11px] text-gray-500">Vale só para o link. No painel você marca para qualquer data.</p>
+              <p className="text-sm text-hud-soft">Agenda aberta até:</p>
+              <p className="text-[11px] text-hud-muted">Vale só para o link. No painel você marca para qualquer data.</p>
             </div>
             <select
               value={shopSettings?.diasAbertos ?? 30}
               disabled={!shopSettings || salvandoJanela}
               onChange={(e) => trocarJanelaDaAgenda(parseInt(e.target.value))}
-              className="rounded-lg border border-gray-700 bg-dark-800 text-white text-sm px-3 py-2 disabled:opacity-50"
+              className="rounded border border-hud-border bg-hud-surface text-hud-text text-sm px-3 py-2 disabled:opacity-50"
             >
               <option value={7}>7 dias</option>
               <option value={15}>15 dias</option>
@@ -1740,7 +1786,7 @@ export default function PainelPage() {
 
           <button
             onClick={compartilharLink}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-brand-500 text-dark-900 font-semibold py-2.5 text-sm hover:bg-brand-400 transition press-scale"
+            className="hud-focus w-full flex items-center justify-center gap-2 rounded gold-fill min-h-[48px] font-bold uppercase tracking-[0.08em] text-sm hover:brightness-105 transition"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M22 2 11 13" />
@@ -1749,8 +1795,8 @@ export default function PainelPage() {
             Compartilhar link
           </button>
           <div className="flex flex-col items-center gap-3">
-            <div ref={qrRef} className="bg-white rounded-xl p-4"><QRCodeCanvas value={bookingLink} size={180} level="H" includeMargin={false} /></div>
-            <button onClick={() => { const canvas = qrRef.current?.querySelector("canvas"); if (!canvas) return; const link = document.createElement("a"); link.download = `qrcode-${user.shopSlug}.png`; link.href = canvas.toDataURL("image/png"); link.click(); }} className="border border-gray-700 text-gray-300 rounded-lg px-4 py-2 text-sm hover:text-white transition">⬇️ Baixar QR Code</button>
+            <div ref={qrRef} className="bg-white rounded p-4"><QRCodeCanvas value={bookingLink} size={180} level="H" includeMargin={false} /></div>
+            <button onClick={() => { const canvas = qrRef.current?.querySelector("canvas"); if (!canvas) return; const link = document.createElement("a"); link.download = `qrcode-${user.shopSlug}.png`; link.href = canvas.toDataURL("image/png"); link.click(); }} className="hud-focus inline-flex min-h-[44px] items-center gap-2 border border-hud-border text-hud-text font-bold rounded px-4 text-sm hover:border-hud-muted transition"><Icon nome="baixar" tamanho={16} /> Baixar QR Code</button>
           </div>
         </div>
       )}
@@ -1766,22 +1812,46 @@ export default function PainelPage() {
                 {resumoAssinatura?.aviso && (resumoAssinatura.estado === "carencia" || resumoAssinatura.estado === "bloqueada" || resumoAssinatura.estado === "trial") && (
                   <button
                     onClick={() => { setActiveTab("config"); setConfigView("assinatura"); }}
-                    className={`w-full rounded-2xl border p-4 text-left transition ${
+                    className={`w-full rounded border p-4 text-left transition ${
                       resumoAssinatura.estado === "bloqueada"
-                        ? "border-red-500/50 bg-red-500/10 hover:border-red-400"
+                        ? "border-[color-mix(in_srgb,var(--hud-err)_50%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] hover:border-hud-err"
                         : resumoAssinatura.estado === "carencia"
-                          ? "border-yellow-500/50 bg-yellow-500/10 hover:border-yellow-400"
-                          : "border-blue-500/40 bg-blue-500/10 hover:border-blue-400"
+                          ? "border-[color-mix(in_srgb,var(--hud-warn)_50%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] hover:border-hud-warn"
+                          : "border-[color-mix(in_srgb,var(--hud-info)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-info)_10%,transparent)] hover:border-hud-info"
                     }`}
                   >
                     <p className={`text-sm font-semibold ${
-                      resumoAssinatura.estado === "bloqueada" ? "text-red-400"
-                      : resumoAssinatura.estado === "carencia" ? "text-yellow-400" : "text-blue-400"
+                      resumoAssinatura.estado === "bloqueada" ? "text-hud-err"
+                      : resumoAssinatura.estado === "carencia" ? "text-hud-warn" : "text-hud-info"
                     }`}>
                       {resumoAssinatura.aviso}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">Toque para ver os planos ›</p>
+                    <p className="text-xs text-hud-muted mt-1">Toque para ver os planos ›</p>
                   </button>
+                )}
+
+                {/* Status do WhatsApp de hoje — imagem pronta, dois toques */}
+                {user?.shopSlug && (
+                  <div className={`hud-card flex items-center gap-3 p-3 ${vindoDoAviso ? "hud-card-sel hud-corners" : ""}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/status/${user.shopSlug}?d=${new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" })}`}
+                      alt="Prévia da imagem de hoje para o Status"
+                      className="h-[84px] w-[48px] shrink-0 rounded border border-hud-border object-cover bg-hud-surface"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="hud-eyebrow">Status de hoje</p>
+                      <p className="text-sm text-hud-soft leading-snug">Imagem nova com os horários livres. Toque e escolha <b className="text-hud-text">Meu status</b>.</p>
+                    </div>
+                    <button
+                      onClick={postarStatus}
+                      disabled={preparandoStatus}
+                      className="hud-focus gold-fill shrink-0 inline-flex min-h-[44px] items-center gap-1.5 rounded px-3 text-xs font-extrabold uppercase tracking-[0.06em] disabled:opacity-70"
+                    >
+                      {preparandoStatus ? <HudSpinner tamanho={14} sobreDestaque /> : <Icon nome="compartilhar" tamanho={16} />}
+                      Postar
+                    </button>
+                  </div>
                 )}
 
                 <RecoveryNag token={token} onIrParaConfig={() => { setActiveTab("config"); setSubView(null); }} />
@@ -1789,24 +1859,24 @@ export default function PainelPage() {
                 {/* Quick Actions Grid */}
                 <div className="grid grid-cols-4 gap-2">
                   {quickActions.map(a => (
-                    <button key={a.label} onClick={a.onClick} className="flex flex-col items-center gap-1 rounded-xl border border-gray-700 bg-dark-800 py-3 px-2 hover:border-brand-400/50 hover:bg-brand-500/5 transition-all">
-                      <span className="text-xl">{a.icon}</span>
-                      <span className="text-xs text-gray-300 leading-tight">{a.label}</span>
+                    <button key={a.label} onClick={a.onClick} className="hud-card hud-focus flex min-h-[76px] flex-col items-center justify-center gap-1.5 py-3 px-1.5 hover:border-hud-accent transition-all">
+                      <span className="text-hud-accent"><Icon nome={a.icon} tamanho={22} /></span>
+                      <span className="text-[11px] font-semibold text-hud-soft leading-tight text-center">{a.label}</span>
                     </button>
                   ))}
                 </div>
 
                 {/* Date strip */}
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="hud-noscroll flex gap-2 overflow-x-auto pb-1">
                   {getDateStrip().map(date => {
                     const { weekday, day } = formatDateLabel(date);
                     const isSelected = selectedDate === date;
                     const isToday = date === new Date().toISOString().split("T")[0];
                     return (
-                      <button key={date} onClick={() => setSelectedDate(date)} className={`flex-shrink-0 flex flex-col items-center rounded-xl border px-3 py-2 text-center min-w-[52px] transition-all ${isSelected ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 bg-dark-800 text-gray-400 hover:border-gray-600"}`}>
-                        <span className="text-xs capitalize">{weekday}</span>
-                        <span className="text-lg font-semibold leading-none">{day}</span>
-                        {isToday && <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? "bg-brand-400" : "bg-gray-500"}`} />}
+                      <button key={date} onClick={() => setSelectedDate(date)} aria-pressed={isSelected} className={`hud-focus flex-shrink-0 flex min-h-[64px] flex-col items-center justify-center rounded border px-3 py-2 text-center min-w-[54px] transition-all ${isSelected ? "hud-card-sel hud-corners border-hud-accent text-hud-light" : "hud-card text-hud-muted hover:border-hud-muted"}`}>
+                        <span className="text-[11px] font-semibold uppercase">{weekday.replace(".", "")}</span>
+                        <span className={`font-display text-2xl leading-none ${isSelected ? "gold-text" : "text-hud-text"}`}>{day}</span>
+                        {isToday && <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? "gold-fill" : "bg-[var(--hud-text-2)]"}`} />}
                       </button>
                     );
                   })}
@@ -1816,24 +1886,24 @@ export default function PainelPage() {
                 {/* Sem conexão: dizer QUE é cópia e DE QUANDO. Sem isso o
                     barbeiro lê uma agenda velha como se fosse a de agora. */}
                 {agendaSalvaEm !== null && (
-                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                  <div className="rounded border border-[color-mix(in_srgb,var(--hud-warn)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] px-4 py-3 text-sm text-hud-warn">
                     <p className="font-semibold">Sem conexão — agenda salva às {horaDaCopia(agendaSalvaEm)}</p>
-                    <p className="text-amber-300/80 text-xs mt-1">
+                    <p className="text-[color-mix(in_srgb,var(--hud-warn)_80%,transparent)] text-xs mt-1">
                       Quem marcou depois disso não aparece aqui, e não dá para confirmar pagamento nem marcar horário até a internet voltar.
                     </p>
                   </div>
                 )}
                 {agendaSemCopia && (
-                  <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  <div className="rounded border border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] px-4 py-3 text-sm text-hud-err">
                     <p className="font-semibold">Sem conexão — não há cópia salva deste dia</p>
-                    <p className="text-red-300/80 text-xs mt-1">
+                    <p className="text-[color-mix(in_srgb,var(--hud-err)_80%,transparent)] text-xs mt-1">
                       A lista abaixo está vazia porque não deu para carregar, não porque o dia está livre.
                     </p>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 uppercase tracking-widest">{appointments.length} agendamento{appointments.length !== 1 ? "s" : ""}</p>
+                <SectionLabel>{appointments.length} agendamento{appointments.length !== 1 ? "s" : ""}</SectionLabel>
                 {agendaLoading ? <Spinner /> : appointments.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500"><p className="text-4xl mb-3">{agendaSemCopia ? "📡" : "📋"}</p><p>{agendaSemCopia ? "Não foi possível carregar" : "Nenhum agendamento neste dia"}</p></div>
+                  <EmptyState erro={agendaSemCopia} icone={agendaSemCopia ? "alerta" : "agenda"} titulo={agendaSemCopia ? "Não foi possível carregar" : "Nenhum agendamento neste dia"} />
                 ) : (
                   <div className="space-y-3">
                     {appointments.map(appt => {
@@ -1843,40 +1913,41 @@ export default function PainelPage() {
                       const isPendingPix = appt.status === "pending_payment";
                       const isPayingThis = payingId === appt.id;
                       return (
-                        <div key={appt.id} className={`rounded-xl border bg-dark-800 p-4 space-y-3 transition-all ${isCancelled || isNoShow ? "opacity-50 border-gray-800" : "border-gray-700"}`}>
+                        <div key={appt.id} className={`hud-card p-4 space-y-3 transition-all ${isCancelled || isNoShow ? "opacity-60" : ""}`}>
                           {/* Header */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-brand-400 font-semibold">{appt.startTime} - {appt.endTime}</span>
-                                <span className="text-brand-400 font-semibold">R$ {appt.totalPrice?.toFixed(2)}</span>
+                                <span className="gold-text font-display text-xl tabular-nums">{appt.startTime}</span>
+                                <span className="text-xs text-hud-muted tabular-nums">até {appt.endTime}</span>
+                                <span className="ml-auto whitespace-nowrap text-sm font-bold text-hud-light tabular-nums">R$ {appt.totalPrice?.toFixed(2).replace(".", ",")}</span>
                               </div>
-                              <p className="font-semibold text-white mt-1">{appt.client?.name}</p>
-                              <p className="text-sm text-gray-400">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
-                              <p className="text-xs text-gray-500">{appt.client?.phone}</p>
+                              <p className="font-semibold text-hud-text mt-1">{appt.client?.name}</p>
+                              <p className="text-sm text-hud-muted">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
+                              <p className="text-xs text-hud-muted">{appt.client?.phone}</p>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${appt.pendingExpired ? "bg-gray-500/20 text-gray-400 border border-gray-600" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>
+                              <span className={`text-[10px] font-bold px-2 py-[3px] rounded-[3px] ${appt.pendingExpired ? "text-hud-err border border-[color-mix(in_srgb,var(--hud-err)_60%,transparent)]" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>
                               {!isCancelled && !isNoShow && (
                                 <div className="relative">
                                   <button
                                     onClick={() => setMenuAberto(menuAberto === appt.id ? null : appt.id)}
                                     aria-label="Mais opções"
-                                    className="rounded-lg px-1.5 py-1 text-gray-500 hover:text-white transition"
+                                    className="hud-focus flex h-11 w-11 items-center justify-center rounded text-hud-muted hover:text-hud-text transition"
                                   >
-                                    ⋯
+                                    <Icon nome="menu" />
                                   </button>
                                   {menuAberto === appt.id && (
                                     <>
                                       {/* Camada invisível: tocar fora fecha, sem precisar
                                           de listener global no documento. */}
                                       <div className="fixed inset-0 z-30" onClick={() => setMenuAberto(null)} />
-                                      <div className="absolute right-0 top-8 z-40 w-52 rounded-xl border border-gray-700 bg-dark-900 p-1 shadow-2xl">
+                                      <div className="hud-card absolute right-0 top-11 z-40 w-56 p-1 shadow-[0_14px_40px_var(--hud-shadow)]">
                                         <button
                                           onClick={() => { setComandaDe(appt); setMenuAberto(null); }}
-                                          className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 transition"
+                                          className="hud-focus flex min-h-[44px] w-full items-center rounded px-3 text-left text-sm font-semibold text-hud-text hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition"
                                         >
-                                          🧴 Adicionar produto
+                                          <Icon nome="mais" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Adicionar produto
                                         </button>
                                       </div>
                                     </>
@@ -1889,14 +1960,14 @@ export default function PainelPage() {
                           {/* O que foi lançado precisa aparecer no card: produto que
                               só existe dentro de um modal é produto esquecido. */}
                           {(appt.comanda?.length ?? 0) > 0 && (
-                            <div className="rounded-lg bg-dark-900 border border-gray-700 px-3 py-2">
+                            <div className="rounded bg-hud-bg border border-hud-border px-3 py-2">
                               <div className="flex items-baseline justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-400">Produtos</span>
-                                <span className="text-sm font-bold text-brand-400 tabular-nums">
+                                <span className="text-xs font-semibold text-hud-muted">Produtos</span>
+                                <span className="text-sm font-bold text-hud-light tabular-nums">
                                   R$ {(appt.comandaTotal ?? 0).toFixed(2)}
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-500 mt-0.5">
+                              <p className="text-xs text-hud-muted mt-0.5">
                                 {appt.comanda!.map(i => `${i.quantity > 1 ? `${i.quantity}× ` : ""}${i.name}`).join(", ")}
                               </p>
                             </div>
@@ -1905,24 +1976,24 @@ export default function PainelPage() {
                           {/* Pré-agendamento por Pix: dentro do prazo ou expirado */}
                           {isPendingPix && (
                             appt.pendingExpired ? (
-                              <div className="bg-gray-500/10 border border-gray-600 rounded-lg p-3 space-y-2">
-                                <p className="text-sm text-gray-300">⌛ Prazo do Pix expirou — o horário foi liberado</p>
-                                <p className="text-xs text-gray-500">O cliente tentou agendar mas o pagamento não foi confirmado a tempo. Se o Pix caiu depois, você ainda pode confirmar (se o horário continuar livre).</p>
+                              <div className="bg-[color-mix(in_srgb,var(--hud-err)_6%,transparent)] border border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] rounded p-3 space-y-2">
+                                <p className="text-sm text-hud-soft flex items-center gap-1.5"><Icon nome="relogio" tamanho={15} className="text-hud-err" /> Prazo do Pix expirou — o horário foi liberado</p>
+                                <p className="text-xs text-hud-muted">O cliente tentou agendar mas o pagamento não foi confirmado a tempo. Se o Pix caiu depois, você ainda pode confirmar (se o horário continuar livre).</p>
                                 <div className="flex gap-2">
-                                  <button onClick={() => confirmPixPayment(appt.id)} className="flex-1 rounded-lg border border-gray-600 py-2 text-sm text-gray-300 hover:text-white hover:border-gray-500 transition">✓ Confirmar mesmo assim</button>
-                                  <button onClick={() => remindClient(appt)} className="flex-1 rounded-lg border border-green-500/30 py-2 text-sm text-green-400 hover:bg-green-500/10 transition">💬 Falar com o cliente</button>
+                                  <button onClick={() => confirmPixPayment(appt.id)} className="hud-focus flex-1 min-h-[44px] rounded border border-hud-border text-sm font-bold text-hud-text hover:border-hud-muted transition">Confirmar mesmo assim</button>
+                                  <button onClick={() => remindClient(appt)} className="flex-1 rounded border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] py-2 text-sm text-hud-ok hover:bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] transition"><Icon nome="mensagem" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Falar com o cliente</button>
                                 </div>
                               </div>
                             ) : (
-                              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 space-y-2">
+                              <div className="bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] rounded p-3 space-y-2">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="text-sm text-orange-400">⏳ Cliente informou que pagou — confirme o Pix</p>
+                                  <p className="text-sm text-hud-warn"><Icon nome="relogio" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Cliente informou que pagou — confirme o Pix</p>
                                   {timeLeftLabel(appt.pendingExpiresAt) && (
-                                    <span className="text-xs text-orange-300/80 shrink-0 whitespace-nowrap">{timeLeftLabel(appt.pendingExpiresAt)}</span>
+                                    <span className="text-xs text-[color-mix(in_srgb,var(--hud-warn)_80%,transparent)] shrink-0 whitespace-nowrap">{timeLeftLabel(appt.pendingExpiresAt)}</span>
                                   )}
                                 </div>
-                                <p className="text-xs text-gray-400">Se não confirmar dentro do prazo, o horário volta a ficar livre para outros clientes.</p>
-                                <button onClick={() => confirmPixPayment(appt.id)} className="w-full rounded-lg bg-orange-500 py-2 text-sm font-semibold text-dark-900 hover:bg-orange-400 transition">✓ Confirmar Pix</button>
+                                <p className="text-xs text-hud-muted">Se não confirmar dentro do prazo, o horário volta a ficar livre para outros clientes.</p>
+                                <button onClick={() => confirmPixPayment(appt.id)} className="hud-focus w-full min-h-[44px] rounded bg-hud-warn text-sm font-extrabold text-[#0B0B14] hover:brightness-110 transition inline-flex items-center justify-center gap-1.5"><Icon nome="check" tamanho={16} traco={3} /> Confirmar Pix</button>
                               </div>
                             )
                           )}
@@ -1930,11 +2001,11 @@ export default function PainelPage() {
                           {/* Action buttons: Cancel + No Show / Lembrar */}
                           {appt.status === "confirmed" && !isPayingThis && (
                             <div className="flex gap-2">
-                              <button onClick={() => openCancelModal(appt.id)} className="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-400 font-medium hover:bg-red-500/20 transition">Cancelar</button>
+                              <button onClick={() => openCancelModal(appt.id)} className="flex-1 py-2 rounded border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] text-sm text-hud-err font-medium hover:bg-[color-mix(in_srgb,var(--hud-err)_20%,transparent)] transition">Cancelar</button>
                               {isAppointmentPast(appt.date, appt.startTime) ? (
-                                <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-sm text-yellow-400 font-medium hover:bg-yellow-500/20 transition">Não veio</button>
+                                <button onClick={() => markNoShow(appt.id, appt.client?.name)} className="flex-1 py-2 rounded border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] text-sm text-hud-warn font-medium hover:bg-[color-mix(in_srgb,var(--hud-warn)_20%,transparent)] transition">Não veio</button>
                               ) : (
-                                <button onClick={() => remindClient(appt)} className="flex-1 py-2 rounded-lg border border-green-500/30 bg-green-500/10 text-sm text-green-400 font-medium hover:bg-green-500/20 transition">🔔 Lembrar</button>
+                                <button onClick={() => remindClient(appt)} className="flex-1 py-2 rounded border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] text-sm text-hud-ok font-medium hover:bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] transition"><Icon nome="sino" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Lembrar</button>
                               )}
                             </div>
                           )}
@@ -1943,45 +2014,45 @@ export default function PainelPage() {
                           {!isCancelled && !isNoShow && !isPendingPix && (
                             <div>
                               {isPaid ? (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Pago {appt.paymentMethod ? `(${PAYMENT_LABELS[appt.paymentMethod] || appt.paymentMethod})` : ""}</span>
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-[3px] bg-[color-mix(in_srgb,var(--hud-ok)_8%,transparent)] text-hud-ok border border-[color-mix(in_srgb,var(--hud-ok)_50%,transparent)]"><Icon nome="check" tamanho={12} traco={3} /> Pago {appt.paymentMethod ? `(${PAYMENT_LABELS[appt.paymentMethod] || appt.paymentMethod})` : ""}</span>
                               ) : isPayingThis ? (
                                 <div className="space-y-3 pt-1">
                                   {appt.services.length > 0 && (
                                     <div className="space-y-1.5">
-                                      <p className="text-xs text-gray-400 font-medium">Serviços realizados:</p>
+                                      <p className="text-xs text-hud-muted font-medium">Serviços realizados:</p>
                                       {appt.services.map(svc => {
                                         const removed = removedServiceIds.includes(svc.serviceId);
-                                        return (<label key={svc.serviceId} className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={!removed} onChange={() => { setRemovedServiceIds(prev => removed ? prev.filter(id => id !== svc.serviceId) : [...prev, svc.serviceId]); setCustomPrice(""); }} className="w-4 h-4 accent-yellow-400" /><span className={`flex-1 text-sm ${removed ? "line-through text-gray-600" : "text-white"}`}>{svc.name}</span><span className={`text-sm font-medium ${removed ? "text-gray-600" : "text-brand-400"}`}>R$ {svc.price.toFixed(2)}</span></label>);
+                                        return (<label key={svc.serviceId} className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={!removed} onChange={() => { setRemovedServiceIds(prev => removed ? prev.filter(id => id !== svc.serviceId) : [...prev, svc.serviceId]); setCustomPrice(""); }} className="w-5 h-5 accent-[var(--hud-accent)]" /><span className={`flex-1 text-sm ${removed ? "line-through text-hud-faint" : "text-hud-text"}`}>{svc.name}</span><span className={`text-sm font-medium ${removed ? "text-hud-faint" : "text-hud-light"}`}>R$ {svc.price.toFixed(2)}</span></label>);
                                       })}
                                     </div>
                                   )}
                                   {(appt.comandaTotal ?? 0) > 0 && (
                                     // O produto entra no que o cliente paga agora. Sem esta
                                     // linha o barbeiro confirma só o serviço e a pomada some.
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-hud-muted">
                                       + R$ {(appt.comandaTotal ?? 0).toFixed(2)} em produtos
                                     </p>
                                   )}
-                                  <div className="flex items-center gap-2"><p className="text-xs text-gray-400 shrink-0">Valor (R$):</p><input type="number" min="0" step="0.01" value={customPrice !== "" ? customPrice : (appt.services.filter(s => !removedServiceIds.includes(s.serviceId)).reduce((sum, s) => sum + s.price, 0) + (appt.comandaTotal ?? 0)).toFixed(2)} onChange={e => setCustomPrice(e.target.value)} className="flex-1 rounded-lg bg-dark-900 border border-gray-700 px-3 py-1.5 text-sm text-white focus:border-brand-400 focus:outline-none text-right" /></div>
-                                  <p className="text-xs text-gray-400">Forma de pagamento:</p>
-                                  <div className="flex gap-2">{(["pix", "dinheiro", "cartao"] as const).map(m => (<button key={m} onClick={() => setPaymentMethod(m)} className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-all ${paymentMethod === m ? "border-brand-400 bg-brand-500/10 text-brand-400" : "border-gray-700 text-gray-400"}`}>{PAYMENT_LABELS[m]}</button>))}</div>
+                                  <div className="flex items-center gap-2"><p className="text-xs text-hud-muted shrink-0">Valor (R$):</p><input type="number" min="0" step="0.01" value={customPrice !== "" ? customPrice : (appt.services.filter(s => !removedServiceIds.includes(s.serviceId)).reduce((sum, s) => sum + s.price, 0) + (appt.comandaTotal ?? 0)).toFixed(2)} onChange={e => setCustomPrice(e.target.value)} className="flex-1 rounded bg-hud-bg border border-hud-border px-3 py-1.5 text-sm text-hud-text focus:border-hud-accent focus:outline-none text-right" /></div>
+                                  <p className="text-xs text-hud-muted">Forma de pagamento:</p>
+                                  <div className="flex gap-2">{(["pix", "dinheiro", "cartao"] as const).map(m => (<button key={m} onClick={() => setPaymentMethod(m)} aria-pressed={paymentMethod === m} className={`hud-focus flex-1 min-h-[44px] rounded border text-sm transition-all ${paymentMethod === m ? "gold-fill border-transparent font-extrabold" : "border-hud-border text-hud-muted font-semibold"}`}>{PAYMENT_LABELS[m]}</button>))}</div>
                                   <div className="flex gap-2">
-                                    <button onClick={() => { setPayingId(null); setRemovedServiceIds([]); setCustomPrice(""); }} className="flex-1 rounded-lg border border-gray-700 py-2 text-sm text-gray-400 hover:text-white transition">Cancelar</button>
-                                    <button disabled={confirmingPayId === appt.id} onClick={() => handleConfirmPayment(appt.id)} className="flex-1 rounded-lg bg-brand-500 py-2 text-sm font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{confirmingPayId === appt.id ? "..." : "Confirmar"}</button>
+                                    <button onClick={() => { setPayingId(null); setRemovedServiceIds([]); setCustomPrice(""); }} className="flex-1 rounded border border-hud-border py-2 text-sm text-hud-muted hover:text-hud-text transition">Cancelar</button>
+                                    <button disabled={confirmingPayId === appt.id} onClick={() => handleConfirmPayment(appt.id)} className="hud-focus flex-1 min-h-[44px] rounded gold-fill text-sm font-extrabold hover:brightness-105 disabled:opacity-50 transition-all">{confirmingPayId === appt.id ? "Salvando…" : "Confirmar"}</button>
                                   </div>
                                 </div>
                               ) : appt.status === "confirmed" && (
-                                <button onClick={() => { setPayingId(appt.id); setPaymentMethod("pix"); setRemovedServiceIds([]); setCustomPrice(""); }} className="w-full rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition">💰 Confirmar Pagamento</button>
+                                <button onClick={() => { setPayingId(appt.id); setPaymentMethod("pix"); setRemovedServiceIds([]); setCustomPrice(""); }} className="hud-focus gold-fill w-full min-h-[48px] rounded text-sm font-extrabold uppercase tracking-[0.08em] hover:brightness-105 transition inline-flex items-center justify-center gap-2"><Icon nome="dinheiro" tamanho={18} /> Confirmar pagamento</button>
                               )}
                             </div>
                           )}
 
                           {/* CRM Notes */}
                           {!isCancelled && !isNoShow && (
-                            <div className="pt-1 border-t border-gray-800">
-                              <p className="text-xs text-gray-500 mb-1">📝 Notas</p>
-                              <textarea rows={2} placeholder="Observações sobre o cliente..." value={clientNotes[appt.client.id] ?? (appt.client.notes || "")} onChange={e => setClientNotes(prev => ({...prev, [appt.client.id]: e.target.value}))} onBlur={() => saveClientNote(appt.client.id, clientNotes[appt.client.id] ?? (appt.client.notes || ""))} className="w-full rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-400 focus:outline-none resize-none transition-colors" />
-                              {savingNote === appt.client.id && <p className="text-xs text-gray-500 mt-1">Salvando...</p>}
+                            <div className="pt-1 border-t border-hud-border">
+                              <p className="text-xs text-hud-muted mb-1"><Icon nome="editar" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Notas</p>
+                              <textarea rows={2} placeholder="Observações sobre o cliente..." value={clientNotes[appt.client.id] ?? (appt.client.notes || "")} onChange={e => setClientNotes(prev => ({...prev, [appt.client.id]: e.target.value}))} onBlur={() => saveClientNote(appt.client.id, clientNotes[appt.client.id] ?? (appt.client.notes || ""))} className="w-full rounded bg-hud-bg border border-hud-border px-3 py-2 text-sm text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none resize-none transition-colors" />
+                              {savingNote === appt.client.id && <p className="text-xs text-hud-muted mt-1">Salvando...</p>}
                             </div>
                           )}
                         </div>
@@ -2057,74 +2128,74 @@ export default function PainelPage() {
                 {totalAReceber && totalAReceber.total > 0 && (
                   <button
                     onClick={() => setVerAReceber(true)}
-                    className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition press-scale ${
+                    className={`w-full flex items-center gap-3 rounded border px-4 py-3.5 text-left transition press-scale ${
                       totalAReceber.promessasVencidas > 0
-                        ? "border-red-500/40 bg-red-500/5 hover:bg-red-500/10"
-                        : "border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10"
+                        ? "border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)]"
+                        : "border-[color-mix(in_srgb,var(--hud-warn)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)]"
                     }`}
                   >
-                    <span className="text-xl shrink-0">💰</span>
+                    <span className="text-xl shrink-0"><Icon nome="dinheiro" tamanho={18} /></span>
                     <span className="flex-1 min-w-0">
-                      <span className={`block text-sm font-semibold ${totalAReceber.promessasVencidas > 0 ? "text-red-400" : "text-yellow-400"}`}>
+                      <span className={`block text-sm font-semibold ${totalAReceber.promessasVencidas > 0 ? "text-hud-err" : "text-hud-warn"}`}>
                         {totalAReceber.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} a receber
                       </span>
-                      <span className="block text-xs text-gray-500">
+                      <span className="block text-xs text-hud-muted">
                         {totalAReceber.promessasVencidas > 0
                           ? `${totalAReceber.promessasVencidas} prometeu e não pagou`
                           : "Ver quem está devendo"}
                       </span>
                     </span>
-                    <span className="text-gray-600 shrink-0">›</span>
+                    <span className="text-hud-faint shrink-0">›</span>
                   </button>
                 )}
 
                 <button
                   onClick={() => setVerRelatorio(true)}
-                  className="w-full flex items-center gap-3 rounded-xl border border-brand-400/40 bg-brand-500/5 px-4 py-3.5 text-left hover:bg-brand-500/10 transition press-scale"
+                  className="w-full flex items-center gap-3 rounded border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-accent)_5%,transparent)] px-4 py-3.5 text-left hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition press-scale"
                 >
-                  <span className="text-xl shrink-0">📄</span>
+                  <span className="shrink-0 text-hud-accent"><Icon nome="ticket" tamanho={20} /></span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-brand-400">Relatório por período</span>
-                    <span className="block text-xs text-gray-500">Quem deve, como entrou, comissões</span>
+                    <span className="block text-sm font-semibold text-hud-light">Relatório por período</span>
+                    <span className="block text-xs text-hud-muted">Quem deve, como entrou, comissões</span>
                   </span>
-                  <span className="text-brand-400/50 shrink-0">›</span>
+                  <span className="text-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] shrink-0">›</span>
                 </button>
 
-                {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-gray-500 py-10">Não foi possível carregar</p> : (
+                {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-hud-muted py-10">Não foi possível carregar</p> : (
                   <>
-                    <div className="rounded-2xl bg-brand-500/10 border border-brand-400/30 p-5">
-                      <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p>
-                      <p className="text-4xl font-semibold text-brand-400">R$ {dashboard.month.revenue.toFixed(2)}</p>
+                    <div className="hud-card hud-corners p-5">
+                      <p className="hud-eyebrow mb-1">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p>
+                      <p className="gold-text gold-glow font-display text-5xl tabular-nums">R$ {dashboard.month.revenue.toFixed(2).replace(".", ",")}</p>
                       <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        {dashboard.month.revenueGrowth !== null && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dashboard.month.revenueGrowth >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>{dashboard.month.revenueGrowth >= 0 ? "▲" : "▼"} {Math.abs(dashboard.month.revenueGrowth)}%</span>}
-                        {dashboard.month.toReceive > 0 && <span className="text-xs text-brand-400/80">+ R$ {dashboard.month.toReceive.toFixed(2)} a receber</span>}
+                        {dashboard.month.revenueGrowth !== null && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${dashboard.month.revenueGrowth >= 0 ? "bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] text-hud-ok" : "bg-[color-mix(in_srgb,var(--hud-err)_20%,transparent)] text-hud-err"}`}>{dashboard.month.revenueGrowth >= 0 ? "▲" : "▼"} {Math.abs(dashboard.month.revenueGrowth)}%</span>}
+                        {dashboard.month.toReceive > 0 && <span className="text-xs text-[color-mix(in_srgb,var(--hud-accent)_80%,transparent)]">+ R$ {dashboard.month.toReceive.toFixed(2)} a receber</span>}
                       </div>
                     </div>
-                    <div><p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Hoje</p>
+                    <div><SectionLabel className="mb-2">Hoje</SectionLabel>
                       <div className="grid grid-cols-3 gap-2">
-                        <StatBox value={`R$ ${dashboard.today.received.toFixed(2)}`} label="Recebido" color="text-green-400" />
+                        <StatBox value={`R$ ${dashboard.today.received.toFixed(2)}`} label="Recebido" color="text-hud-ok" />
                         <StatBox value={`${dashboard.today.appointments}`} label="Agendamentos" />
-                        <StatBox value={`R$ ${dashboard.today.expected.toFixed(2)}`} label="A receber" color="text-brand-400" />
+                        <StatBox value={`R$ ${dashboard.today.expected.toFixed(2)}`} label="A receber" color="text-hud-light" />
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                      <StatBox value={`${dashboard.month.appointments}`} label="Atendimentos" extra={dashboard.month.aptGrowth !== null ? `${dashboard.month.aptGrowth >= 0 ? "+" : ""}${dashboard.month.aptGrowth}%` : undefined} extraColor={dashboard.month.aptGrowth && dashboard.month.aptGrowth >= 0 ? "text-green-400" : "text-red-400"} />
+                      <StatBox value={`${dashboard.month.appointments}`} label="Atendimentos" extra={dashboard.month.aptGrowth !== null ? `${dashboard.month.aptGrowth >= 0 ? "+" : ""}${dashboard.month.aptGrowth}%` : undefined} extraColor={dashboard.month.aptGrowth && dashboard.month.aptGrowth >= 0 ? "text-hud-ok" : "text-hud-err"} />
                       <StatBox value={`R$ ${dashboard.month.avgTicket.toFixed(2)}`} label="Ticket médio" />
-                      <StatBox value={`${dashboard.month.cancelRate}%`} label="Cancelamentos" color={dashboard.month.cancelRate > 20 ? "text-red-400" : dashboard.month.cancelRate > 10 ? "text-yellow-400" : "text-green-400"} />
+                      <StatBox value={`${dashboard.month.cancelRate}%`} label="Cancelamentos" color={dashboard.month.cancelRate > 20 ? "text-hud-err" : dashboard.month.cancelRate > 10 ? "text-hud-warn" : "text-hud-ok"} />
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <StatBox value={`${dashboard.totalClients}`} label="Clientes" />
-                      <StatBox value={dashboard.avgRating ? `${dashboard.avgRating} ★` : "—"} label="Avaliação" color="text-yellow-400" />
-                      {dashboard.peakHour && <StatBox value={`⚡ ${dashboard.peakHour}`} label="Pico" color="text-brand-400" />}
+                      <StatBox value={dashboard.avgRating ? `${dashboard.avgRating} ★` : "—"} label="Avaliação" color="text-hud-warn" />
+                      {dashboard.peakHour && <StatBox value={dashboard.peakHour} label="Pico" color="text-hud-light" />}
                     </div>
                     {dashboard.barberStats?.length > 0 && (
                       <div className="space-y-3">
-                        <p className="text-xs text-gray-500 uppercase tracking-widest">Ranking</p>
+                        <p className="hud-eyebrow">Ranking</p>
                         {dashboard.barberStats.map((b, i) => (
-                          <div key={i} className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-2">
-                            <div className="flex items-center gap-3"><span className="text-brand-400 font-semibold w-6">#{i+1}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-white truncate">{b.name}</p><p className="text-xs text-gray-400">{b.count} atend.</p></div><p className="text-sm font-semibold text-brand-400">R$ {b.revenue.toFixed(2)}</p></div>
-                            <div className="h-1.5 rounded-full bg-gray-700"><div className="h-1.5 rounded-full bg-brand-500 transition-all" style={{ width: `${Math.round(b.revenueShare * 100)}%` }} /></div>
-                            {b.commission > 0 && <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-1.5"><span className="text-xs text-green-400">Comissao ({b.commission}%)</span><span className="text-xs font-semibold text-green-400">R$ {b.commissionValue.toFixed(2)}</span></div>}
+                          <div key={i} className="hud-card p-4 space-y-2">
+                            <div className="flex items-center gap-3"><span className="text-hud-light font-semibold w-6">#{i+1}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-hud-text truncate">{b.name}</p><p className="text-xs text-hud-muted">{b.count} atend.</p></div><p className="text-sm font-semibold text-hud-light">R$ {b.revenue.toFixed(2)}</p></div>
+                            <div className="h-1.5 rounded-full bg-[var(--hud-track)]"><div className="h-1.5 rounded-full gold-fill transition-all" style={{ width: `${Math.round(b.revenueShare * 100)}%` }} /></div>
+                            {b.commission > 0 && <div className="flex items-center justify-between bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] rounded px-3 py-1.5"><span className="text-xs text-hud-ok">Comissao ({b.commission}%)</span><span className="text-xs font-semibold text-hud-ok">R$ {b.commissionValue.toFixed(2)}</span></div>}
                           </div>
                         ))}
                       </div>
@@ -2142,17 +2213,10 @@ export default function PainelPage() {
                 tela curta com o próprio botão à vista. */}
             {activeTab === "config" && (
               <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => (configView ? setConfigView(null) : setActiveTab("home"))}
-                    className="flex items-center gap-1 text-brand-400 text-sm hover:text-brand-300 shrink-0"
-                  >
-                    <span className="text-lg">←</span> Voltar
-                  </button>
-                  <h2 className="text-lg font-semibold text-white">
-                    {configView ? CONFIG_TITULOS[configView] : "⚙️ Configurações"}
-                  </h2>
-                </div>
+                <ScreenHeader
+                  titulo={configView ? CONFIG_TITULOS[configView] : "Configurações"}
+                  onVoltar={() => (configView ? setConfigView(null) : setActiveTab("home"))}
+                />
 
                 {/* ─── Menu ─── */}
                 {!configView && (
@@ -2163,10 +2227,10 @@ export default function PainelPage() {
                         não salvou. */}
                     <button
                       onClick={() => setConfigView("horário")}
-                      className="w-full rounded-2xl border border-gray-700 bg-dark-800 p-4 text-left hover:border-brand-400 transition-all press-scale"
+                      className="hud-card hud-corners hud-focus w-full p-4 text-left hover:border-hud-accent transition-all"
                     >
-                      <p className="text-xs text-gray-500">🕐 Horário e dias</p>
-                      <p className="mt-1 text-lg font-semibold text-white tabular-nums">
+                      <p className="hud-label flex items-center gap-1.5"><Icon nome="relogio" tamanho={14} />Horário e dias</p>
+                      <p className="mt-1 text-lg font-semibold text-hud-text tabular-nums">
                         {resumo
                           ? `${resumo.horario.openTime} – ${resumo.horario.closeTime} · ${resumirDias(resumo.horario.workDays)}`
                           : "—"}
@@ -2175,7 +2239,7 @@ export default function PainelPage() {
 
                     {cartoesCadastro.length > 0 && (
                       <>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest">Cadastros</p>
+                        <SectionLabel>Cadastros</SectionLabel>
                         <div className="grid grid-cols-2 gap-2.5">
                           {cartoesCadastro.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
                         </div>
@@ -2184,7 +2248,7 @@ export default function PainelPage() {
 
                     {cartoesBarbearia.length > 0 && (
                       <>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest">Barbearia</p>
+                        <SectionLabel>Barbearia</SectionLabel>
                         <div className="grid grid-cols-2 gap-2.5">
                           {cartoesBarbearia.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
                         </div>
@@ -2193,25 +2257,25 @@ export default function PainelPage() {
 
                     {resumoAssinatura && (
                       <>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest">Plano</p>
+                        <SectionLabel>Plano</SectionLabel>
                         <button
                           onClick={() => setConfigView("assinatura")}
-                          className={`w-full rounded-2xl border p-4 text-left transition-all press-scale ${
+                          className={`w-full rounded border p-4 text-left transition-all press-scale ${
                             resumoAssinatura.estado === "bloqueada" || resumoAssinatura.estado === "carencia"
-                              ? "border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-400"
-                              : "border-gray-700 bg-dark-800 hover:border-brand-400"
+                              ? "border-[color-mix(in_srgb,var(--hud-warn)_50%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_5%,transparent)] hover:border-hud-warn"
+                              : "border-hud-border bg-hud-surface hover:border-hud-accent"
                           }`}
                         >
-                          <p className="text-xs text-gray-500">⭐ Minha assinatura</p>
+                          <p className="hud-label flex items-center gap-1.5"><Icon nome="estrela" tamanho={14} />Minha assinatura</p>
                           <p className={`mt-1 text-lg font-semibold ${
-                            resumoAssinatura.estado === "bloqueada" ? "text-red-400"
-                            : resumoAssinatura.estado === "carencia" ? "text-yellow-400"
-                            : resumoAssinatura.estado === "trial" ? "text-blue-400"
-                            : "text-white"
+                            resumoAssinatura.estado === "bloqueada" ? "text-hud-err"
+                            : resumoAssinatura.estado === "carencia" ? "text-hud-warn"
+                            : resumoAssinatura.estado === "trial" ? "text-hud-info"
+                            : "text-hud-text"
                           }`}>
                             {ROTULO_ASSINATURA[resumoAssinatura.estado] || resumoAssinatura.estado}
                             {resumoAssinatura.estado !== "cortesia" && (
-                              <span className="text-sm font-normal text-gray-500 ml-2 tabular-nums">
+                              <span className="text-sm font-normal text-hud-muted ml-2 tabular-nums">
                                 {resumoAssinatura.diasRestantes}d
                               </span>
                             )}
@@ -2220,7 +2284,7 @@ export default function PainelPage() {
                       </>
                     )}
 
-                    <p className="text-xs text-gray-500 uppercase tracking-widest">Conta</p>
+                    <SectionLabel>Conta</SectionLabel>
                     <div className="grid grid-cols-2 gap-2.5">
                       {cartoesConta.map(c => <TileConfig key={c.label} c={c} onClick={() => abrirCartao(c)} />)}
                     </div>
@@ -2228,15 +2292,15 @@ export default function PainelPage() {
                     {/* Logout */}
                 <div className="flex items-center justify-between gap-3 pt-2">
                   <div className="min-w-0">
-                    <p className="text-sm text-white truncate">{user?.name || "—"}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.shopName}{user?.role === "owner" ? " · dono" : " · barbeiro"}</p>
+                    <p className="text-sm text-hud-text truncate">{user?.name || "—"}</p>
+                    <p className="text-xs text-hud-muted truncate">{user?.shopName}{user?.role === "owner" ? " · dono" : " · barbeiro"}</p>
                   </div>
-                  <button onClick={handleLogout} className="shrink-0 flex items-center gap-2 rounded-xl border border-red-500/30 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition">
-                    Sair <span>→</span>
+                  <button onClick={handleLogout} className="hud-focus shrink-0 flex min-h-[44px] items-center gap-2 rounded border border-[color-mix(in_srgb,var(--hud-err)_45%,transparent)] px-4 text-sm font-bold text-hud-err hover:bg-[color-mix(in_srgb,var(--hud-err)_8%,transparent)] transition">
+                    <Icon nome="sair" tamanho={16} /> Sair
                   </button>
                 </div>
 
-                    <p className="text-center text-xs text-gray-600 pb-4">BarberPro v2.0</p>
+                    <p className="text-center text-xs text-hud-faint pb-4">BarberPro v2.0</p>
                   </>
                 )}
 
@@ -2245,51 +2309,51 @@ export default function PainelPage() {
                   <>
                     {/* Identidade e endereco — o cliente precisa saber onde fica */}
                 {shopSettings && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+                  <div className="hud-card p-5 space-y-4">
                     <div>
-                      <h3 className="font-semibold text-white">🏠 Dados da Barbearia</h3>
-                      <p className="text-xs text-gray-500 mt-1">Aparecem no link que o cliente abre para agendar.</p>
+                      <h3 className="font-semibold text-hud-text"><Icon nome="inicio" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Dados da Barbearia</h3>
+                      <p className="text-xs text-hud-muted mt-1">Aparecem no link que o cliente abre para agendar.</p>
                     </div>
 
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Nome da barbearia</label>
-                      <input type="text" value={shopSettings.name} onChange={e => setShopSettings(p => p ? { ...p, name: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
-                      <p className="text-xs text-gray-500 mt-1">O link continua o mesmo ({bookingLink.replace(/^https?:\/\//, "")}) — trocar o nome nao quebra o que voce ja mandou pros clientes.</p>
+                      <label className="text-xs text-hud-muted mb-1 block">Nome da barbearia</label>
+                      <input type="text" value={shopSettings.name} onChange={e => setShopSettings(p => p ? { ...p, name: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
+                      <p className="text-xs text-hud-muted mt-1">O link continua o mesmo ({bookingLink.replace(/^https?:\/\//, "")}) — trocar o nome nao quebra o que voce ja mandou pros clientes.</p>
                     </div>
 
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Telefone / WhatsApp</label>
-                      <input type="tel" inputMode="numeric" placeholder="(00) 00000-0000" value={shopSettings.phone} onChange={e => setShopSettings(p => p ? { ...p, phone: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      <label className="text-xs text-hud-muted mb-1 block">Telefone / WhatsApp</label>
+                      <input type="tel" inputMode="numeric" placeholder="(00) 00000-0000" value={shopSettings.phone} onChange={e => setShopSettings(p => p ? { ...p, phone: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                     </div>
 
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Endereço (rua e número)</label>
-                      <input type="text" placeholder="Rua das Flores, 123" value={shopSettings.address} onChange={e => setShopSettings(p => p ? { ...p, address: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                      <label className="text-xs text-hud-muted mb-1 block">Endereço (rua e número)</label>
+                      <input type="text" placeholder="Rua das Flores, 123" value={shopSettings.address} onChange={e => setShopSettings(p => p ? { ...p, address: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Bairro</label>
-                        <input type="text" value={shopSettings.neighborhood} onChange={e => setShopSettings(p => p ? { ...p, neighborhood: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                        <label className="text-xs text-hud-muted mb-1 block">Bairro</label>
+                        <input type="text" value={shopSettings.neighborhood} onChange={e => setShopSettings(p => p ? { ...p, neighborhood: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">CEP</label>
-                        <input type="text" inputMode="numeric" placeholder="00000-000" value={shopSettings.zipCode} onChange={e => setShopSettings(p => p ? { ...p, zipCode: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
+                        <label className="text-xs text-hud-muted mb-1 block">CEP</label>
+                        <input type="text" inputMode="numeric" placeholder="00000-000" value={shopSettings.zipCode} onChange={e => setShopSettings(p => p ? { ...p, zipCode: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
                       <div className="col-span-2">
-                        <label className="text-xs text-gray-400 mb-1 block">Cidade</label>
-                        <input type="text" value={shopSettings.city} onChange={e => setShopSettings(p => p ? { ...p, city: e.target.value } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white focus:border-brand-400 focus:outline-none" />
+                        <label className="text-xs text-hud-muted mb-1 block">Cidade</label>
+                        <input type="text" value={shopSettings.city} onChange={e => setShopSettings(p => p ? { ...p, city: e.target.value } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text focus:border-hud-accent focus:outline-none" />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">UF</label>
-                        <input type="text" maxLength={2} placeholder="SP" value={shopSettings.state} onChange={e => setShopSettings(p => p ? { ...p, state: e.target.value.toUpperCase() } : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 uppercase focus:border-brand-400 focus:outline-none" />
+                        <label className="text-xs text-hud-muted mb-1 block">UF</label>
+                        <input type="text" maxLength={2} placeholder="SP" value={shopSettings.state} onChange={e => setShopSettings(p => p ? { ...p, state: e.target.value.toUpperCase() } : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint uppercase focus:border-hud-accent focus:outline-none" />
                       </div>
                     </div>
 
-                    <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+                    <button onClick={saveShopSettings} disabled={savingSettings} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
                       {savingSettings ? "Salvando..." : "Salvar dados"}
                     </button>
                   </div>
@@ -2302,72 +2366,72 @@ export default function PainelPage() {
                   <>
                     {/* Shop settings */}
                 {shopSettings && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-5">
-                    <h3 className="font-semibold text-white">🕐 Horário de funcionamento</h3>
+                  <div className="hud-card p-5 space-y-5">
+                    <h3 className="font-semibold text-hud-text"><Icon nome="relogio" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Horário de funcionamento</h3>
 
                     {/* Os campos únicos de abertura e fechamento saíram: cada dia
                         tem o seu. Aqui fica o resumo da semana, que abre o modal. */}
                     <button
                       onClick={() => setVerExpediente(true)}
-                      className="w-full rounded-xl border border-gray-700 p-3.5 text-left hover:border-brand-400/50 transition"
+                      className="w-full rounded border border-hud-border p-3.5 text-left hover:border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] transition"
                     >
                       <span className="flex items-center justify-between gap-3 mb-2.5">
-                        <span className="text-sm font-semibold text-white">Cada dia com seu horário</span>
-                        <span className="text-brand-400 text-sm shrink-0">Editar ›</span>
+                        <span className="text-sm font-semibold text-hud-text">Cada dia com seu horário</span>
+                        <span className="text-hud-light text-sm shrink-0">Editar ›</span>
                       </span>
                       {semana ? (
                         <span className="grid grid-cols-7 gap-1">
                           {semana.map(d => (
                             <span
                               key={d.dia}
-                              className={`rounded-lg py-1.5 text-center border ${d.aberto ? "border-gray-700 bg-dark-900" : "border-gray-800 opacity-45"}`}
+                              className={`rounded py-1.5 text-center border ${d.aberto ? "border-hud-border bg-hud-bg" : "border-hud-border opacity-45"}`}
                             >
-                              <span className="block text-[11px] font-bold text-gray-300">{WEEKDAYS[d.dia]}</span>
-                              <span className="block text-[9px] text-gray-500 tabular-nums mt-0.5">
+                              <span className="block text-[11px] font-bold text-hud-soft">{WEEKDAYS[d.dia]}</span>
+                              <span className="block text-[9px] text-hud-muted tabular-nums mt-0.5">
                                 {d.aberto ? d.abre.slice(0, 2) + "–" + d.fecha.slice(0, 2) : "—"}
                               </span>
                             </span>
                           ))}
                         </span>
                       ) : (
-                        <span className="block text-xs text-gray-500">Toque para definir o horário de cada dia e o almoço.</span>
+                        <span className="block text-xs text-hud-muted">Toque para definir o horário de cada dia e o almoço.</span>
                       )}
                     </button>
                     <div>
-                      <p className="text-xs text-gray-400 mb-1">De quanto em quanto tempo</p>
+                      <p className="text-xs text-hud-muted mb-1">De quanto em quanto tempo</p>
                       <div className="grid grid-cols-5 gap-1.5">
                         {[15, 20, 30, 45, 60].map(min => (
                           <button
                             key={min}
                             onClick={() => setShopSettings(p => p ? { ...p, slotInterval: min } : p)}
-                            className={`py-2.5 rounded-lg border text-sm font-medium transition ${
+                            className={`py-2.5 rounded border text-sm font-medium transition ${
                               shopSettings.slotInterval === min
-                                ? "border-brand-400 bg-brand-500/10 text-brand-400"
-                                : "border-gray-700 text-gray-500 hover:text-gray-300"
+                                ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] text-hud-light"
+                                : "border-hud-border text-hud-muted hover:text-hud-soft"
                             }`}
                           >
                             {min === 60 ? "1h" : min + "m"}
                           </button>
                         ))}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1.5">
+                      <p className="text-xs text-hud-muted mt-1.5">
                         {shopSettings.slotInterval === 60
                           ? "O cliente vê 08:00, 09:00, 10:00 — um atendimento por hora."
                           : `O cliente vê horários a cada ${shopSettings.slotInterval} minutos.`}
                       </p>
                     </div>
 
-                    <div><p className="text-xs text-gray-400 mb-1">Chave Pix</p><input type="text" placeholder="Sua chave pix" value={shopSettings.pixKey} onChange={e => setShopSettings(p => p ? {...p, pixKey: e.target.value} : p)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" /></div>
+                    <div><p className="text-xs text-hud-muted mb-1">Chave Pix</p><input type="text" placeholder="Sua chave pix" value={shopSettings.pixKey} onChange={e => setShopSettings(p => p ? {...p, pixKey: e.target.value} : p)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" /></div>
 
                     {/* Booking mode */}
-                    <div><p className="text-xs text-gray-400 mb-2">Modo de Atendimento</p>
+                    <div><p className="text-xs text-hud-muted mb-2">Modo de Atendimento</p>
                       <div className="flex gap-2">
-                        <button onClick={() => setShopSettings(p => p ? {...p, bookingMode: "steps"} : p)} className={`flex-1 rounded-xl py-3 text-sm font-semibold transition border ${shopSettings.bookingMode === "steps" ? "bg-brand-500 text-dark-900 border-brand-500" : "bg-transparent text-gray-400 border-gray-700"}`}>📋 Etapas</button>
-                        <button onClick={() => setShopSettings(p => p ? {...p, bookingMode: "agent"} : p)} className={`flex-1 rounded-xl py-3 text-sm font-semibold transition border ${shopSettings.bookingMode === "agent" ? "bg-blue-600 text-white border-blue-600" : "bg-transparent text-gray-400 border-gray-700"}`}>🤖 Agente IA</button>
+                        <button onClick={() => setShopSettings(p => p ? {...p, bookingMode: "steps"} : p)} className={`flex-1 rounded py-3 text-sm font-semibold transition border ${shopSettings.bookingMode === "steps" ? "gold-fill text-[var(--hud-on-accent)] border-hud-accent" : "bg-transparent text-hud-muted border-hud-border"}`}><Icon nome="agenda" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Etapas</button>
+                        <button onClick={() => setShopSettings(p => p ? {...p, bookingMode: "agent"} : p)} className={`flex-1 rounded py-3 text-sm font-semibold transition border ${shopSettings.bookingMode === "agent" ? "gold-fill text-[var(--hud-on-accent)] border-hud-accent" : "bg-transparent text-hud-muted border-hud-border"}`}><Icon nome="mensagem" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Agente IA</button>
                       </div>
                     </div>
 
-                    <button onClick={saveShopSettings} disabled={savingSettings} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{savingSettings ? "Salvando..." : "Salvar configurações"}</button>
+                    <button onClick={saveShopSettings} disabled={savingSettings} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{savingSettings ? "Salvando..." : "Salvar configurações"}</button>
                   </div>
                 )}
                   </>
@@ -2381,28 +2445,28 @@ export default function PainelPage() {
                   <>
                     {/* Logo da barbearia */}
                 {shopSettings && (
-                  <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+                  <div className="hud-card p-5 space-y-4">
                     <div>
-                      <h3 className="font-semibold text-white">🖼️ Logo da barbearia</h3>
-                      <p className="text-xs text-gray-500 mt-1">Aparece no topo do link que você envia para os clientes.</p>
+                      <h3 className="font-semibold text-hud-text"><Icon nome="imagem" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Logo da barbearia</h3>
+                      <p className="text-xs text-hud-muted mt-1">Aparece no topo do link que você envia para os clientes.</p>
                     </div>
                     <div className="flex items-center gap-4">
                       {shopSettings.logoUrl ? (
-                        <img src={shopSettings.logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-cover border border-brand-500/30 shrink-0" />
+                        <img src={shopSettings.logoUrl} alt="Logo" className="w-16 h-16 rounded object-cover border border-[color-mix(in_srgb,var(--hud-accent)_30%,transparent)] shrink-0" />
                       ) : (
-                        <div className="w-16 h-16 rounded-xl bg-brand-500/10 border border-gray-700 flex items-center justify-center text-2xl shrink-0">✂️</div>
+                        <div className="w-16 h-16 rounded bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] border border-hud-border flex items-center justify-center text-2xl shrink-0"><Icon nome="tesoura" tamanho={18} /></div>
                       )}
                       <div className="flex-1 space-y-2">
-                        <label className={`block text-center rounded-lg border border-brand-400/50 py-2 text-sm text-brand-400 hover:bg-brand-500/10 transition cursor-pointer ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                        <label className={`block text-center rounded border border-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] py-2 text-sm text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition cursor-pointer ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
                           {uploadingLogo ? "Enviando..." : shopSettings.logoUrl ? "Trocar logo" : "Enviar logo"}
                           <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingLogo} onChange={e => handleLogoUpload(e.target.files?.[0] || null)} />
                         </label>
                         {shopSettings.logoUrl && (
-                          <button onClick={handleRemoveLogo} disabled={uploadingLogo} className="w-full rounded-lg border border-gray-700 py-2 text-xs text-gray-400 hover:text-red-400 transition disabled:opacity-50">Remover logo</button>
+                          <button onClick={handleRemoveLogo} disabled={uploadingLogo} className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2 text-xs text-hud-muted hover:text-hud-err transition disabled:opacity-50">Remover logo</button>
                         )}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">JPG, PNG ou WEBP · máx 3MB · de preferência quadrado.</p>
+                    <p className="text-xs text-hud-muted">JPG, PNG ou WEBP · máx 3MB · de preferência quadrado.</p>
                   </div>
                 )}
                   </>
@@ -2416,11 +2480,11 @@ export default function PainelPage() {
                   <>
                     <RecoveryCode token={token} />
                     {/* Change password */}
-                <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-                  <h3 className="font-semibold text-white">🔒 Alterar senha</h3>
-                  <input type="password" placeholder="Senha atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                  <input type="password" placeholder="Nova senha (min 6)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                  <button onClick={handleChangePassword} disabled={changingPassword} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar senha"}</button>
+                <div className="hud-card p-5 space-y-3">
+                  <h3 className="font-semibold text-hud-text"><Icon nome="cadeado" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Alterar senha</h3>
+                  <input type="password" placeholder="Senha atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+                  <input type="password" placeholder="Nova senha (min 6)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+                  <button onClick={handleChangePassword} disabled={changingPassword} className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">{changingPassword ? "Alterando..." : "Alterar senha"}</button>
                 </div>
                   </>
                 )}
@@ -2433,32 +2497,32 @@ export default function PainelPage() {
                 {/* ─── Clientes banidos ─── */}
                 {configView === "banidos" && (
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
-                      <p className="text-xs text-gray-500">
+                    <div className="hud-card p-5 space-y-3">
+                      <p className="text-xs text-hud-muted">
                         Cliente banido não consegue agendar nem entrar na lista de espera desta
                         barbearia. O histórico e o financeiro dele continuam intactos, e ele pode
                         agendar normalmente em outras barbearias do BarberPro.
                       </p>
-                      <input type="tel" inputMode="numeric" placeholder="Telefone (com DDD)" value={novoBanido.phone} onChange={e => setNovoBanido(p => ({ ...p, phone: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                      <input type="text" placeholder="Motivo (opcional, só você vê)" value={novoBanido.reason} onChange={e => setNovoBanido(p => ({ ...p, reason: e.target.value }))} className="w-full rounded-xl bg-dark-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none" />
-                      <button onClick={() => banirCliente(novoBanido.phone, undefined, novoBanido.reason)} disabled={baningClient} className="w-full rounded-xl border border-red-500/40 bg-red-500/10 py-3 font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition">
+                      <input type="tel" inputMode="numeric" placeholder="Telefone (com DDD)" value={novoBanido.phone} onChange={e => setNovoBanido(p => ({ ...p, phone: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+                      <input type="text" placeholder="Motivo (opcional, só você vê)" value={novoBanido.reason} onChange={e => setNovoBanido(p => ({ ...p, reason: e.target.value }))} className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
+                      <button onClick={() => banirCliente(novoBanido.phone, undefined, novoBanido.reason)} disabled={baningClient} className="w-full rounded border border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] py-3 font-semibold text-hud-err hover:bg-[color-mix(in_srgb,var(--hud-err)_20%,transparent)] disabled:opacity-50 transition">
                         {baningClient ? "Banindo..." : "Banir este telefone"}
                       </button>
                     </div>
 
                     {bannedLoading ? <Spinner /> : banned.length === 0 ? (
-                      <p className="text-center text-gray-500 py-6">Nenhum cliente banido</p>
+                      <p className="text-center text-hud-muted py-6">Nenhum cliente banido</p>
                     ) : (
                       <div className="space-y-2">
                         {banned.map(b => (
-                          <div key={b.id} className="flex items-center gap-3 rounded-xl bg-dark-800 border border-gray-700 p-4">
-                            <span className="text-xl shrink-0">🚫</span>
+                          <div key={b.id} className="hud-card flex items-center gap-3 p-4">
+                            <span className="text-xl shrink-0"><Icon nome="bloqueio" tamanho={18} /></span>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white truncate">{b.name || "Sem nome"}</p>
-                              <p className="text-sm text-gray-400">{b.phone}</p>
-                              {b.reason && <p className="text-xs text-gray-500 mt-0.5 truncate">{b.reason}</p>}
+                              <p className="font-medium text-hud-text truncate">{b.name || "Sem nome"}</p>
+                              <p className="text-sm text-hud-muted">{b.phone}</p>
+                              {b.reason && <p className="text-xs text-hud-muted mt-0.5 truncate">{b.reason}</p>}
                             </div>
-                            <button onClick={() => desbanirCliente(b.phone)} className="shrink-0 rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-400 hover:text-green-400 hover:border-green-500/50 transition">
+                            <button onClick={() => desbanirCliente(b.phone)} className="shrink-0 rounded border border-hud-border px-3 py-2 text-xs text-hud-muted hover:text-hud-ok hover:border-[color-mix(in_srgb,var(--hud-ok)_50%,transparent)] transition">
                               Liberar
                             </button>
                           </div>
@@ -2510,20 +2574,17 @@ export default function PainelPage() {
         confirming={cancellingId === cancelModalId}
       />
 
-      {/* ── Bottom Navigation (mobile-like) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-dark-800 border-t border-gray-700 flex z-30 safe-bottom">
-        {([
-          { tab: "home" as Tab, icon: "🏠", label: "Início" },
-          { tab: "agenda" as Tab, icon: "📅", label: "Agenda" },
-          { tab: "financeiro" as Tab, icon: "💰", label: "Financeiro" },
-          { tab: "config" as Tab, icon: "⚙️", label: "Config" },
-        ]).map(item => (
-          <button key={item.tab} onClick={() => { setActiveTab(item.tab); setSubView(null); }} className={`flex-1 flex flex-col items-center py-2.5 text-xs transition-colors ${activeTab === item.tab && !subView ? "text-brand-400" : "text-gray-500"}`}>
-            <span className="text-lg leading-none mb-0.5">{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      {/* ── Navegação inferior (68px) ── */}
+      <BottomNav<Tab>
+        valor={subView ? ("" as Tab) : activeTab}
+        onChange={(t) => { setActiveTab(t); setSubView(null); }}
+        itens={[
+          { valor: "home", rotulo: "Início", icone: "inicio" },
+          { valor: "agenda", rotulo: "Agenda", icone: "agenda" },
+          { valor: "financeiro", rotulo: "Financeiro", icone: "dinheiro" },
+          { valor: "config", rotulo: "Config", icone: "config" },
+        ]}
+      />
     </main>
   );
 }
@@ -2540,40 +2601,40 @@ function TileConfig({
   c,
   onClick,
 }: {
-  c: { icon: string; label: string; valor: string; pendente?: boolean };
+  c: { icon: NomeIcone; label: string; valor: string; pendente?: boolean };
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col gap-1 rounded-2xl border bg-dark-800 p-3.5 text-left transition-all press-scale ${
+      className={`hud-card hud-focus flex min-h-[96px] flex-col gap-1 p-3.5 text-left transition-all ${
         c.pendente
-          ? "border-yellow-500/40 hover:border-yellow-400"
-          : "border-gray-700 hover:border-brand-400"
-      }`}
+          ? "!border-[color-mix(in_srgb,var(--hud-warn)_50%,transparent)] hover:!border-hud-warn"
+          : "hover:border-hud-accent"
+      }hud-focus`}
     >
-      <span className="text-lg leading-none">{c.icon}</span>
-      <span className={`text-sm font-semibold leading-tight ${c.pendente ? "text-yellow-400" : "text-white"}`}>
+      <span className={c.pendente ? "text-hud-warn" : "text-hud-accent"}><Icon nome={c.icon} tamanho={20} /></span>
+      <span className={`text-sm font-semibold leading-tight ${c.pendente ? "text-hud-warn" : "text-hud-text"}`}>
         {c.valor}
       </span>
-      <span className="text-xs text-gray-500 leading-tight">{c.label}</span>
+      <span className="text-xs text-hud-muted leading-tight">{c.label}</span>
     </button>
   );
 }
 
 function Spinner() {
-  return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-400 border-t-transparent" /></div>;
+  return <div className="flex justify-center py-12"><HudSpinner rotulo="Carregando…" /></div>;
 }
 
 function StatBox({ value, label, color, extra, extraColor }: { value: string; label: string; color?: string; extra?: string; extraColor?: string }) {
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-3 text-center">
-      <p className={`text-lg font-semibold ${color || "text-white"}`}>{value}</p>
+    <div className="hud-card p-3 text-center">
+      <p className={`font-display text-xl tabular-nums leading-tight ${color || "text-hud-text"}`}>{value}</p>
       {extra && <p className={`text-xs font-semibold ${extraColor || ""}`}>{extra}</p>}
       {/* Quebra em duas linhas em vez de cortar: "Agendamentos" não cabe
           numa coluna de 1/3 de tela a 320px, e cortar palavra é pior que
           usar uma linha a mais. */}
-      <p className="text-xs text-gray-500 mt-1 leading-tight break-words">{label}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-hud-muted leading-tight [overflow-wrap:anywhere] hyphens-auto" lang="pt-BR">{label}</p>
     </div>
   );
 }
@@ -2596,36 +2657,36 @@ function CancelModal({ open, appt, waitlistCount, notifyWaitlist, onToggleNotify
       {/* Fundo sólido: a classe de vidro é 74% opaca e faz o modal
           parecer conteúdo desfocado em vez de uma caixa por cima. */}
       <div
-        className="border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl"
+        className="border border-hud-border rounded max-w-sm w-full p-6 space-y-4 shadow-2xl"
         style={{ backgroundColor: "#161625" }}
         onClick={e => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white">Cancelar agendamento?</h3>
+        <h3 className="font-display text-xl leading-tight text-hud-text">Cancelar agendamento?</h3>
         {appt && (
-          <div className="rounded-xl bg-dark-900 border border-gray-700 p-3">
-            <p className="font-medium text-white">{appt.client?.name}</p>
-            <p className="text-sm text-gray-400">{appt.startTime} - {appt.endTime} · {appt.services.map(s => s.name).join(", ")}</p>
+          <div className="rounded bg-hud-bg border border-hud-border p-3">
+            <p className="font-medium text-hud-text">{appt.client?.name}</p>
+            <p className="text-sm text-hud-muted">{appt.startTime} - {appt.endTime} · {appt.services.map(s => s.name).join(", ")}</p>
           </div>
         )}
         {waitlistCount > 0 && (
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 space-y-3">
+          <div className="rounded bg-[color-mix(in_srgb,var(--hud-info)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-info)_30%,transparent)] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-400">📋 Lista de espera</p>
-                <p className="text-xs text-gray-400">{waitlistCount} cliente{waitlistCount > 1 ? "s" : ""} aguardando vaga</p>
+                <p className="text-sm font-medium text-hud-info"><Icon nome="copiar" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Lista de espera</p>
+                <p className="text-xs text-hud-muted">{waitlistCount} cliente{waitlistCount > 1 ? "s" : ""} aguardando vaga</p>
               </div>
-              <button onClick={onToggleNotify} className={`w-12 h-6 rounded-full transition-colors shrink-0 ${notifyWaitlist ? "bg-blue-500" : "bg-gray-700"}`}>
+              <button onClick={onToggleNotify} className={`hud-focus w-12 h-6 rounded-full transition-colors shrink-0 ${notifyWaitlist ? "bg-hud-info" : "bg-[var(--hud-track)]"}hud-focus`}>
                 <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${notifyWaitlist ? "translate-x-6" : "translate-x-0.5"}`} />
               </button>
             </div>
             {notifyWaitlist && (
-              <p className="text-xs text-blue-300">Ao cancelar, abriremos o WhatsApp para você avisar os clientes da lista de espera.</p>
+              <p className="text-xs text-hud-info">Ao cancelar, abriremos o WhatsApp para você avisar os clientes da lista de espera.</p>
             )}
           </div>
         )}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition">Voltar</button>
-          <button onClick={onConfirm} disabled={confirming} className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-all">{confirming ? "Cancelando..." : "Confirmar Cancelamento"}</button>
+          <button onClick={onClose} className="hud-focus flex-1 rounded border border-hud-border py-3 text-sm text-hud-muted hover:text-hud-text transition">Voltar</button>
+          <button onClick={onConfirm} disabled={confirming} className="hud-focus flex-1 rounded bg-hud-err py-3 text-sm font-semibold text-hud-text hover:brightness-110 disabled:opacity-50 transition-all">{confirming ? "Cancelando..." : "Confirmar Cancelamento"}</button>
         </div>
       </div>
     </div>,

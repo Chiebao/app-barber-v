@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 
 /**
@@ -127,21 +128,21 @@ export default function PushToggle({ token }: { token: string | null }) {
   if (state === "checking") return null;
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-3">
+    <div className="hud-card p-5 space-y-3">
       <div>
-        <h3 className="font-semibold text-white">🔔 Notificações neste aparelho</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <h3 className="font-semibold text-hud-text"><Icon nome="sino" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Notificações neste aparelho</h3>
+        <p className="text-xs text-hud-muted mt-1">
           Receba um aviso na hora que um cliente agendar ou cancelar — mesmo com o app fechado.
         </p>
       </div>
 
       {state === "on" && (
         <>
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-3 py-2">
-            <span className="text-green-400 text-sm">✓ Ativadas neste aparelho</span>
+          <div className="flex items-center gap-2 rounded bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-ok)_30%,transparent)] px-3 py-2">
+            <span className="text-hud-ok text-sm">✓ Ativadas neste aparelho</span>
           </div>
           <button onClick={disable} disabled={busy}
-            className="w-full rounded-xl border border-gray-700 py-2.5 text-sm text-gray-400 hover:text-white disabled:opacity-50 transition">
+            className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2.5 text-sm text-hud-muted hover:text-hud-text disabled:opacity-50 transition">
             {busy ? "..." : "Desativar aqui"}
           </button>
         </>
@@ -149,15 +150,15 @@ export default function PushToggle({ token }: { token: string | null }) {
 
       {state === "off" && (
         <button onClick={enable} disabled={busy}
-          className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all">
+          className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all">
           {busy ? "Ativando..." : "Ativar notificações"}
         </button>
       )}
 
       {state === "needs-install" && (
-        <div className="rounded-lg bg-blue-500/10 border border-blue-500/30 px-3 py-3 text-sm text-blue-300 space-y-1">
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-info)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-info)_30%,transparent)] px-3 py-3 text-sm text-hud-info space-y-1">
           <p className="font-medium">Instale o app para receber notificações</p>
-          <p className="text-xs text-blue-200/80">
+          <p className="text-xs text-[color-mix(in_srgb,var(--hud-info)_80%,transparent)]">
             No iPhone, toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>,
             abra o BarberPro por lá e ative aqui. É uma exigência da Apple.
           </p>
@@ -165,9 +166,9 @@ export default function PushToggle({ token }: { token: string | null }) {
       )}
 
       {state === "blocked" && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-3 text-sm text-red-300 space-y-1">
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-err)_30%,transparent)] px-3 py-3 text-sm text-hud-err space-y-1">
           <p className="font-medium">Notificações bloqueadas</p>
-          <p className="text-xs text-red-200/80">
+          <p className="text-xs text-[color-mix(in_srgb,var(--hud-err)_80%,transparent)]">
             Você bloqueou as notificações para este site. Libere nas configurações do navegador
             (cadeado ao lado do endereço) e volte aqui.
           </p>
@@ -175,7 +176,7 @@ export default function PushToggle({ token }: { token: string | null }) {
       )}
 
       {state === "unsupported" && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-hud-muted">
           Este navegador não suporta notificações. Tente pelo Chrome (Android/PC) ou instale o app.
         </p>
       )}

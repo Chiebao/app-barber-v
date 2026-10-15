@@ -44,13 +44,16 @@ interface Cobranca {
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/** Nome do plano pelo tamanho do compromisso, em meses. */
+const NOME_COMPROMISSO: Record<number, string> = { 3: "Trimestral", 6: "Semestral", 12: "Anual" };
+
 const VISUAL: Record<string, { rotulo: string; cor: string; borda: string; fundo: string }> = {
-  trial:     { rotulo: "Teste grátis",  cor: "text-blue-400",   borda: "border-blue-500/40",   fundo: "bg-blue-500/10" },
-  ativa:     { rotulo: "Ativa",          cor: "text-green-400",  borda: "border-green-500/40",  fundo: "bg-green-500/10" },
-  carencia:  { rotulo: "Em atraso",      cor: "text-yellow-400", borda: "border-yellow-500/40", fundo: "bg-yellow-500/10" },
-  bloqueada: { rotulo: "Bloqueada",      cor: "text-red-400",    borda: "border-red-500/40",    fundo: "bg-red-500/10" },
-  cortesia:  { rotulo: "Cortesia",       cor: "text-brand-400",  borda: "border-brand-400/40",  fundo: "bg-brand-500/10" },
-  cancelada: { rotulo: "Cancelada",      cor: "text-gray-400",   borda: "border-gray-600",      fundo: "bg-dark-800" },
+  trial:     { rotulo: "Teste grátis",  cor: "text-hud-info",   borda: "border-[color-mix(in_srgb,var(--hud-info)_40%,transparent)]",   fundo: "bg-[color-mix(in_srgb,var(--hud-info)_10%,transparent)]" },
+  ativa:     { rotulo: "Ativa",          cor: "text-hud-ok",  borda: "border-[color-mix(in_srgb,var(--hud-ok)_40%,transparent)]",  fundo: "bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)]" },
+  carencia:  { rotulo: "Em atraso",      cor: "text-hud-warn", borda: "border-[color-mix(in_srgb,var(--hud-warn)_40%,transparent)]", fundo: "bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)]" },
+  bloqueada: { rotulo: "Bloqueada",      cor: "text-hud-err",    borda: "border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)]",    fundo: "bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)]" },
+  cortesia:  { rotulo: "Cortesia",       cor: "text-hud-light",  borda: "border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)]",  fundo: "bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]" },
+  cancelada: { rotulo: "Cancelada",      cor: "text-hud-muted",   borda: "border-hud-border",      fundo: "bg-hud-surface" },
 };
 
 export default function Assinatura({
@@ -145,7 +148,7 @@ export default function Assinatura({
   if (carregando) {
     return (
       <div className="flex justify-center py-14">
-        <div className="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-hud-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -157,29 +160,29 @@ export default function Assinatura({
   return (
     <div className="space-y-5">
       {/* Onde eu estou */}
-      <div className={`rounded-2xl border p-5 ${v.borda} ${v.fundo}`}>
+      <div className={`rounded border p-5 ${v.borda} ${v.fundo}`}>
         <div className="flex items-center justify-between gap-3 mb-2">
           <span className={`text-xs uppercase tracking-widest font-semibold ${v.cor}`}>{v.rotulo}</span>
           {situacao.estado !== "cortesia" && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-hud-muted">
               {situacao.estado === "bloqueada" ? "venceu em" : "até"} {vence}
             </span>
           )}
         </div>
 
         {situacao.estado === "cortesia" ? (
-          <p className="text-lg text-white">Acesso liberado, sem cobrança.</p>
+          <p className="text-lg text-hud-text">Acesso liberado, sem cobrança.</p>
         ) : (
-          <p className="text-3xl font-semibold text-white tabular-nums">
+          <p className="text-3xl font-semibold text-hud-text tabular-nums">
             {situacao.diasRestantes}
-            <span className="text-base font-normal text-gray-400 ml-2">
+            <span className="text-base font-normal text-hud-muted ml-2">
               {situacao.diasRestantes === 1 ? "dia" : "dias"}
               {situacao.estado === "carencia" ? " até bloquear" : situacao.estado === "trial" ? " de teste" : ""}
             </span>
           </p>
         )}
 
-        {situacao.aviso && <p className="text-sm text-gray-300 mt-2">{situacao.aviso}</p>}
+        {situacao.aviso && <p className="text-sm text-hud-soft mt-2">{situacao.aviso}</p>}
       </div>
 
       {/* Pagar. Só aparece quando faz sentido: em cortesia não há cobrança,
@@ -187,18 +190,18 @@ export default function Assinatura({
       {situacao.podeGerenciar &&
         situacao.estado !== "cortesia" &&
         (situacao.estado !== "ativa" || situacao.diasRestantes <= 7) && (
-        <div className="rounded-xl bg-dark-800 border border-brand-400/40 p-4 space-y-3">
+        <div className="rounded bg-hud-surface border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] p-4 space-y-3">
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm text-gray-300">
+            <p className="text-sm text-hud-soft">
               {situacao.estado === "trial" ? "Assinar agora" : "Renovar assinatura"}
             </p>
-            <p className="text-lg font-semibold text-white tabular-nums">{BRL(situacao.valorCiclo)}</p>
+            <p className="text-lg font-semibold text-hud-text tabular-nums">{BRL(situacao.valorCiclo)}</p>
           </div>
 
           <button
             onClick={pagarAgora}
             disabled={gerando}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all press-scale"
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all press-scale"
           >
             {gerando ? "Gerando cobrança..." : "Pagar com Pix ou cartão"}
           </button>
@@ -206,52 +209,52 @@ export default function Assinatura({
           {cobranca && (
             <div className="space-y-2 pt-1">
               {cobranca.descontoAAcertar > 0 && (
-                <div className="rounded-lg bg-dark-900 border border-gray-700 p-3 space-y-1 text-xs">
-                  <div className="flex justify-between text-gray-400">
+                <div className="rounded bg-hud-bg border border-hud-border p-3 space-y-1 text-xs">
+                  <div className="flex justify-between text-hud-muted">
                     <span>Mensalidade</span>
                     <span className="tabular-nums">{BRL(cobranca.mensalidade)}</span>
                   </div>
-                  <div className="flex justify-between text-yellow-400">
+                  <div className="flex justify-between text-hud-warn">
                     <span>Diferença de desconto</span>
                     <span className="tabular-nums">{BRL(cobranca.descontoAAcertar)}</span>
                   </div>
-                  <div className="flex justify-between text-white font-semibold border-t border-gray-700 pt-1">
+                  <div className="flex justify-between text-hud-text font-semibold border-t border-hud-border pt-1">
                     <span>Total</span>
                     <span className="tabular-nums">{BRL(cobranca.valor)}</span>
                   </div>
                 </div>
               )}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-hud-muted">
                 A página de pagamento abriu em outra aba. Se não abriu, use o link:
               </p>
               <a
                 href={cobranca.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-lg bg-dark-900 border border-gray-700 px-3 py-2 text-xs text-brand-400 truncate"
+                className="block rounded bg-hud-bg border border-hud-border px-3 py-2 text-xs text-hud-light truncate"
               >
                 {cobranca.link}
               </a>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-hud-muted">
                 Assim que o pagamento cair, sua assinatura é liberada sozinha — não precisa
                 avisar ninguém.
               </p>
             </div>
           )}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-hud-muted">
             Pix ou cartão. No cartão, compromete apenas {BRL(situacao.valorCiclo)} do seu limite.
           </p>
         </div>
       )}
 
       {situacao.descontoAAcertar > 0 && (
-        <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4 space-y-2">
-          <p className="text-xs text-yellow-500/80 uppercase tracking-widest">Diferença de desconto</p>
-          <p className="text-2xl font-semibold text-yellow-400 tabular-nums">
+        <div className="rounded bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] p-4 space-y-2">
+          <p className="text-xs text-[color-mix(in_srgb,var(--hud-warn)_80%,transparent)] uppercase tracking-widest">Diferença de desconto</p>
+          <p className="text-2xl font-semibold text-hud-warn tabular-nums">
             {BRL(situacao.descontoAAcertar)}
           </p>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-hud-soft">
             Você usou {situacao.ciclosPagos} de {situacao.compromisso} meses com preço de plano longo.
             A diferença dos meses aproveitados entra na próxima cobrança, junto da mensalidade.
           </p>
@@ -260,18 +263,18 @@ export default function Assinatura({
 
       {/* O que acontece se eu não pagar — dito antes de ele perguntar */}
       {situacao.estado !== "cortesia" && (
-        <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-2">
-          <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Se o pagamento atrasar</p>
-          <p className="text-sm text-gray-300">
-            <span className="text-yellow-400">•</span> Você tem <strong>{situacao.diasCarencia} dias</strong> de
+        <div className="hud-card p-4 space-y-2">
+          <p className="hud-eyebrow mb-1">Se o pagamento atrasar</p>
+          <p className="text-sm text-hud-soft">
+            <span className="text-hud-warn">•</span> Você tem <strong>{situacao.diasCarencia} dias</strong> de
             acesso normal depois do vencimento.
           </p>
-          <p className="text-sm text-gray-300">
-            <span className="text-red-400">•</span> Passou disso, o painel fica <strong>só leitura</strong>: você
+          <p className="text-sm text-hud-soft">
+            <span className="text-hud-err">•</span> Passou disso, o painel fica <strong>só leitura</strong>: você
             ainda vê a agenda e confirma pagamento, mas não cria nem edita.
           </p>
-          <p className="text-sm text-gray-300">
-            <span className="text-red-400">•</span> O link para de aceitar agendamento novo — quem já tinha
+          <p className="text-sm text-hud-soft">
+            <span className="text-hud-err">•</span> O link para de aceitar agendamento novo — quem já tinha
             horário marcado não perde.
           </p>
         </div>
@@ -283,20 +286,22 @@ export default function Assinatura({
           Cinco cartões soltos numa lista ele não compara. */}
       {situacao.podeGerenciar && situacao.estado !== "cortesia" && (
         <div className="space-y-4">
-          <p className="text-xs text-gray-500 uppercase tracking-widest">Planos</p>
+          <p className="hud-eyebrow">Planos</p>
 
-          {[1, 6, 12].map((meses) => {
+          {/* O trimestral estava no catálogo (lib/assinatura) mas não
+              aparecia aqui: a lista de grupos era fixa em 1, 6 e 12. */}
+          {[1, 3, 6, 12].map((meses) => {
             const doGrupo = planos.filter(p => p.compromisso === meses);
             if (doGrupo.length === 0) return null;
-            const titulo = meses === 1 ? "Sem compromisso" : meses === 6 ? "Semestral" : "Anual";
+            const titulo = meses === 1 ? "Sem compromisso" : NOME_COMPROMISSO[meses] ?? `${meses} meses`;
             const melhor = doGrupo.reduce((a, b) => (a.mensal <= b.mensal ? a : b));
 
             return (
               <div key={meses} className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <p className="text-sm font-semibold text-white">{titulo}</p>
+                  <p className="text-sm font-semibold text-hud-text">{titulo}</p>
                   {meses === 12 && (
-                    <span className="text-[10px] uppercase tracking-wide text-brand-400 border border-brand-400/40 rounded px-1.5 py-0.5">
+                    <span className="text-[10px] uppercase tracking-wide text-hud-light border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] rounded px-1.5 py-0.5">
                       mais barato
                     </span>
                   )}
@@ -309,28 +314,28 @@ export default function Assinatura({
                       key={p.id}
                       onClick={() => trocarPlano(p)}
                       disabled={salvando || atual}
-                      className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition ${
+                      className={`w-full flex items-center gap-3 rounded border p-4 text-left transition ${
                         atual
-                          ? "border-brand-400 bg-brand-500/10"
-                          : "border-gray-700 bg-dark-800 hover:border-brand-400/60"
+                          ? "border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)]"
+                          : "border-hud-border bg-hud-surface hover:border-[color-mix(in_srgb,var(--hud-accent)_60%,transparent)]"
                       } disabled:cursor-default`}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={`font-semibold ${atual ? "text-brand-400" : "text-white"}`}>
+                        <p className={`font-semibold ${atual ? "text-hud-light" : "text-hud-text"}`}>
                           Pagando {p.comoPaga}
                           {atual && <span className="ml-2 text-xs font-normal">· seu plano</span>}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-hud-muted">
                           {p.mesesCobranca === 1
                             ? `${BRL(p.porCobranca)} por mês`
                             : `${BRL(p.porCobranca)} de uma vez, cobre ${p.mesesCobranca} meses`}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-lg font-semibold text-white tabular-nums">{BRL(p.mensal)}</p>
-                        <p className="text-xs text-gray-500">por mês</p>
+                        <p className="text-lg font-semibold text-hud-text tabular-nums">{BRL(p.mensal)}</p>
+                        <p className="text-xs text-hud-muted">por mês</p>
                         {p.economiaMensal > 0 && (
-                          <p className="text-xs text-green-400 tabular-nums">−{BRL(p.economiaMensal)}/mês</p>
+                          <p className="text-xs text-hud-ok tabular-nums">−{BRL(p.economiaMensal)}/mês</p>
                         )}
                       </div>
                     </button>
@@ -338,7 +343,7 @@ export default function Assinatura({
                 })}
 
                 {meses > 1 && (
-                  <p className="text-xs text-gray-600 pl-1">
+                  <p className="text-xs text-hud-faint pl-1">
                     À vista sai {BRL(melhor.mensal)}/mês porque você adianta o período inteiro.
                   </p>
                 )}
@@ -346,7 +351,7 @@ export default function Assinatura({
             );
           })}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-hud-muted">
             Preço fixo por barbearia — vale para 1 ou 10 barbeiros.
           </p>
         </div>
@@ -354,22 +359,22 @@ export default function Assinatura({
 
       {/* Histórico */}
       {cobrancas.length > 0 && (
-        <div className="rounded-xl bg-dark-800 border border-gray-700 overflow-hidden">
-          <p className="px-4 pt-4 pb-2 text-xs text-gray-500 uppercase tracking-widest">Cobranças</p>
-          <div className="divide-y divide-gray-700/60">
+        <div className="hud-card overflow-hidden">
+          <p className="px-4 pt-4 pb-2 hud-eyebrow">Cobranças</p>
+          <div className="divide-y divide-hud-border/60">
             {cobrancas.map((c) => (
               <div key={c.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white tabular-nums">{BRL(c.valor)}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-hud-text tabular-nums">{BRL(c.valor)}</p>
+                  <p className="text-xs text-hud-muted">
                     venceu {new Date(c.vencimento).toLocaleDateString("pt-BR")}
                     {c.metodo ? ` · ${c.metodo}` : ""}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  c.status === "paga" ? "bg-green-500/15 text-green-400"
-                  : c.status === "vencida" ? "bg-red-500/15 text-red-400"
-                  : "bg-yellow-500/15 text-yellow-400"
+                  c.status === "paga" ? "bg-[color-mix(in_srgb,var(--hud-ok)_15%,transparent)] text-hud-ok"
+                  : c.status === "vencida" ? "bg-[color-mix(in_srgb,var(--hud-err)_15%,transparent)] text-hud-err"
+                  : "bg-[color-mix(in_srgb,var(--hud-warn)_15%,transparent)] text-hud-warn"
                 }`}>
                   {c.status === "paga" ? "paga" : c.status === "vencida" ? "vencida" : "pendente"}
                 </span>
@@ -382,67 +387,67 @@ export default function Assinatura({
       {/* Confirmar troca de plano */}
       <Modal aberto={!!confirmarPlano} onFechar={() => setConfirmarPlano(null)}>{confirmarPlano && (<>
             <div>
-              <p className="text-xs text-brand-400 uppercase tracking-widest mb-1">Mudar de plano</p>
-              <h3 className="text-xl font-semibold text-white">Plano {confirmarPlano.rotulo}</h3>
+              <p className="text-xs text-hud-light uppercase tracking-widest mb-1">Mudar de plano</p>
+              <h3 className="font-display text-[22px] leading-tight text-hud-text">Plano {confirmarPlano.rotulo}</h3>
             </div>
 
-            <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-3">
+            <div className="rounded bg-hud-bg border border-hud-border p-4 space-y-3">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-gray-400">Sai por</span>
-                <span className="text-2xl font-semibold text-brand-400 tabular-nums">
-                  {BRL(confirmarPlano.mensal)}<span className="text-sm font-normal text-gray-500">/mês</span>
+                <span className="text-sm text-hud-muted">Sai por</span>
+                <span className="text-2xl font-semibold text-hud-light tabular-nums">
+                  {BRL(confirmarPlano.mensal)}<span className="text-sm font-normal text-hud-muted">/mês</span>
                 </span>
               </div>
-              <div className="border-t border-gray-700/60 pt-3 flex items-baseline justify-between">
-                <span className="text-sm text-gray-400">
+              <div className="border-t border-hud-border pt-3 flex items-baseline justify-between">
+                <span className="text-sm text-hud-muted">
                   {confirmarPlano.mesesCobranca === 1
                     ? "Você paga todo mês"
                     : `Você paga uma vez a cada ${confirmarPlano.mesesCobranca} meses`}
                 </span>
-                <span className="text-lg font-semibold text-white tabular-nums">{BRL(confirmarPlano.porCobranca)}</span>
+                <span className="text-lg font-semibold text-hud-text tabular-nums">{BRL(confirmarPlano.porCobranca)}</span>
               </div>
               {confirmarPlano.mesesCobranca > 1 ? (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-hud-muted">
                   É um pagamento único de {BRL(confirmarPlano.porCobranca)} que cobre{" "}
                   {confirmarPlano.mesesCobranca} meses — não é uma mensalidade de {BRL(confirmarPlano.mensal)}.
                 </p>
               ) : confirmarPlano.compromisso > 1 ? (
                 <>
-                  <p className="text-xs text-gray-500">
-                    Preço de plano {confirmarPlano.compromisso === 12 ? "anual" : "semestral"}, mas cobrado
+                  <p className="text-xs text-hud-muted">
+                    Preço de plano {(NOME_COMPROMISSO[confirmarPlano.compromisso] ?? "").toLowerCase()}, mas cobrado
                     mês a mês — sem desembolsar {BRL(confirmarPlano.totalCompromisso)} de uma vez.
                   </p>
                   {/* Dito ANTES de escolher. Descobrir isso só na saída seria
                       uma armadilha, por mais justa que a conta seja. */}
-                  <p className="text-xs text-yellow-400/90 leading-relaxed">
+                  <p className="text-xs text-[color-mix(in_srgb,var(--hud-warn)_90%,transparent)] leading-relaxed">
                     O desconto vem adiantado: você paga preço de{" "}
-                    {confirmarPlano.compromisso === 12 ? "anual" : "semestral"} já no primeiro mês.
+                    {(NOME_COMPROMISSO[confirmarPlano.compromisso] ?? "").toLowerCase()} já no primeiro mês.
                     Se sair antes de {confirmarPlano.compromisso} meses, a diferença dos meses usados
                     ({BRL(confirmarPlano.economiaMensal)} por mês) entra na cobrança se você voltar.
                   </p>
                 </>
               ) : null}
               {confirmarPlano.economiaMensal > 0 && (
-                <p className="text-xs text-green-400">
+                <p className="text-xs text-hud-ok">
                   Economiza {BRL(confirmarPlano.economiaMensal)} por mês em relação ao mensal.
                 </p>
               )}
             </div>
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-hud-muted">
               Vale a partir da próxima cobrança. O período que você já pagou não muda de preço.
             </p>
 
             <button
               onClick={() => { const p = confirmarPlano; setConfirmarPlano(null); alterar({ plano: p.id }); }}
               disabled={salvando}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition-all"
+              className="hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition-all"
             >
               {salvando ? "Alterando..." : `Mudar para ${confirmarPlano.rotulo}`}
             </button>
             <button
               onClick={() => setConfirmarPlano(null)}
-              className="w-full text-sm text-gray-500 hover:text-gray-300 transition py-1"
+              className="w-full text-sm text-hud-muted hover:text-hud-soft transition py-1"
             >
               Deixar como está
             </button>
@@ -450,30 +455,30 @@ export default function Assinatura({
 
       {/* Confirmar cancelamento */}
       <Modal aberto={!!confirmarCancelar} onFechar={() => setConfirmarCancelar(false)}>{confirmarCancelar && (<>
-            <h3 className="text-xl font-semibold text-white">Cancelar assinatura?</h3>
-            <div className="rounded-xl bg-dark-900 border border-gray-700 p-4 space-y-2">
-              <p className="text-sm text-gray-300">
-                <span className="text-green-400">•</span> Você continua com acesso normal até{" "}
-                <strong className="text-white">{vence}</strong>.
+            <h3 className="font-display text-[22px] leading-tight text-hud-text">Cancelar assinatura?</h3>
+            <div className="rounded bg-hud-bg border border-hud-border p-4 space-y-2">
+              <p className="text-sm text-hud-soft">
+                <span className="text-hud-ok">•</span> Você continua com acesso normal até{" "}
+                <strong className="text-hud-text">{vence}</strong>.
               </p>
-              <p className="text-sm text-gray-300">
-                <span className="text-yellow-400">•</span> Depois disso o link para de aceitar agendamento novo.
+              <p className="text-sm text-hud-soft">
+                <span className="text-hud-warn">•</span> Depois disso o link para de aceitar agendamento novo.
               </p>
-              <p className="text-sm text-gray-300">
-                <span className="text-green-400">•</span> Sua agenda e seu histórico continuam salvos.
+              <p className="text-sm text-hud-soft">
+                <span className="text-hud-ok">•</span> Sua agenda e seu histórico continuam salvos.
               </p>
             </div>
-            <p className="text-xs text-gray-500">Dá para reativar a qualquer momento, sem taxa.</p>
+            <p className="text-xs text-hud-muted">Dá para reativar a qualquer momento, sem taxa.</p>
             <button
               onClick={() => { setConfirmarCancelar(false); alterar({ cancelar: true }); }}
               disabled={salvando}
-              className="w-full rounded-xl border border-red-500/40 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition"
+              className="w-full rounded border border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] py-3 text-sm font-semibold text-hud-err hover:bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] disabled:opacity-50 transition"
             >
               {salvando ? "Cancelando..." : "Sim, cancelar"}
             </button>
             <button
               onClick={() => setConfirmarCancelar(false)}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition"
+              className="hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 transition"
             >
               Continuar assinando
             </button>
@@ -486,7 +491,7 @@ export default function Assinatura({
             <button
               onClick={() => alterar({ cancelar: false })}
               disabled={salvando}
-              className="w-full rounded-xl border border-brand-400/40 py-3 text-sm text-brand-400 hover:bg-brand-500/10 disabled:opacity-50 transition"
+              className="w-full rounded border border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)] py-3 text-sm text-hud-light hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] disabled:opacity-50 transition"
             >
               Reativar assinatura
             </button>
@@ -494,7 +499,7 @@ export default function Assinatura({
             <button
               onClick={() => setConfirmarCancelar(true)}
               disabled={salvando}
-              className="w-full text-sm text-gray-500 hover:text-red-400 disabled:opacity-50 transition py-2"
+              className="w-full text-sm text-hud-muted hover:text-hud-err disabled:opacity-50 transition py-2"
             >
               Cancelar assinatura
             </button>

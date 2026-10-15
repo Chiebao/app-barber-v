@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Início (versão completa)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1300px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:-140px;left:50%;margin-left:-190px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.14),rgba(245,183,49,0) 65%)"></div>
+
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 0;display:flex;flex-direction:column;gap:14px">
+
+    <!-- cabeçalho -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;flex-shrink:0;box-sizing:border-box;border:1px solid #F5B731;background:rgba(245,183,49,0.08);display:flex;align-items:center;justify-content:center;border-radius:4px"><span style="font-family:'Marcellus',Georgia,serif;font-size:26px;font-style:italic;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;padding-right:3px">B</span></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sua Barbearia</div>
+        <div style="margin-top:2px;font-size:12px;color:#8B8FA3">Boa tarde, Rafa</div>
+      </div>
+      <button type="button" aria-label="Link de agendamento e QR Code" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5F5F7;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></button>
+      <button type="button" aria-label="Configurações" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5F5F7;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+    </div>
+
+    <!-- aviso de assinatura (teste) -->
+    <button type="button" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid rgba(96,165,250,0.5);background:rgba(96,165,250,0.08);border-radius:4px;color:#F5F5F7;font-family:inherit;cursor:pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700;color:#93C5FD">Você está no teste grátis · 12 dias</span><span style="display:block;margin-top:2px;font-size:12px;color:#8B8FA3">Toque para ver os planos ›</span></span>
+    </button>
+
+    <!-- KPI -->
+    <div style="position:relative;padding:14px 16px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px">
+      <span style="position:absolute;top:-1px;left:-1px;width:10px;height:10px;border-top:2px solid #F9DA8A;border-left:2px solid #F9DA8A"></span>
+      <span style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-bottom:2px solid #F9DA8A;border-right:2px solid #F9DA8A"></span>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Recebido hoje</div>
+          <div style="margin-top:4px;font-family:'Marcellus',Georgia,serif;font-size:40px;line-height:1.05;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 12px rgba(245,183,49,0.3))">R$ 180,00</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">A receber</div>
+          <div style="margin-top:4px;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:#C9CCD6">R$ 120,00</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <span style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08)"></span><span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span><span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span><span style="flex:1;height:6px;border-radius:3px;background:#2B2E40"></span>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#8B8FA3">3 de 6 agendamentos pagos</div>
+    </div>
+
+    <!-- atalhos -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>Agenda</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Financeiro</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7"></path><path d="M18 14a6.5 6.5 0 0 1 3.5 6"></path></svg>Clientes</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>Fidelidade</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>Sumidos</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #F5B731;background:rgba(245,183,49,0.10);border-radius:4px;color:#F9DA8A;font-family:inherit;font-size:11px;font-weight:700;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F9DA8A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Novo</button>
+      <button type="button" style="position:relative;height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><span style="position:absolute;top:6px;right:8px;min-width:16px;height:16px;box-sizing:border-box;padding:0 4px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);color:#0B0B14;font-size:10px;font-weight:800">2</span><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5z"></path></svg>Mensagens</button>
+      <button type="button" style="height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;color:#C9CCD6;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5B731" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Espera</button>
+    </div>
+
+    <!-- tira de datas -->
+    <div style="display:flex;gap:8px;overflow:hidden">
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">QUA</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">14</span><span style="width:4px;height:4px;border-radius:50%;background:#F5B731;margin-top:2px"></span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">QUI</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">15</span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">SEX</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">16</span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">SÁB</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">17</span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">SEG</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">19</span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">TER</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">20</span></button>
+      <button type="button" style="flex:0 0 52px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;padding:0;font-family:inherit;color:#F5F5F7;cursor:pointer;opacity:0.6"><span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#8B8FA3">QUA</span><span style="font-family:'Marcellus',Georgia,serif;font-size:20px;line-height:1.1">21</span></button>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">6 agendamentos</div>
+
+    <!-- próximo -->
+    <div style="position:relative;padding:14px 16px;border:1px solid rgba(245,183,49,0.55);background:rgba(245,183,49,0.07);border-radius:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase"><span style="width:8px;height:8px;border-radius:50%;background:#F5B731;box-shadow:0 0 10px #F5B731"></span><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Próximo · em 12 min</span></div>
+        <div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">10:30 – 11:15</div>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+        <div style="font-size:19px;font-weight:700">Carlos Mendes</div>
+        <div style="font-family:'Marcellus',Georgia,serif;font-size:24px;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">R$ 60,00</div>
+      </div>
+      <div style="margin-top:2px;font-size:13px;color:#8B8FA3">Corte + Barba · Rafa</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button type="button" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Confirmar pagamento</button>
+        <button type="button" aria-label="Lembrar cliente pelo WhatsApp" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.9);border:1px solid #2A2D42;border-radius:4px;color:#F5F5F7;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></button>
+        <button type="button" aria-label="Mais opções" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.9);border:1px solid #2A2D42;border-radius:4px;color:#F5F5F7;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+      </div>
+      <button type="button" style="margin-top:8px;width:100%;height:40px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.06);border-radius:4px;color:#F87171;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Cancelar agendamento</button>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #2A2D42;display:flex;align-items:center;gap:8px;font-size:12px;color:#6E7289"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Observações sobre o cliente…</div>
+    </div>
+
+    <!-- Pix pendente -->
+    <div style="padding:14px 16px;border:1px solid rgba(251,146,60,0.5);background:rgba(251,146,60,0.07);border-radius:4px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">11:30 – 12:00 <span style="color:#F9DA8A;margin-left:6px">R$ 25,00</span></div><div style="margin-top:3px;font-size:16px;font-weight:700">Pedro Alves</div><div style="margin-top:1px;font-size:12px;color:#8B8FA3">Barba · Rafa</div></div>
+        <span style="padding:3px 8px;border:1px solid rgba(251,146,60,0.6);border-radius:3px;font-size:10px;font-weight:700;color:#FB923C;white-space:nowrap">Aguarda Pix</span>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px"><span style="color:#FDBA74;font-weight:700">Cliente informou que pagou — confirme o Pix</span><span style="color:#8B8FA3;white-space:nowrap">5h 12min</span></div>
+      <button type="button" style="margin-top:10px;width:100%;height:44px;border:0;border-radius:4px;background:#FB923C;color:#0B0B14;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:0.04em;cursor:pointer">✓ Confirmar Pix</button>
+    </div>
+
+    <!-- pago -->
+    <div style="padding:12px 16px;border:1px solid #2A2D42;background:rgba(22,22,37,0.6);border-radius:4px;opacity:0.85">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">09:00 – 09:30 <span style="color:#C9CCD6;margin-left:6px">R$ 35,00</span></div><div style="margin-top:3px;font-size:15px;font-weight:700">Lucas Prado</div><div style="margin-top:1px;font-size:12px;color:#8B8FA3">Corte · Rafa</div></div>
+        <span style="padding:3px 8px;border:1px solid rgba(74,222,128,0.5);background:rgba(74,222,128,0.08);border-radius:3px;font-size:10px;font-weight:700;color:#4ADE80;white-space:nowrap">Pago (Pix)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <nav aria-label="Navegação principal" style="position:absolute;left:0;right:0;bottom:0;height:68px;box-sizing:border-box;display:flex;background:#0B0B14;border-top:1px solid #2A2D42">
+    <button type="button" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#F5B731;font-family:inherit;font-size:11px;font-weight:700;padding:0;cursor:pointer"><span style="position:absolute;top:-1px;left:25%;right:25%;height:2px;background:linear-gradient(90deg,#F9DA8A,#F5B731,#C47A08);box-shadow:0 0 10px #F5B731"></span><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Início</span></button>
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>Agenda</button>
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Financeiro</button>
+    <button type="button" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#8B8FA3;font-family:inherit;font-size:11px;font-weight:600;padding:0;cursor:pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg>Config</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

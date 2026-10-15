@@ -118,19 +118,19 @@ export default function Mensagens({
       <div className="flex items-center gap-3">
         <button
           onClick={onVoltar}
-          className="rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-400 hover:text-white transition"
+          className="hud-focus min-h-[44px] rounded border border-hud-border px-3 py-2 text-sm text-hud-muted hover:text-hud-text transition"
         >
           ← Voltar
         </button>
-        <h2 className="text-lg font-semibold text-white">Mensagens</h2>
+        <h2 className="font-display text-2xl leading-tight text-hud-text">Mensagens</h2>
       </div>
 
-      {carregando && <p className="text-center text-sm text-gray-500 py-10">Carregando...</p>}
+      {carregando && <p className="text-center text-sm text-hud-muted py-10">Carregando...</p>}
 
       {!carregando && msgs.length === 0 && (
-        <div className="rounded-xl bg-dark-800 border border-gray-700 p-6 text-center space-y-2">
-          <p className="text-sm text-gray-400">Nenhuma mensagem ainda.</p>
-          <p className="text-xs text-gray-500 leading-relaxed">
+        <div className="hud-card p-6 text-center space-y-2">
+          <p className="text-sm text-hud-muted">Nenhuma mensagem ainda.</p>
+          <p className="text-xs text-hud-muted leading-relaxed">
             Quando um cliente responder a um lembrete, a mensagem aparece aqui —
             e ele recebe na hora o seu WhatsApp para falar direto com você.
           </p>
@@ -141,24 +141,24 @@ export default function Mensagens({
         {msgs.map((m) => (
           <div
             key={m.id}
-            className={`rounded-xl border p-3.5 space-y-2.5 ${
-              m.lida ? "bg-dark-800 border-gray-700" : "bg-brand-500/5 border-brand-500/40"
+            className={`rounded border p-3.5 space-y-2.5 ${
+              m.lida ? "bg-hud-surface border-hud-border" : "bg-[color-mix(in_srgb,var(--hud-accent)_5%,transparent)] border-[color-mix(in_srgb,var(--hud-accent)_40%,transparent)]"
             }`}
           >
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-sm font-semibold text-white truncate">
+              <span className="text-sm font-semibold text-hud-text truncate">
                 {m.nome || m.telefone}
               </span>
-              <span className="text-xs text-gray-500 shrink-0">{quando(m.recebidaEm)}</span>
+              <span className="text-xs text-hud-muted shrink-0">{quando(m.recebidaEm)}</span>
             </div>
 
-            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-sm text-hud-soft leading-relaxed whitespace-pre-wrap break-words">
               {m.texto}
             </p>
 
             <div className="flex items-center gap-2 flex-wrap">
               {m.respondida && (
-                <span className="rounded-full border border-green-500/35 bg-green-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-green-400">
+                <span className="rounded-full border border-[color-mix(in_srgb,var(--hud-ok)_35%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-hud-ok">
                   respondida
                 </span>
               )}
@@ -166,11 +166,11 @@ export default function Mensagens({
                 <>
                   <button
                     onClick={() => { setRespondendo(m); setTexto(""); }}
-                    className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-bold text-dark-900 hover:bg-brand-400 transition"
+                    className="rounded gold-fill px-3 py-1.5 text-xs font-bold text-[var(--hud-on-accent)] hover:brightness-105 transition"
                   >
                     Responder aqui
                   </button>
-                  <span className="text-[11px] text-gray-500">
+                  <span className="text-[11px] text-hud-muted">
                     {m.horasRestantes}h para responder por aqui
                   </span>
                 </>
@@ -178,12 +178,12 @@ export default function Mensagens({
                 <>
                   <button
                     onClick={() => abrirNoWhatsApp(m)}
-                    className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:text-white transition"
+                    className="rounded border border-hud-border px-3 py-1.5 text-xs font-semibold text-hud-soft hover:text-hud-text transition"
                   >
                     Abrir no WhatsApp
                   </button>
                   {/* Sem esta frase o barbeiro acha que o app quebrou. */}
-                  <span className="text-[11px] text-gray-500">
+                  <span className="text-[11px] text-hud-muted">
                     Passaram 24h — o WhatsApp não deixa mais responder por aqui
                   </span>
                 </>
@@ -196,11 +196,11 @@ export default function Mensagens({
       <Modal aberto={!!respondendo} onFechar={() => setRespondendo(null)}>
         {respondendo && (
           <>
-            <h3 className="text-xl font-semibold text-white">
+            <h3 className="font-display text-[22px] leading-tight text-hud-text">
               Responder {respondendo.nome || respondendo.telefone}
             </h3>
-            <div className="rounded-lg bg-dark-900 border border-gray-700 p-3">
-              <p className="text-xs text-gray-400 whitespace-pre-wrap break-words">
+            <div className="rounded bg-hud-bg border border-hud-border p-3">
+              <p className="text-xs text-hud-muted whitespace-pre-wrap break-words">
                 {respondendo.texto}
               </p>
             </div>
@@ -211,18 +211,18 @@ export default function Mensagens({
               autoFocus
               maxLength={1000}
               placeholder="Escreva sua resposta..."
-              className="w-full rounded-xl bg-dark-900 border border-gray-700 p-3 text-sm text-white placeholder-gray-500 focus:border-brand-500 focus:outline-none resize-none"
+              className="w-full rounded bg-hud-bg border border-hud-border p-3 text-sm text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none resize-none"
             />
             <button
               onClick={enviar}
               disabled={enviando || !texto.trim()}
-              className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition"
+              className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition"
             >
               {enviando ? "Enviando..." : "Enviar"}
             </button>
             <button
               onClick={() => setRespondendo(null)}
-              className="w-full rounded-xl border border-gray-700 py-3 text-sm font-medium text-gray-400 hover:text-white transition"
+              className="w-full rounded border border-hud-border py-3 text-sm font-medium text-hud-muted hover:text-hud-text transition"
             >
               Cancelar
             </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import HudIcon, { iconeDoEmoji } from "../components/HudIcon";
 import {
   View,
   Text,
@@ -52,9 +53,9 @@ interface Props {
 type Period = "day" | "week" | "month";
 
 const PAYMENT_METHODS = [
-  { key: "pix", label: "Pix", icon: "💠" },
-  { key: "dinheiro", label: "Dinheiro", icon: "💵" },
-  { key: "cartao", label: "Cartão", icon: "💳" },
+  { key: "pix", label: "Pix", icon: "zap" },
+  { key: "dinheiro", label: "Dinheiro", icon: "dollar-sign" },
+  { key: "cartao", label: "Cartão", icon: "credit-card" },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -401,7 +402,7 @@ export default function FinanceScreen({ token, onBack }: Props) {
                   {Object.entries(summary.paymentCounts).map(([method, data]) => (
                     <View key={method} style={styles.paymentMethodRow}>
                       <Text style={styles.paymentMethodLabel}>
-                        {method === "pix" ? "💠 Pix" : method === "dinheiro" ? "💵 Dinheiro" : "💳 Cartão"}
+                        {method === "pix" ? "Pix" : method === "dinheiro" ? "Dinheiro" : "Cartão"}
                       </Text>
                       <Text style={styles.paymentMethodValue}>
                         {data.count}x = R$ {data.total.toFixed(2)}
@@ -450,13 +451,13 @@ export default function FinanceScreen({ token, onBack }: Props) {
                     {apt.paidAt ? (
                       <View style={styles.paidBadge}>
                         <Text style={styles.paidText}>
-                          {apt.paymentMethod === "pix" ? "💠" : apt.paymentMethod === "dinheiro" ? "💵" : "💳"} Pago
+                          Pago
                         </Text>
                       </View>
                     ) : apt.deferredPaymentDate ? (
                       <View style={styles.deferredBadge}>
                         <Text style={styles.deferredText}>
-                          📅 {new Date(apt.deferredPaymentDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                          {new Date(apt.deferredPaymentDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                         </Text>
                       </View>
                     ) : (
@@ -490,7 +491,7 @@ export default function FinanceScreen({ token, onBack }: Props) {
                     onPress={() => handleConfirmPayment(method.key)}
                     disabled={confirming}
                   >
-                    <Text style={styles.paymentIcon}>{method.icon}</Text>
+                    <HudIcon nome={iconeDoEmoji(method.icon) ?? "circle"} size={24} color={colors.brand[400]} />
                     <Text style={styles.paymentLabel}>{method.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -500,7 +501,7 @@ export default function FinanceScreen({ token, onBack }: Props) {
                   onPress={() => handleConfirmPayment("adiado")}
                   disabled={confirming}
                 >
-                  <Text style={styles.paymentIcon}>📅</Text>
+                  <HudIcon nome="calendar" size={24} color={colors.brand[400]} />
                   <Text style={[styles.paymentLabel, { color: colors.brand[400] }]}>Adiado</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelButton} onPress={closePaymentModal}>
@@ -543,7 +544,7 @@ export default function FinanceScreen({ token, onBack }: Props) {
       <Modal visible={!!loyaltyAlert} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.loyaltyIcon}>🏆</Text>
+            <HudIcon nome="award" size={24} color={colors.brand[400]} />
             <Text style={styles.loyaltyTitle}>Cliente Fiel!</Text>
             <Text style={styles.loyaltyText}>
               {loyaltyAlert?.clientName} completou{" "}

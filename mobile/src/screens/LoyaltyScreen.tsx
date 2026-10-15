@@ -183,7 +183,7 @@ export default function LoyaltyScreen({ token, onBack }: Props) {
                 </Text>
                 {item.rewardsEarned > 0 && (
                   <Text style={styles.rewardText}>
-                    🏆 {item.rewardsEarned} recompensa{item.rewardsEarned > 1 ? "s" : ""} conquistada{item.rewardsEarned > 1 ? "s" : ""}
+                    {item.rewardsEarned} recompensa{item.rewardsEarned > 1 ? "s" : ""} conquistada{item.rewardsEarned > 1 ? "s" : ""}
                   </Text>
                 )}
               </View>

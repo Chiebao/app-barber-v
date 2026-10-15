@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${manrope.variable} ${marcellus.variable}`}>
       <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

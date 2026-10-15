@@ -205,27 +205,27 @@ export default function Despesas({
       <div className="flex items-center gap-3">
         <button
           onClick={onVoltar}
-          className="rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-400 hover:text-white transition"
+          className="hud-focus min-h-[44px] rounded border border-hud-border px-3 py-2 text-sm text-hud-muted hover:text-hud-text transition"
         >
           ← Voltar
         </button>
-        <h2 className="text-lg font-semibold text-white">Despesas</h2>
+        <h2 className="font-display text-2xl leading-tight text-hud-text">Despesas</h2>
       </div>
 
       {/* Navegação de mês */}
-      <div className="flex items-center justify-between rounded-xl bg-dark-800 border border-gray-700 p-2">
+      <div className="hud-card flex items-center justify-between p-2">
         <button
           onClick={() => setMes(mudarMes(mes, -1))}
-          className="rounded-lg px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 transition"
+          className="rounded px-3 py-2 text-hud-muted hover:text-hud-text hover:bg-white/5 transition"
           aria-label="Mês anterior"
         >
           ←
         </button>
-        <span className="text-sm font-semibold text-white">{mesPorExtenso(mes)}</span>
+        <span className="text-sm font-semibold text-hud-text">{mesPorExtenso(mes)}</span>
         <button
           onClick={() => setMes(mudarMes(mes, 1))}
           disabled={ehMesAtual}
-          className="rounded-lg px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition"
+          className="rounded px-3 py-2 text-hud-muted hover:text-hud-text hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition"
           aria-label="Mês seguinte"
         >
           →
@@ -234,26 +234,26 @@ export default function Despesas({
 
       <button
         onClick={abrirNova}
-        className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition"
+        className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 transition"
       >
         + Nova despesa
       </button>
 
-      {carregando && <p className="text-center text-sm text-gray-500 py-8">Carregando...</p>}
+      {carregando && <p className="text-center text-sm text-hud-muted py-8">Carregando...</p>}
 
       {!carregando && dados && (
         <>
-          <div className="flex items-baseline justify-between rounded-xl bg-dark-800 border border-gray-700 p-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+          <div className="hud-card flex items-baseline justify-between p-4">
+            <span className="text-xs font-bold uppercase tracking-widest text-hud-muted">
               Total do mês
             </span>
-            <span className="text-lg font-bold text-red-400 tabular-nums">{BRL(dados.total)}</span>
+            <span className="text-lg font-bold text-hud-err tabular-nums">{BRL(dados.total)}</span>
           </div>
 
           {dados.despesas.length === 0 && (
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-6 text-center space-y-2">
-              <p className="text-sm text-gray-400">Nenhuma despesa neste mês.</p>
-              <p className="text-xs text-gray-500">
+            <div className="hud-card p-6 text-center space-y-2">
+              <p className="text-sm text-hud-muted">Nenhuma despesa neste mês.</p>
+              <p className="text-xs text-hud-muted">
                 Comece pelo aluguel e marque &quot;repete todo mês&quot; — aí você não
                 precisa lembrar de novo.
               </p>
@@ -266,10 +266,10 @@ export default function Despesas({
               return (
                 <div
                   key={d.id}
-                  className="flex items-center gap-3 rounded-xl bg-dark-800 border border-gray-700 p-3"
+                  className="hud-card flex items-center gap-3 p-3"
                 >
-                  <div className="w-10 shrink-0 text-center leading-tight text-gray-500 tabular-nums">
-                    <span className="block text-base font-bold text-white">{dia}</span>
+                  <div className="w-10 shrink-0 text-center leading-tight text-hud-muted tabular-nums">
+                    <span className="block text-base font-bold text-hud-text">{dia}</span>
                     <span className="block text-[10px] uppercase tracking-wider">{m}</span>
                   </div>
 
@@ -280,17 +280,17 @@ export default function Despesas({
                     {/* Duas linhas em vez de cortar: "Pomada e cera — fornecedor"
                         vira "Pomada e cera — for…" a 375px, e o que sobra não
                         diz de onde saiu o dinheiro. */}
-                    <span className="block text-sm font-semibold text-white leading-snug line-clamp-2">
+                    <span className="block text-sm font-semibold text-hud-text leading-snug line-clamp-2">
                       {d.descricao}
                     </span>
-                    <span className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500 mt-1">
+                    <span className="flex items-center gap-1.5 flex-wrap text-xs text-hud-muted mt-1">
                       {/* A categoria aparece sempre — antes ela sumia nas
                           recorrentes, e "Conta de luz" perdia o "Contas". */}
-                      <span className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                      <span className="rounded-full border border-hud-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                         {rotulo(d.categoria)}
                       </span>
                       {(d.recorrente || d.automatica) && (
-                        <span className="rounded-full border border-brand-500/35 bg-brand-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-400">
+                        <span className="rounded-full border border-[color-mix(in_srgb,var(--hud-accent)_35%,transparent)] bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-hud-light">
                           todo mês
                         </span>
                       )}
@@ -298,13 +298,13 @@ export default function Despesas({
                     </span>
                   </button>
 
-                  <span className="text-sm font-bold text-red-400 tabular-nums whitespace-nowrap">
+                  <span className="text-sm font-bold text-hud-err tabular-nums whitespace-nowrap">
                     {BRL(d.valor)}
                   </span>
 
                   <button
                     onClick={() => apagar(d)}
-                    className="shrink-0 rounded-lg px-2 py-1 text-gray-600 hover:text-red-400 transition"
+                    className="shrink-0 rounded px-2 py-1 text-hud-faint hover:text-hud-err transition"
                     aria-label={`Apagar ${d.descricao}`}
                   >
                     ✕
@@ -315,8 +315,8 @@ export default function Despesas({
           </div>
 
           {dados.despesas.length > 0 && (
-            <div className="rounded-xl bg-dark-800 border border-gray-700 p-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+            <div className="hud-card p-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-hud-muted">
                 Por categoria
               </span>
               <div className="mt-3 space-y-2">
@@ -324,8 +324,8 @@ export default function Despesas({
                   .sort((a, b) => b[1] - a[1])
                   .map(([cat, v]) => (
                     <div key={cat} className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm text-gray-300">{rotulo(cat)}</span>
-                      <span className="text-sm font-semibold text-white tabular-nums">{BRL(v)}</span>
+                      <span className="text-sm text-hud-soft">{rotulo(cat)}</span>
+                      <span className="text-sm font-semibold text-hud-text tabular-nums">{BRL(v)}</span>
                     </div>
                   ))}
               </div>
@@ -335,13 +335,13 @@ export default function Despesas({
       )}
 
       {/* ── Lançar / editar ── */}
-      <Modal aberto={aberto} onFechar={() => setAberto(false)}>
-        <h3 className="text-xl font-semibold text-white">
+      <Modal gaveta aberto={aberto} onFechar={() => setAberto(false)}>
+        <h3 className="font-display text-[22px] leading-tight text-hud-text">
           {editando ? "Editar despesa" : "Nova despesa"}
         </h3>
 
         <div className="space-y-1.5">
-          <label htmlFor="d-valor" className="block text-xs font-semibold text-gray-500">
+          <label htmlFor="d-valor" className="block text-xs font-semibold text-hud-muted">
             Quanto foi
           </label>
           <input
@@ -352,12 +352,12 @@ export default function Despesas({
             onChange={(e) => setValor(e.target.value)}
             placeholder="0,00"
             autoFocus
-            className="w-full rounded-xl bg-dark-900 border border-gray-700 p-3 text-2xl text-center text-white font-display focus:border-brand-500 focus:outline-none"
+            className="w-full rounded bg-hud-bg border border-hud-border p-3 text-2xl text-center text-hud-text font-display focus:border-hud-accent focus:outline-none"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-500">Categoria</label>
+          <label className="block text-xs font-semibold text-hud-muted">Categoria</label>
           <div className="flex flex-wrap gap-2">
             {cats.map((c) => (
               <button
@@ -365,8 +365,8 @@ export default function Despesas({
                 onClick={() => setCategoria(c.id)}
                 className={
                   categoria === c.id
-                    ? "rounded-full bg-brand-500 border border-brand-500 px-3 py-2 text-sm font-semibold text-dark-900 transition"
-                    : "rounded-full border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-400 hover:text-white transition"
+                    ? "rounded-full gold-fill border border-hud-accent px-3 py-2 text-sm font-semibold text-[var(--hud-on-accent)] transition"
+                    : "rounded-full border border-hud-border px-3 py-2 text-sm font-semibold text-hud-muted hover:text-hud-text transition"
                 }
               >
                 {c.rotulo}
@@ -376,7 +376,7 @@ export default function Despesas({
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="d-desc" className="block text-xs font-semibold text-gray-500">
+          <label htmlFor="d-desc" className="block text-xs font-semibold text-hud-muted">
             O que foi
           </label>
           <input
@@ -386,26 +386,26 @@ export default function Despesas({
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Aluguel, conta de luz, pomada..."
             maxLength={80}
-            className="w-full rounded-xl bg-dark-900 border border-gray-700 p-3 text-white focus:border-brand-500 focus:outline-none"
+            className="w-full rounded bg-hud-bg border border-hud-border p-3 text-hud-text focus:border-hud-accent focus:outline-none"
           />
         </div>
 
         <button
           onClick={() => setRepete(!repete)}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-700 p-3 text-left hover:bg-white/5 transition"
+          className="flex w-full items-center justify-between gap-3 rounded border border-hud-border p-3 text-left hover:bg-white/5 transition"
           aria-pressed={repete}
         >
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-hud-text">
             Repete todo mês
-            <span className="block text-xs font-normal text-gray-500 mt-0.5">
+            <span className="block text-xs font-normal text-hud-muted mt-0.5">
               Lanço sozinho, você não precisa lembrar
             </span>
           </span>
           <span
-            className={`relative h-7 w-12 shrink-0 rounded-full transition ${repete ? "bg-brand-500" : "bg-gray-700"}`}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition ${repete ? "gold-fill" : "bg-[var(--hud-track)]"}`}
           >
             <span
-              className={`absolute top-1 h-5 w-5 rounded-full transition-all ${repete ? "left-6 bg-dark-900" : "left-1 bg-gray-400"}`}
+              className={`absolute top-1 h-5 w-5 rounded-full transition-all ${repete ? "left-6 bg-hud-bg" : "left-1 bg-[var(--hud-text-2)]"}`}
             />
           </span>
         </button>
@@ -413,13 +413,13 @@ export default function Despesas({
         <button
           onClick={salvar}
           disabled={salvando}
-          className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition"
+          className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition"
         >
           {salvando ? "Salvando..." : "Salvar"}
         </button>
         <button
           onClick={() => setAberto(false)}
-          className="w-full rounded-xl border border-gray-700 py-3 text-sm font-medium text-gray-400 hover:text-white transition"
+          className="w-full rounded border border-hud-border py-3 text-sm font-medium text-hud-muted hover:text-hud-text transition"
         >
           Cancelar
         </button>

@@ -73,18 +73,18 @@ export default function Lucro({
   const v = r.comparacao.variacao;
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-4 space-y-4">
+    <div className="hud-card p-4 space-y-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Lucro mensal</span>
+        <span className="text-xs font-bold uppercase tracking-widest text-hud-muted">Lucro mensal</span>
         <span
-          className={`font-display text-4xl leading-none tabular-nums ${positivo ? "text-brand-400" : "text-red-400"}`}
+          className={`font-display text-4xl leading-none tabular-nums ${positivo ? "text-hud-light" : "text-hud-err"}`}
         >
           {BRL(r.lucro)}
         </span>
         {v !== null && (
-          <span className={`text-xs font-semibold mt-1 ${v >= 0 ? "text-green-400" : "text-red-400"}`}>
+          <span className={`text-xs font-semibold mt-1 ${v >= 0 ? "text-hud-ok" : "text-hud-err"}`}>
             {v >= 0 ? "↑" : "↓"} {Math.abs(v)}%{" "}
-            <span className="font-medium text-gray-500">
+            <span className="font-medium text-hud-muted">
               vs {nomeDoMes(r.comparacao.mes)} ({BRL(r.comparacao.lucro)})
             </span>
           </span>
@@ -92,20 +92,20 @@ export default function Lucro({
       </div>
 
       {semNada ? (
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs text-hud-muted leading-relaxed">
           Ainda não há atendimento pago nem despesa lançada neste mês. Assim que
           houver, a conta aparece aqui.
         </p>
       ) : (
         <div className="flex flex-col">
-          <Linha rotulo="Entrou" valor={r.entrou} cor="text-green-400" sinal="" />
+          <Linha rotulo="Entrou" valor={r.entrou} cor="text-hud-ok" sinal="" />
           <Filha rotulo="Serviços" valor={r.servicos} />
           <Filha rotulo="Produtos" valor={r.produtos} />
-          <Linha rotulo="Comissões" valor={r.comissoes} cor="text-red-400" sinal="− " />
-          <Linha rotulo="Despesas" valor={r.despesas} cor="text-red-400" sinal="− " />
-          <div className="flex items-baseline justify-between gap-3 border-t border-gray-700 mt-1.5 pt-3">
-            <span className="text-sm font-bold text-white">Lucro</span>
-            <span className={`text-lg font-bold tabular-nums ${positivo ? "text-brand-400" : "text-red-400"}`}>
+          <Linha rotulo="Comissões" valor={r.comissoes} cor="text-hud-err" sinal="− " />
+          <Linha rotulo="Despesas" valor={r.despesas} cor="text-hud-err" sinal="− " />
+          <div className="flex items-baseline justify-between gap-3 border-t border-hud-border mt-1.5 pt-3">
+            <span className="text-sm font-bold text-hud-text">Lucro</span>
+            <span className={`text-lg font-bold tabular-nums ${positivo ? "text-hud-light" : "text-hud-err"}`}>
               {BRL(r.lucro)}
             </span>
           </div>
@@ -116,17 +116,17 @@ export default function Lucro({
           para comprar produto já foi lançado como despesa. Descontar o custo
           aqui também seria tirar a mesma compra duas vezes. */}
       {r.margemProdutos.vendeu > 0 && (
-        <div className="rounded-lg bg-dark-900 border border-gray-700 p-3 space-y-1">
+        <div className="rounded bg-hud-bg border border-hud-border p-3 space-y-1">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs text-gray-400">Margem dos produtos</span>
-            <span className="text-sm font-semibold text-green-400 tabular-nums">
+            <span className="text-xs text-hud-muted">Margem dos produtos</span>
+            <span className="text-sm font-semibold text-hud-ok tabular-nums">
               {BRL(r.margemProdutos.margem)}
             </span>
           </div>
-          <p className="text-[11px] text-gray-500 leading-snug">
+          <p className="text-[11px] text-hud-muted leading-snug">
             Vendeu {BRL(r.margemProdutos.vendeu)}, custou {BRL(r.margemProdutos.custou)}.
             {r.margemProdutos.itensSemCusto > 0 && (
-              <span className="text-yellow-400">
+              <span className="text-hud-warn">
                 {" "}
                 {r.margemProdutos.itensSemCusto} venda
                 {r.margemProdutos.itensSemCusto === 1 ? "" : "s"} sem custo cadastrado — a
@@ -139,7 +139,7 @@ export default function Lucro({
 
       <button
         onClick={onVerDespesas}
-        className="w-full rounded-xl border border-gray-700 py-2.5 text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition"
+        className="hud-focus min-h-[44px] w-full rounded border border-hud-border py-2.5 text-sm font-semibold text-hud-muted hover:text-hud-text hover:bg-white/5 transition"
       >
         {r.despesas > 0 ? "Ver e lançar despesas" : "Lançar a primeira despesa"}
       </button>
@@ -149,8 +149,8 @@ export default function Lucro({
 
 function Linha({ rotulo, valor, cor, sinal }: { rotulo: string; valor: number; cor: string; sinal: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-2 border-b border-gray-700/60">
-      <span className="text-sm text-white">{rotulo}</span>
+    <div className="flex items-baseline justify-between gap-3 py-2 border-b border-hud-border">
+      <span className="text-sm text-hud-text">{rotulo}</span>
       <span className={`text-sm font-semibold tabular-nums whitespace-nowrap ${cor}`}>
         {sinal}
         {BRL(valor)}
@@ -162,8 +162,8 @@ function Linha({ rotulo, valor, cor, sinal }: { rotulo: string; valor: number; c
 function Filha({ rotulo, valor }: { rotulo: string; valor: number }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1 pl-3.5">
-      <span className="text-xs text-gray-500">{rotulo}</span>
-      <span className="text-xs font-medium text-gray-500 tabular-nums">{BRL(valor)}</span>
+      <span className="text-xs text-hud-muted">{rotulo}</span>
+      <span className="text-xs font-medium text-hud-muted tabular-nums">{BRL(valor)}</span>
     </div>
   );
 }

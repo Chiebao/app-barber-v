@@ -257,7 +257,7 @@ export default function BarbersScreen({ token, onBack }: Props) {
             <View style={styles.roleToggleRow}>
               <View style={styles.roleToggleInfo}>
                 <Text style={styles.roleToggleLabel}>
-                  {newRole === "owner" ? "👑 Dono" : "✂️ Barbeiro"}
+                  {newRole === "owner" ? "Dono" : "Barbeiro"}
                 </Text>
                 <Text style={styles.roleToggleSub}>
                   {newRole === "owner"
@@ -312,7 +312,7 @@ export default function BarbersScreen({ token, onBack }: Props) {
                       style={[styles.roleBadge, barber.role === "owner" && styles.roleBadgeOwner]}
                     >
                       <Text style={[styles.roleBadgeText, barber.role === "owner" && styles.roleBadgeTextOwner]}>
-                        {barber.role === "owner" ? "👑 Dono" : "✂️ Barbeiro"}
+                        {barber.role === "owner" ? "Dono" : "Barbeiro"}
                       </Text>
                     </TouchableOpacity>
                   </View>

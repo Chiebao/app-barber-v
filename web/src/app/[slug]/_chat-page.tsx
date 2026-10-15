@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Icon } from "@/app/components/hud";
 import { useRouter } from "next/navigation";
 
 interface Service {
@@ -325,25 +326,25 @@ export default function BarberPageChat({
   };
 
   return (
-    <main className="flex flex-col h-screen bg-black text-white">
-      <header className="flex items-center justify-between px-4 py-3 bg-dark-800 border-b border-gray-800 shrink-0">
+    <main className="flex flex-col h-screen hud-bg text-hud-text">
+      <header className="flex items-center justify-between px-4 py-3 bg-hud-surface border-b border-hud-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl">✂️</div>
+          <div className="w-11 h-11 rounded-full border border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_12%,transparent)] flex items-center justify-center text-hud-accent"><Icon nome="tesoura" tamanho={20} /></div>
           <div>
-            <p className="font-semibold text-brand-400 text-sm">{shop.name}</p>
+            <p className="font-display text-lg leading-tight text-hud-text">{shop.name}</p>
             <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500">{shop.openTime} – {shop.closeTime}</p>
+              <p className="text-xs text-hud-muted">{shop.openTime} – {shop.closeTime}</p>
               {shop.avgRating && shop.ratingCount && shop.ratingCount > 0 && (
-                <span className="flex items-center gap-0.5 text-xs text-amber-400 font-semibold">
-                  ★ {shop.avgRating.toFixed(1)}
-                  <span className="text-gray-600 font-normal">({shop.ratingCount})</span>
+                <span className="flex items-center gap-1 text-xs text-hud-light font-semibold">
+                  <Icon nome="estrela" tamanho={13} /> {shop.avgRating.toFixed(1)}
+                  <span className="text-hud-faint font-normal">({shop.ratingCount})</span>
                 </span>
               )}
             </div>
           </div>
         </div>
         <button onClick={() => router.push(`/${slug}/meus-agendamentos`)}
-          className="text-xs text-gray-400 border border-gray-700 rounded-lg px-3 py-1.5 hover:text-white transition">
+          className="hud-focus min-h-[44px] text-xs font-bold text-hud-text border border-hud-border rounded px-3 hover:border-hud-muted transition">
           Meus agendamentos
         </button>
       </header>
@@ -352,10 +353,10 @@ export default function BarberPageChat({
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
             {msg.from === "bot" && (
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs mr-2 shrink-0 mt-1">✂️</div>
+              <div className="gold-fill w-7 h-7 rounded-full flex items-center justify-center mr-2 shrink-0 mt-1"><Icon nome="tesoura" tamanho={14} /></div>
             )}
-            <div className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-              msg.from === "bot" ? "bg-blue-600 text-white rounded-tl-sm" : "bg-gray-700 text-white rounded-tr-sm"
+            <div className={`max-w-xs px-4 py-2.5 rounded text-sm leading-relaxed ${
+              msg.from === "bot" ? "hud-card text-hud-text rounded-tl-none" : "gold-fill font-semibold rounded-tr-none"
             }`}
               dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*(.*?)\*/g, "<strong>$1</strong>") }}
             />
@@ -364,15 +365,15 @@ export default function BarberPageChat({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="shrink-0 border-t border-gray-800 bg-gray-950">
+      <div className="shrink-0 border-t border-hud-border bg-hud-surface">
         {step === "name" && (
           <div className="p-3 flex gap-2">
             <input autoFocus value={inputValue} onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitName(); } }}
               placeholder="Seu nome completo..."
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none text-sm" />
+              className="flex-1 bg-hud-surface border border-hud-border rounded px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none text-sm" />
             <button onClick={handleSubmitName} disabled={!inputValue.trim()}
-              className="bg-blue-600 text-white rounded-xl px-4 py-3 font-semibold text-sm disabled:opacity-40 hover:bg-blue-500 transition">
+              className="hud-focus gold-fill rounded px-4 py-3 font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition">
               Enviar
             </button>
           </div>
@@ -382,32 +383,32 @@ export default function BarberPageChat({
             <input autoFocus value={inputValue} onChange={(e) => handlePhoneInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitPhone(); } }}
               placeholder="(11) 99999-9999" type="tel"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none text-sm" />
+              className="flex-1 bg-hud-surface border border-hud-border rounded px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none text-sm" />
             <button onClick={handleSubmitPhone} disabled={inputValue.replace(/\D/g, "").length < 10}
-              className="bg-blue-600 text-white rounded-xl px-4 py-3 font-semibold text-sm disabled:opacity-40 hover:bg-blue-500 transition">
+              className="hud-focus gold-fill rounded px-4 py-3 font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition">
               Enviar
             </button>
           </div>
         )}
         {step === "rating" && pendingRating && (
           <div className="p-4 space-y-3">
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-xs text-hud-muted text-center">
               {pendingRating.services.join(", ")} com {pendingRating.barberName} — {formatDate(pendingRating.date)}
             </p>
             <div className="flex justify-center gap-3">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} onClick={() => setRatingScore(star)}
-                  className={`text-3xl transition-all ${ratingScore >= star ? "text-yellow-400" : "text-gray-600"}`}>★</button>
+                  aria-label={`${star} estrela${star > 1 ? "s" : ""}`} className={`hud-focus h-11 w-11 rounded text-3xl transition-all ${ratingScore >= star ? "text-hud-accent" : "text-[var(--hud-track)]"}`}>★</button>
               ))}
             </div>
             <input value={ratingComment} onChange={(e) => setRatingComment(e.target.value)}
               placeholder="Comentário (opcional)"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none" />
+              className="w-full bg-hud-surface border border-hud-border rounded px-3 py-2 text-sm text-hud-text placeholder:text-hud-faint focus:outline-none" />
             <div className="flex gap-2">
               <button onClick={() => { addUser("Pular avaliação"); goToServices(); }}
-                className="flex-1 border border-gray-700 rounded-xl py-2.5 text-sm text-gray-400">Pular</button>
+                className="flex-1 border border-hud-border rounded py-2.5 text-sm text-hud-muted">Pular</button>
               <button onClick={handleSubmitRating} disabled={ratingScore === 0}
-                className="flex-1 bg-blue-600 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-40">Avaliar</button>
+                className="hud-focus min-h-[44px] flex-1 gold-fill rounded py-2.5 text-sm font-semibold disabled:opacity-40">Avaliar</button>
             </div>
           </div>
         )}
@@ -415,7 +416,7 @@ export default function BarberPageChat({
           <div className="px-4 pt-3">
             <button
               onClick={voltarUmPasso}
-              className="flex items-center gap-1 text-sm text-gray-400 hover:text-brand-400 transition"
+              className="hud-focus flex items-center gap-1 text-sm text-hud-muted hover:text-hud-light transition"
             >
               <span className="text-base">←</span> Voltar
             </button>
@@ -424,23 +425,23 @@ export default function BarberPageChat({
 
         {step === "services" && shop && (
           <div className="pt-3 pb-3">
-            <p className="text-xs text-gray-500 px-4 mb-2 tracking-widest">SELECIONE OS SERVIÇOS:</p>
+            <p className="text-xs text-hud-muted px-4 mb-2 tracking-widest">SELECIONE OS SERVIÇOS:</p>
             <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
               {shop.services.map((service) => {
                 const selected = selectedServices.includes(service.id);
                 return (
                   <button key={service.id} onClick={() => toggleService(service.id, service.category)}
-                    className={`relative flex-shrink-0 w-44 h-36 rounded-2xl overflow-hidden border-2 transition-all ${selected ? "border-yellow-400" : "border-transparent"}`}>
+                    className={`relative flex-shrink-0 w-44 h-36 rounded overflow-hidden border-2 transition-all ${selected ? "border-hud-accent" : "border-hud-border"}`}>
                     {service.imageUrl
                       ? <img src={service.imageUrl} alt={service.name} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center text-4xl">✂️</div>}
+                      : <div className="w-full h-full bg-hud-surface flex items-center justify-center text-hud-accent opacity-60"><Icon nome="tesoura" tamanho={32} /></div>}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selected ? "bg-yellow-400 border-yellow-400" : "bg-white/20 border-white/60"}`}>
-                      {selected && <span className="text-black text-xs font-semibold">✓</span>}
+                    <div className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selected ? "gold-fill border-transparent" : "bg-black/30 border-white/70"}`}>
+                      {selected && <span className="text-[var(--hud-on-accent)] text-xs font-semibold">✓</span>}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                      <p className="text-white font-semibold text-sm leading-tight">{service.name}</p>
-                      <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                      <p className="text-hud-text font-semibold text-sm leading-tight">{service.name}</p>
+                      <div className="flex justify-between text-xs text-hud-soft mt-0.5">
                         <span>R$ {service.price.toFixed(2)}</span>
                         <span>{service.duration}min</span>
                       </div>
@@ -451,11 +452,11 @@ export default function BarberPageChat({
               <div className="flex-shrink-0 w-2" />
             </div>
             {shop.services.length > 2 && (
-              <p className="text-xs text-gray-600 text-right px-4 mt-1">ARRASTE PARA O LADO PARA VER MAIS →</p>
+              <p className="text-xs text-hud-faint text-right px-4 mt-1">ARRASTE PARA O LADO PARA VER MAIS →</p>
             )}
             <div className="px-4 mt-3">
               <button onClick={handleSubmitServices} disabled={selectedServices.length === 0}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white rounded-xl py-3 font-semibold text-sm disabled:opacity-40 transition">
+                className="hud-focus gold-fill w-full min-h-[48px] rounded font-bold text-sm disabled:opacity-40 transition">
                 {selectedServices.length > 0 ? `Enviar (R$ ${totalPrice.toFixed(2)} · ${totalDuration}min)` : "Enviar"}
               </button>
             </div>
@@ -463,15 +464,15 @@ export default function BarberPageChat({
         )}
         {step === "barber" && shop && (
           <div className="pt-3 pb-3">
-            <p className="text-xs text-gray-500 px-4 mb-2 tracking-widest">ESCOLHA O PROFISSIONAL:</p>
+            <p className="text-xs text-hud-muted px-4 mb-2 tracking-widest">ESCOLHA O PROFISSIONAL:</p>
             <div className="flex gap-3 overflow-x-auto px-4 pb-2">
               {shop.barbers.map((b) => (
                 <button key={b.id} onClick={() => handleSelectBarber(b)}
-                  className="flex-shrink-0 flex flex-col items-center gap-2 p-4 bg-gray-800 rounded-2xl border border-gray-700 hover:border-brand-400 transition min-w-[100px]">
-                  <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xl font-semibold">
+                  className="flex-shrink-0 flex flex-col items-center gap-2 p-4 bg-hud-surface rounded border border-hud-border hover:border-hud-accent transition min-w-[100px]">
+                  <div className="w-12 h-12 rounded-full bg-[color-mix(in_srgb,var(--hud-accent)_20%,transparent)] flex items-center justify-center text-hud-light text-xl font-semibold">
                     {b.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm font-medium text-white">{b.name}</span>
+                  <span className="text-sm font-medium text-hud-text">{b.name}</span>
                 </button>
               ))}
             </div>
@@ -479,16 +480,16 @@ export default function BarberPageChat({
         )}
         {step === "date" && (
           <div className="pt-3 pb-3">
-            <p className="text-xs text-gray-500 px-4 mb-2 tracking-widest">ESCOLHA A DATA:</p>
+            <p className="text-xs text-hud-muted px-4 mb-2 tracking-widest">ESCOLHA A DATA:</p>
             <div className="flex gap-2 overflow-x-auto px-4 pb-2">
               {getAvailableDates().map((date) => (
                 <button key={date} onClick={() => handleSelectDate(date)}
-                  className="flex-shrink-0 flex flex-col items-center px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-xl hover:border-brand-400 hover:bg-brand-500/10 transition text-sm">
-                  <span className="text-gray-400 text-xs">
+                  className="flex-shrink-0 flex flex-col items-center px-3 py-2.5 bg-hud-surface border border-hud-border rounded hover:border-hud-accent hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition text-sm">
+                  <span className="text-hud-muted text-xs">
                     {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short" })}
                   </span>
-                  <span className="font-semibold text-white">{new Date(date + "T12:00:00").getDate()}</span>
-                  <span className="text-gray-400 text-xs">
+                  <span className="font-semibold text-hud-text">{new Date(date + "T12:00:00").getDate()}</span>
+                  <span className="text-hud-muted text-xs">
                     {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { month: "short" })}
                   </span>
                 </button>
@@ -500,19 +501,19 @@ export default function BarberPageChat({
           <div className="p-4">
             {slotsLoading ? (
               <div className="flex justify-center py-4">
-                <div className="w-6 h-6 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-hud-accent border-t-transparent rounded-full animate-spin" />
               </div>
             ) : availableSlots.length === 0 ? (
               <div className="text-center py-3">
-                <p className="text-gray-400 text-sm mb-3">Nenhum horário disponível neste dia</p>
+                <p className="text-hud-muted text-sm mb-3">Nenhum horário disponível neste dia</p>
                 <button onClick={voltarUmPasso}
-                  className="text-brand-400 text-sm underline">Escolher outra data</button>
+                  className="hud-focus text-hud-light text-sm underline">Escolher outra data</button>
               </div>
             ) : (
               <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto">
                 {availableSlots.map((time) => (
                   <button key={time} onClick={() => handleSelectTime(time)}
-                    className="py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm font-medium text-white hover:border-brand-400 hover:bg-brand-500/10 transition">
+                    className="py-2 bg-hud-surface border border-hud-border rounded text-sm font-medium text-hud-text hover:border-hud-accent hover:bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] transition">
                     {time}
                   </button>
                 ))}
@@ -522,65 +523,65 @@ export default function BarberPageChat({
         )}
         {step === "confirm" && shop && (
           <div className="p-4">
-            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 mb-3 space-y-2.5">
+            <div className="hud-card p-4 mb-3 space-y-2.5">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Cliente</span><span className="font-medium">{clientName}</span>
+                <span className="text-hud-muted">Cliente</span><span className="font-medium">{clientName}</span>
               </div>
               {selectedBarber && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Profissional</span><span className="font-medium">{selectedBarber.name}</span>
+                  <span className="text-hud-muted">Profissional</span><span className="font-medium">{selectedBarber.name}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Serviços</span>
+                <span className="text-hud-muted">Serviços</span>
                 <span className="font-medium text-right">
                   {shop.services.filter((s) => selectedServices.includes(s.id)).map((s) => s.name).join(", ")}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Data</span><span className="font-medium">{formatDate(selectedDate)}</span>
+                <span className="text-hud-muted">Data</span><span className="font-medium">{formatDate(selectedDate)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Horário</span><span className="font-medium">{selectedTime}</span>
+                <span className="text-hud-muted">Horário</span><span className="font-medium">{selectedTime}</span>
               </div>
-              <div className="border-t border-gray-700 pt-2.5 flex justify-between">
-                <span className="text-gray-400 text-sm">Total</span>
-                <span className="font-semibold text-brand-400">R$ {totalPrice.toFixed(2)}</span>
+              <div className="border-t border-hud-border pt-2.5 flex justify-between">
+                <span className="text-hud-muted text-sm">Total</span>
+                <span className="font-semibold text-hud-light">R$ {totalPrice.toFixed(2)}</span>
               </div>
             </div>
             <button onClick={handleBook}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 font-semibold text-sm transition">
+              className="hud-focus w-full bg-hud-info hover:brightness-110 text-hud-text rounded py-3 font-semibold text-sm transition">
               Confirmar agendamento
             </button>
           </div>
         )}
         {step === "booking" && (
           <div className="p-4 flex items-center justify-center gap-3">
-            <div className="w-5 h-5 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
-            <span className="text-gray-400 text-sm">Confirmando...</span>
+            <div className="w-5 h-5 border-2 border-hud-accent border-t-transparent rounded-full animate-spin" />
+            <span className="text-hud-muted text-sm">Confirmando...</span>
           </div>
         )}
         {step === "pix" && pixKey && shop && (
           <div className="p-4 space-y-3">
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 space-y-3">
+            <div className="bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] border border-[color-mix(in_srgb,var(--hud-warn)_30%,transparent)] rounded p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-yellow-400 font-semibold">Entrada via Pix (50%)</span>
-                <span className="text-yellow-400 font-semibold">R$ {(totalPrice / 2).toFixed(2)}</span>
+                <span className="text-hud-warn font-semibold">Entrada via Pix (50%)</span>
+                <span className="text-hud-warn font-semibold">R$ {(totalPrice / 2).toFixed(2)}</span>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-1">Chave Pix</p>
+                <p className="text-xs text-hud-muted mb-1">Chave Pix</p>
                 <button onClick={() => { navigator.clipboard.writeText(pixKey); setPixCopied(true); setTimeout(() => setPixCopied(false), 2000); }}
-                  className="w-full flex items-center justify-between bg-gray-900 rounded-lg p-2 text-sm hover:bg-gray-800 transition">
-                  <span className="text-white font-semibold break-all text-left">{pixKey}</span>
-                  <span className="ml-2 shrink-0 text-xs font-semibold text-yellow-400">
-                    {pixCopied ? "✓ Copiado!" : "📋 Copiar"}
+                  className="w-full flex items-center justify-between bg-hud-surface rounded p-2 text-sm hover:bg-[var(--hud-track)] transition">
+                  <span className="text-hud-text font-semibold break-all text-left">{pixKey}</span>
+                  <span className="ml-2 shrink-0 text-xs font-semibold text-hud-warn">
+                    {pixCopied ? "Copiado!" : "Copiar"}
                   </span>
                 </button>
               </div>
-              <p className="text-xs text-gray-400">Após o pagamento, envie o comprovante via WhatsApp para a barbearia.</p>
+              <p className="text-xs text-hud-muted">Após o pagamento, envie o comprovante via WhatsApp para a barbearia.</p>
             </div>
             <button onClick={resetFlow}
-              className="w-full border border-gray-700 text-gray-400 rounded-xl py-2.5 text-sm hover:text-white transition">
+              className="hud-focus min-h-[44px] w-full border border-hud-border text-hud-muted rounded py-2.5 text-sm hover:text-hud-text transition">
               Voltar ao início
             </button>
           </div>
@@ -588,11 +589,11 @@ export default function BarberPageChat({
         {step === "done" && (
           <div className="p-4 flex gap-2">
             <button onClick={resetFlow}
-              className="flex-1 border border-gray-700 text-gray-400 rounded-xl py-2.5 text-sm hover:text-white transition">
+              className="hud-focus min-h-[44px] flex-1 border border-hud-border text-hud-muted rounded py-2.5 text-sm hover:text-hud-text transition">
               Novo agendamento
             </button>
             <button onClick={() => router.push(`/${slug}/meus-agendamentos`)}
-              className="flex-1 bg-brand-500 text-dark-900 rounded-xl py-2.5 text-sm font-semibold hover:bg-brand-400 transition">
+              className="flex-1 gold-fill text-[var(--hud-on-accent)] rounded py-2.5 text-sm font-semibold hover:brightness-105 transition">
               Meus agendamentos
             </button>
           </div>

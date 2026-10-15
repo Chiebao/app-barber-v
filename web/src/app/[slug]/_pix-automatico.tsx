@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Alert, GoldButton, HudCard, Icon, Spinner } from "@/app/components/hud";
 
 /**
  * Tela de pagamento do sinal via Pix (Mercado Pago).
@@ -62,17 +63,17 @@ export default function PixAutomatico({
 
   return (
     <div className="space-y-5">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-white">Pague o sinal para garantir</h2>
-        <p className="text-gray-400 mt-1 text-sm">
+      <div>
+        <h2 className="font-display text-[28px] leading-tight text-hud-text">Pague o sinal para garantir</h2>
+        <p className="mt-1 text-sm text-hud-muted">
           Assim que o Pix cair, seu horário é confirmado automaticamente.
         </p>
       </div>
 
-      <div className="bg-dark-900 border border-gray-700 rounded-2xl p-5 space-y-4">
-        <div className="flex justify-between items-baseline">
-          <span className="text-gray-400 text-sm">Valor do sinal</span>
-          <span className="text-2xl font-bold text-brand-400">R$ {pix.valor.toFixed(2)}</span>
+      <HudCard variante="destaque" className="space-y-4 p-5">
+        <div className="flex items-end justify-between gap-3">
+          <span className="text-sm text-hud-muted">Valor do sinal</span>
+          <span className="gold-text gold-glow font-display text-3xl tabular-nums">R$ {pix.valor.toFixed(2).replace(".", ",")}</span>
         </div>
 
         {pix.qrCodeBase64 && (
@@ -81,51 +82,32 @@ export default function PixAutomatico({
             <img
               src={`data:image/png;base64,${pix.qrCodeBase64}`}
               alt="QR Code do Pix"
-              className="w-52 h-52 rounded-xl bg-white p-2"
+              className="h-52 w-52 rounded bg-white p-2"
             />
           </div>
         )}
 
-        <div>
-          <p className="text-xs text-gray-400 mb-2 text-center">
-            Escaneie o QR Code ou use o código abaixo
+        <p className="text-center text-xs text-hud-muted">Escaneie o QR Code ou use o código abaixo</p>
+        <GoldButton cheio onClick={copiar}>
+          <Icon nome={copiado ? "check" : "copiar"} tamanho={18} /> {copiado ? "Código copiado!" : "Copiar código Pix"}
+        </GoldButton>
+      </HudCard>
+
+      {verificando ? (
+        <div role="status" className="flex items-start gap-3 rounded border border-[color-mix(in_srgb,var(--hud-info)_50%,transparent)] bg-[color-mix(in_srgb,var(--hud-info)_8%,transparent)] px-4 py-3">
+          <Spinner tamanho={18} />
+          <p className="text-sm leading-snug text-hud-text">
+            Aguardando o pagamento…
+            <span className="mt-1 block text-xs text-hud-muted">Pode deixar esta tela aberta — ela confirma sozinha em alguns segundos.</span>
           </p>
-          <button
-            onClick={copiar}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 transition"
-          >
-            {copiado ? "✓ Código copiado!" : "📋 Copiar código Pix"}
-          </button>
         </div>
-      </div>
+      ) : (
+        <Alert tom="info" titulo="Não detectamos o pagamento por aqui">
+          Se você já pagou, tudo certo — a barbearia recebe a confirmação do mesmo jeito.
+        </Alert>
+      )}
 
-      <div className="rounded-2xl border border-blue-500/25 bg-blue-500/10 px-4 py-3 flex items-start gap-3">
-        {verificando ? (
-          <>
-            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mt-0.5 shrink-0" />
-            <p className="text-sm text-blue-300 leading-snug">
-              Aguardando o pagamento…
-              <span className="block text-blue-200/70 text-xs mt-1">
-                Pode deixar esta tela aberta — ela confirma sozinha em alguns segundos.
-              </span>
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-blue-300 leading-snug">
-            Não detectamos o pagamento por aqui.
-            <span className="block text-blue-200/70 text-xs mt-1">
-              Se você já pagou, tudo certo — a barbearia recebe a confirmação do mesmo jeito.
-            </span>
-          </p>
-        )}
-      </div>
-
-      <button
-        onClick={onVoltar}
-        className="w-full rounded-xl border border-gray-700 py-3 text-sm text-gray-400 hover:text-white transition"
-      >
-        Voltar ao início
-      </button>
+      <GoldButton variante="neutro" cheio onClick={onVoltar}>Voltar ao início</GoldButton>
     </div>
   );
 }

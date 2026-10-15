@@ -93,8 +93,57 @@ export function getPaletteById(id: string): WebPalette {
 }
 
 /** Returns inline CSS variables string for a palette */
+/**
+ * Tokens do visual "Ouro HUD", derivados da paleta.
+ *
+ * O dourado das referencias e so a Midnight Gold: em cada barbearia o
+ * destaque vira a cor dela, e as duas pontas do gradiente metalico saem dela
+ * (`globals.css`, com `color-mix`). A Midnight Gold usa o ouro das
+ * referencias (#F5B731) e nao o `brand500` antigo (#c9a96e, mais apagado):
+ * o desenho inteiro foi feito em cima daquele ouro.
+ *
+ * Nas paletas CLARAS o gradiente vai da cor para o escuro, nao do claro para
+ * a cor: a ponta clara some no fundo creme/cinza e o texto metalico fica
+ * ilegivel. As cores de estado tambem escurecem — verde-limao em fundo claro
+ * nao passa no contraste.
+ */
+function hudVars(p: WebPalette): string[] {
+  const accent = p.id === "midnight_gold" ? "#F5B731" : p.brand500;
+  // Nas claras o gradiente escurece (vai da cor para o escuro), entao o
+  // texto do botao e BRANCO: escuro sobre o marrom do Pergaminho media 1,8:1.
+  const sobreAccent = !p.dark ? "#FFFFFF" : "#0B0B14";
+  const claro = !p.dark;
+  return [
+    `--hud-accent: ${accent}`,
+    `--hud-on-accent: ${sobreAccent}`,
+    `--hud-mix-claro: ${claro ? "100%" : "55%"}`,
+    `--hud-mix-escuro: ${claro ? "55%" : "72%"}`,
+    `--hud-tint-mix: ${claro ? "100%" : "62%"}`,
+    `--hud-ok: ${claro ? "#166534" : "#4ADE80"}`,
+    `--hud-warn: ${claro ? "#9A3412" : "#FB923C"}`,
+    `--hud-err: ${claro ? "#B91C1C" : "#F87171"}`,
+    `--hud-info: ${claro ? "#1D4ED8" : "#60A5FA"}`,
+    `--hud-shadow: ${claro ? "rgba(15,23,42,0.18)" : "rgba(0,0,0,0.55)"}`,
+  ];
+}
+
+/** As mesmas variaveis como objeto de estilo — para tematizar so um trecho da tela. */
+export function paletteToStyle(p: WebPalette): Record<string, string> {
+  return Object.fromEntries(
+    paletteToVars(p)
+      .split(";")
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .map((d) => {
+        const i = d.indexOf(":");
+        return [d.slice(0, i).trim(), d.slice(i + 1).trim()];
+      }),
+  );
+}
+
 export function paletteToVars(p: WebPalette): string {
   return [
+    ...hudVars(p),
     `--brand-500: ${p.brand500}`,
     `--dark-900: ${p.dark900}`,
     `--dark-800: ${p.dark800}`,

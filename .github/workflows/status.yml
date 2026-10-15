@@ -1,0 +1,34 @@
+name: Status do dia
+
+# Avisa os barbeiros, às 7h de Brasília, que a imagem do Status de hoje está
+# pronta no painel (botão "Postar" → WhatsApp → Meu status).
+#
+# Só avisa: o WhatsApp não deixa sistema nenhum postar no Status de alguém.
+# Push grátis (navegador + app), nenhuma mensagem paga.
+#
+# ~30 execuções/mês × 1 min mínimo cobrado = 30 min dos 2.000 do plano grátis.
+#
+# Às 10:00 UTC = 7h em Brasília. O GitHub costuma atrasar alguns minutos.
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch: {}   # permite disparar na mão pelo site do GitHub
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Avisar que o status de hoje está pronto
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://barberpro-mauve.vercel.app/api/cron/status-do-dia")
+          codigo=$(echo "$resposta" | tail -n1)
+          corpo=$(echo "$resposta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$corpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Endpoint do status do dia respondeu $codigo"
+            exit 1
+          fi

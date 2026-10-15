@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Icon } from "@/app/components/hud";
 import { toast } from "@/app/lib/toast";
 import { Modal, useConfirmacao } from "@/app/lib/modal";
 
@@ -313,6 +314,28 @@ export default function Agenda({
   }
 
   const faixas = d ? montarFaixas(d) : [];
+
+  // Linha do "agora" (Ouro HUD). Só apresentação: a régua é a mesma das
+  // faixas — cada uma ocupa a altura dela mais o vão de 4px entre blocos.
+  const [, setRelogio] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setRelogio((x) => x + 1), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const linhaAgora = (() => {
+    const n = new Date();
+    const hojeIso = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+    if (data !== hojeIso || faixas.length === 0) return null;
+    const m = n.getHours() * 60 + n.getMinutes();
+    let y = 0;
+    for (const f of faixas) {
+      const h = Math.max(ALTURA_MIN, (f.fim - f.inicio) * ESCALA);
+      if (m < f.inicio) return null;
+      if (m <= f.fim) return y + ((m - f.inicio) / (f.fim - f.inicio)) * (h - 4);
+      y += h;
+    }
+    return null;
+  })();
   const livreTotal = faixas.filter((f) => f.tipo === "livre").reduce((s, f) => s + (f.fim - f.inicio), 0);
 
   // A tira comeca no dia ABERTO, nao em hoje: quem pulou para 12/10 pelo
@@ -328,7 +351,7 @@ export default function Agenda({
     <div className="space-y-4">
       {dialogoConfirmacao}
 
-      <h2 className="text-lg font-semibold text-white">📅 Minha Agenda</h2>
+      <h2 className="font-display text-2xl leading-tight text-hud-text"><Icon nome="agenda" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Minha Agenda</h2>
 
       {/* Tira de datas + salto para qualquer dia.
 
@@ -343,7 +366,7 @@ export default function Agenda({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onMudarData(new Date().toISOString().split("T")[0])}
-          className="shrink-0 rounded-lg border border-gray-700 px-2.5 py-2 text-xs font-semibold text-gray-300 transition hover:border-gray-500 hover:text-white"
+          className="shrink-0 rounded border border-hud-border px-2.5 py-2 text-xs font-semibold text-hud-soft transition hover:border-hud-border hover:text-hud-text"
         >
           Hoje
         </button>
@@ -352,7 +375,7 @@ export default function Agenda({
           value={data}
           onChange={(e) => e.target.value && onMudarData(e.target.value)}
           aria-label="Ir para uma data"
-          className="flex-1 min-w-0 rounded-lg border border-gray-700 bg-dark-800 px-2.5 py-2 text-sm text-white"
+          className="flex-1 min-w-0 rounded border border-hud-border bg-hud-surface px-2.5 py-2 text-sm text-hud-text"
         />
       </div>
 
@@ -363,10 +386,10 @@ export default function Agenda({
           <button
             key={x.iso}
             onClick={() => onMudarData(x.iso)}
-            className={`shrink-0 w-[52px] rounded-xl py-1.5 text-center border transition ${
+            className={`shrink-0 w-[52px] rounded py-1.5 text-center border transition ${
               x.iso === data
-                ? "bg-brand-500 border-brand-500 text-dark-900"
-                : "bg-dark-800 border-gray-700 text-gray-300 hover:border-gray-500"
+                ? "gold-fill border-hud-accent text-[var(--hud-on-accent)]"
+                : "bg-hud-surface border-hud-border text-hud-soft hover:border-hud-border"
             }`}
           >
             <span className="block text-[10px] uppercase tracking-wide opacity-75">{x.semana}</span>
@@ -379,34 +402,34 @@ export default function Agenda({
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setVerIntervalo(true)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/45 bg-brand-500/10 px-3 py-2 text-xs font-bold text-brand-400"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--hud-accent)_45%,transparent)] bg-[color-mix(in_srgb,var(--hud-accent)_10%,transparent)] px-3 py-2 text-xs font-bold text-hud-light"
         >
-          Intervalo <span className="text-white">{slotInterval >= 60 ? "1h" : `${slotInterval}min`}</span>
+          Intervalo <span className="text-hud-text">{slotInterval >= 60 ? "1h" : `${slotInterval}min`}</span>
           <span className="opacity-60">▾</span>
         </button>
         <button
           onClick={() => setVerBloqueio(true)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-gray-700 bg-dark-800 px-3 py-2 text-xs font-bold text-gray-400 hover:text-white transition"
+          className="inline-flex items-center gap-1.5 rounded-full border border-hud-border bg-hud-surface px-3 py-2 text-xs font-bold text-hud-muted hover:text-hud-text transition"
         >
           Bloquear <span className="opacity-60">▾</span>
         </button>
         {livreTotal > 0 && (
-          <span className="inline-flex items-center rounded-full border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-500">
+          <span className="inline-flex items-center rounded-full border border-hud-border px-3 py-2 text-xs font-semibold text-hud-muted">
             {duracao(livreTotal)} livre
           </span>
         )}
       </div>
 
-      {carregando && <p className="text-center text-sm text-gray-500 py-10">Carregando...</p>}
+      {carregando && <p className="text-center text-sm text-hud-muted py-10">Carregando...</p>}
 
       {!carregando && d && d.allDay && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-5 text-center space-y-3">
-          <p className="text-sm font-semibold text-red-400">Dia inteiro bloqueado</p>
-          <p className="text-xs text-gray-500">Nenhum horário aparece para o cliente.</p>
+        <div className="rounded border border-[color-mix(in_srgb,var(--hud-err)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_5%,transparent)] p-5 text-center space-y-3">
+          <p className="text-sm font-semibold text-hud-err">Dia inteiro bloqueado</p>
+          <p className="text-xs text-hud-muted">Nenhum horário aparece para o cliente.</p>
           <button
             onClick={() => diaInteiro(false)}
             disabled={salvando}
-            className="w-full rounded-xl border border-green-500/50 bg-green-500/10 py-2.5 text-sm font-semibold text-green-400 hover:bg-green-500/20 disabled:opacity-50 transition"
+            className="w-full rounded border border-[color-mix(in_srgb,var(--hud-ok)_50%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_10%,transparent)] py-2.5 text-sm font-semibold text-hud-ok hover:bg-[color-mix(in_srgb,var(--hud-ok)_20%,transparent)] disabled:opacity-50 transition"
           >
             Liberar o dia
           </button>
@@ -415,7 +438,7 @@ export default function Agenda({
 
       {/* ── A régua ── */}
       {!carregando && d && !d.allDay && faixas.length === 0 && (
-        <p className="text-center text-sm text-gray-500 py-10">Nenhum horário neste dia.</p>
+        <p className="text-center text-sm text-hud-muted py-10">Nenhum horário neste dia.</p>
       )}
 
       {!carregando && d && !d.allDay && faixas.length > 0 && (
@@ -425,14 +448,20 @@ export default function Agenda({
               <div
                 key={`e-${f.inicio}`}
                 style={{ height: Math.max(ALTURA_MIN, (f.fim - f.inicio) * ESCALA) }}
-                className="text-[11px] text-gray-500 tabular-nums pt-1"
+                className="text-[11px] text-hud-muted tabular-nums pt-1"
               >
                 {emTexto(f.inicio)}
               </div>
             ))}
           </div>
 
-          <div className="flex-1 flex flex-col gap-1 min-w-0">
+          <div className="relative flex-1 flex flex-col gap-1 min-w-0">
+            {linhaAgora !== null && (
+              <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: linhaAgora - 1 }}>
+                <span className="-ml-1 h-2.5 w-2.5 rounded-full gold-fill" style={{ boxShadow: "0 0 10px var(--hud-accent)" }} />
+                <span className="h-0.5 flex-1" style={{ background: "var(--hud-gradient-h)", boxShadow: "0 0 10px var(--hud-accent)" }} />
+              </div>
+            )}
             {faixas.map((f) => {
               const altura = Math.max(ALTURA_MIN, (f.fim - f.inicio) * ESCALA) - 4;
               const mins = f.fim - f.inicio;
@@ -450,19 +479,19 @@ export default function Agenda({
                   <div
                     key={`c-${f.inicio}`}
                     style={{ height: altura }}
-                    className="rounded-xl border border-brand-500/35 bg-brand-500/15 px-3 py-1.5 overflow-hidden flex flex-col justify-center"
+                    className="rounded border border-l-[3px] border-hud-accent bg-[color-mix(in_srgb,var(--hud-accent)_14%,var(--hud-surface))] px-3 py-1.5 overflow-hidden flex flex-col justify-center"
                   >
                     {compacto ? (
-                      <span className="text-sm font-bold text-brand-400 truncate leading-tight">
+                      <span className="text-sm font-bold text-hud-light truncate leading-tight">
                         {a.cliente}
-                        <span className="font-medium text-brand-400/70"> · {duracao(mins)}</span>
+                        <span className="font-medium text-[color-mix(in_srgb,var(--hud-accent)_70%,transparent)]"> · {duracao(mins)}</span>
                       </span>
                     ) : (
                       <>
-                        <span className="text-sm font-bold text-brand-400 truncate leading-tight">
+                        <span className="text-sm font-bold text-hud-light truncate leading-tight">
                           {a.cliente}
                         </span>
-                        <span className="text-[11px] text-brand-400/70 truncate leading-tight mt-0.5">
+                        <span className="text-[11px] text-[color-mix(in_srgb,var(--hud-accent)_70%,transparent)] truncate leading-tight mt-0.5">
                           {detalhe} · {duracao(mins)}
                         </span>
                       </>
@@ -480,10 +509,10 @@ export default function Agenda({
                       backgroundImage:
                         "repeating-linear-gradient(45deg, rgba(139,143,163,.10), rgba(139,143,163,.10) 7px, transparent 7px, transparent 14px)",
                     }}
-                    className="rounded-xl border border-dashed border-gray-700 px-3 py-2 overflow-hidden flex flex-col justify-center"
+                    className="rounded border border-dashed border-hud-border px-3 py-2 overflow-hidden flex flex-col justify-center"
                   >
-                    <span className="text-sm font-bold text-gray-400 leading-tight">Fechado · todo dia</span>
-                    {!compacto && (<span className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                    <span className="text-sm font-bold text-hud-muted leading-tight">Fechado · todo dia</span>
+                    {!compacto && (<span className="text-[11px] text-hud-muted leading-tight mt-0.5">
                       {emTexto(f.inicio)} – {emTexto(f.fim)} · toque em Bloquear para mudar
                     </span>)}
                   </div>
@@ -497,10 +526,10 @@ export default function Agenda({
                     onClick={() => mexerNosBlocos(f.horarios, false)}
                     disabled={salvando}
                     style={{ height: altura }}
-                    className="rounded-xl border border-red-500/40 bg-red-500/8 px-3 py-2 text-left overflow-hidden flex flex-col justify-center disabled:opacity-50"
+                    className="hud-focus rounded border border-[color-mix(in_srgb,var(--hud-err)_55%,transparent)] bg-[color-mix(in_srgb,var(--hud-err)_10%,transparent)] px-3 py-2 text-left overflow-hidden flex flex-col justify-center disabled:opacity-50"
                   >
-                    <span className="text-sm font-bold text-red-400 leading-tight">Bloqueado · {duracao(mins)}</span>
-                    {!compacto && <span className="text-[11px] text-gray-500 leading-tight mt-0.5">Toque para liberar</span>}
+                    <span className="text-sm font-bold text-hud-err leading-tight">Bloqueado · {duracao(mins)}</span>
+                    {!compacto && <span className="text-[11px] text-hud-muted leading-tight mt-0.5">Toque para liberar</span>}
                   </button>
                 );
               }
@@ -511,10 +540,10 @@ export default function Agenda({
                   onClick={() => mexerNosBlocos(f.horarios, true)}
                   disabled={salvando}
                   style={{ height: altura }}
-                  className="rounded-xl border border-dashed border-green-500/35 bg-green-500/5 px-3 py-2 text-left overflow-hidden flex flex-col justify-center disabled:opacity-50"
+                  className="hud-focus rounded border border-dashed border-[color-mix(in_srgb,var(--hud-ok)_55%,transparent)] bg-[color-mix(in_srgb,var(--hud-ok)_5%,transparent)] px-3 py-2 text-left overflow-hidden flex flex-col justify-center disabled:opacity-50"
                 >
-                  <span className="text-sm font-bold text-green-400 leading-tight">{duracao(mins)} livre</span>
-                  {!compacto && <span className="text-[11px] text-gray-500 leading-tight mt-0.5">Toque para fechar</span>}
+                  <span className="text-sm font-bold text-hud-ok leading-tight">{duracao(mins)} livre</span>
+                  {!compacto && <span className="text-[11px] text-hud-muted leading-tight mt-0.5">Toque para fechar</span>}
                 </button>
               );
             })}
@@ -524,8 +553,8 @@ export default function Agenda({
 
       {/* ── Intervalo ── */}
       <Modal aberto={verIntervalo} onFechar={() => setVerIntervalo(false)}>
-        <h3 className="text-xl font-semibold text-white">Intervalo da agenda</h3>
-        <p className="text-sm text-gray-300">
+        <h3 className="font-display text-[22px] leading-tight text-hud-text">Intervalo da agenda</h3>
+        <p className="text-sm text-hud-soft">
           De quanto em quanto tempo a agenda oferece horário quando o dia está vazio.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -535,8 +564,8 @@ export default function Agenda({
               onClick={async () => { await onMudarIntervalo(min); setVerIntervalo(false); await buscar(); }}
               className={
                 slotInterval === min
-                  ? "rounded-full bg-brand-500 border border-brand-500 px-4 py-2.5 text-sm font-bold text-dark-900"
-                  : "rounded-full border border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-400 hover:text-white transition"
+                  ? "rounded-full gold-fill border border-hud-accent px-4 py-2.5 text-sm font-bold text-[var(--hud-on-accent)]"
+                  : "rounded-full border border-hud-border px-4 py-2.5 text-sm font-semibold text-hud-muted hover:text-hud-text transition"
               }
             >
               {min >= 60 ? "1 hora" : `${min} min`}
@@ -544,13 +573,13 @@ export default function Agenda({
           ))}
         </div>
         {/* Sem este aviso parece que muda só o dia aberto na tela. */}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-hud-muted">
           Vale para a barbearia inteira, todos os dias — é o mesmo ajuste que
           fica em Configurações.
         </p>
         <button
           onClick={() => setVerIntervalo(false)}
-          className="w-full rounded-xl border border-gray-700 py-3 text-sm font-medium text-gray-400 hover:text-white transition"
+          className="w-full rounded border border-hud-border py-3 text-sm font-medium text-hud-muted hover:text-hud-text transition"
         >
           Fechar
         </button>
@@ -558,20 +587,20 @@ export default function Agenda({
 
       {/* ── Bloquear ── */}
       <Modal aberto={verBloqueio} onFechar={() => setVerBloqueio(false)}>
-        <h3 className="text-xl font-semibold text-white">Bloquear horário</h3>
+        <h3 className="font-display text-[22px] leading-tight text-hud-text">Bloquear horário</h3>
 
         <button
           onClick={() => diaInteiro(true)}
           disabled={salvando}
-          className="w-full rounded-xl border border-gray-700 py-3 text-sm font-semibold text-gray-300 hover:bg-white/5 disabled:opacity-50 transition"
+          className="w-full rounded border border-hud-border py-3 text-sm font-semibold text-hud-soft hover:bg-white/5 disabled:opacity-50 transition"
         >
           Fechar o dia inteiro
         </button>
 
-        <div className="rounded-xl border border-gray-700 p-4 space-y-3">
+        <div className="rounded border border-hud-border p-4 space-y-3">
           <div>
-            <span className="block text-sm font-semibold text-white">Todo dia, no mesmo horário</span>
-            <span className="block text-xs text-gray-500 mt-0.5">
+            <span className="block text-sm font-semibold text-hud-text">Todo dia, no mesmo horário</span>
+            <span className="block text-xs text-hud-muted mt-0.5">
               O almoço, por exemplo. Vale toda semana, sem você precisar voltar aqui.
             </span>
           </div>
@@ -581,15 +610,15 @@ export default function Agenda({
               type="time"
               value={de}
               onChange={(e) => setDe(e.target.value)}
-              className="flex-1 min-w-0 rounded-lg bg-dark-900 border border-gray-700 px-3 py-2.5 text-white text-sm focus:border-brand-500 focus:outline-none"
+              className="flex-1 min-w-0 rounded bg-hud-bg border border-hud-border px-3 py-2.5 text-hud-text text-sm focus:border-hud-accent focus:outline-none"
               aria-label="Começa às"
             />
-            <span className="text-gray-500 text-sm shrink-0">até</span>
+            <span className="text-hud-muted text-sm shrink-0">até</span>
             <input
               type="time"
               value={ate}
               onChange={(e) => setAte(e.target.value)}
-              className="flex-1 min-w-0 rounded-lg bg-dark-900 border border-gray-700 px-3 py-2.5 text-white text-sm focus:border-brand-500 focus:outline-none"
+              className="flex-1 min-w-0 rounded bg-hud-bg border border-hud-border px-3 py-2.5 text-hud-text text-sm focus:border-hud-accent focus:outline-none"
               aria-label="Termina às"
             />
           </div>
@@ -603,10 +632,10 @@ export default function Agenda({
                   onClick={() => setDias((p) => (on ? p.filter((x) => x !== dia.n) : [...p, dia.n]))}
                   aria-label={dia.nome}
                   aria-pressed={on}
-                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                  className={`flex-1 rounded py-2 text-xs font-bold transition ${
                     on
-                      ? "bg-brand-500 text-dark-900"
-                      : "border border-gray-700 text-gray-500 hover:text-white"
+                      ? "gold-fill text-[var(--hud-on-accent)]"
+                      : "border border-hud-border text-hud-muted hover:text-hud-text"
                   }`}
                 >
                   {dia.curto}
@@ -618,7 +647,7 @@ export default function Agenda({
           <button
             onClick={salvarRegra}
             disabled={salvando}
-            className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-dark-900 hover:bg-brand-400 disabled:opacity-50 transition"
+            className="hud-focus hud-chamfer w-full gold-fill min-h-[56px] font-bold uppercase tracking-[0.1em] text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:brightness-105 disabled:opacity-50 transition"
           >
             {salvando ? "Salvando..." : "Criar bloqueio"}
           </button>
@@ -626,19 +655,19 @@ export default function Agenda({
 
         {regras.length > 0 && (
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+            <span className="text-xs font-bold uppercase tracking-widest text-hud-muted">
               Bloqueios que se repetem
             </span>
             {regras.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center gap-3 rounded-xl border border-gray-700 px-3 py-2.5"
+                className="flex items-center gap-3 rounded border border-hud-border px-3 py-2.5"
               >
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-white tabular-nums">
+                  <span className="block text-sm font-semibold text-hud-text tabular-nums">
                     {r.horaInicio} – {r.horaFim}
                   </span>
-                  <span className="block text-xs text-gray-500">
+                  <span className="block text-xs text-hud-muted">
                     {r.diasSemana.length === 7
                       ? "todos os dias"
                       : r.diasSemana.map((n) => DIAS[n].nome.slice(0, 3)).join(", ")}
@@ -646,7 +675,7 @@ export default function Agenda({
                 </span>
                 <button
                   onClick={() => apagarRegra(r)}
-                  className="shrink-0 rounded-lg px-2 py-1 text-gray-600 hover:text-red-400 transition"
+                  className="shrink-0 rounded px-2 py-1 text-hud-faint hover:text-hud-err transition"
                   aria-label="Apagar regra"
                 >
                   ✕
@@ -658,7 +687,7 @@ export default function Agenda({
 
         <button
           onClick={() => setVerBloqueio(false)}
-          className="w-full rounded-xl border border-gray-700 py-3 text-sm font-medium text-gray-400 hover:text-white transition"
+          className="w-full rounded border border-hud-border py-3 text-sm font-medium text-hud-muted hover:text-hud-text transition"
         >
           Fechar
         </button>

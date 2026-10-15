@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 
 /**
  * Funil do link: de cada 10 pessoas que abrem, quantas agendam.
@@ -33,8 +34,8 @@ export default function Conversao({ token }: { token: string | null }) {
 
   if (carregando) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5">
-        <div className="h-4 w-40 bg-gray-700/60 rounded animate-pulse" />
+      <div className="hud-card p-5">
+        <div className="h-4 w-40 bg-[color-mix(in_srgb,var(--hud-surface)_60%,transparent)] rounded animate-pulse" />
       </div>
     );
   }
@@ -43,9 +44,9 @@ export default function Conversao({ token }: { token: string | null }) {
 
   if (d.semDados) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-2">
-        <h3 className="font-semibold text-white">📈 Conversão do seu link</h3>
-        <p className="text-sm text-gray-400">
+      <div className="hud-card p-5 space-y-2">
+        <h3 className="font-semibold text-hud-text"><Icon nome="grafico" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Conversão do seu link</h3>
+        <p className="text-sm text-hud-muted">
           Ainda não temos dados suficientes. Assim que seus clientes começarem a abrir o link,
           mostramos aqui quantos deles realmente agendam.
         </p>
@@ -67,18 +68,18 @@ export default function Conversao({ token }: { token: string | null }) {
       : "Muita gente abre e não agenda. Vale olhar se há horários disponíveis suficientes e se os preços estão claros.";
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+    <div className="hud-card p-5 space-y-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-semibold text-white">📈 Conversão do seu link</h3>
-        <span className="text-xs text-gray-500">últimos {d.dias} dias</span>
+        <h3 className="font-semibold text-hud-text"><Icon nome="grafico" tamanho={16} className="mr-1.5 inline-block align-[-3px]" />Conversão do seu link</h3>
+        <span className="text-xs text-hud-muted">últimos {d.dias} dias</span>
       </div>
 
       <div className="flex items-end gap-2">
-        <p className="text-4xl font-bold text-brand-400 tabular-nums">{conversao}%</p>
+        <p className="text-4xl font-bold text-hud-light tabular-nums">{conversao}%</p>
         {d.anterior.visitas > 0 && variou !== 0 && (
           <span
             className={
-              "text-sm font-semibold pb-1 " + (variou > 0 ? "text-green-400" : "text-red-400")
+              "text-sm font-semibold pb-1 " + (variou > 0 ? "text-hud-ok" : "text-hud-err")
             }
           >
             {variou > 0 ? "▲" : "▼"} {Math.abs(variou)} pts
@@ -89,27 +90,27 @@ export default function Conversao({ token }: { token: string | null }) {
       {/* Funil visual */}
       <div className="space-y-2">
         <div>
-          <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <div className="flex justify-between text-xs text-hud-muted mb-1">
             <span>Abriram o link</span>
-            <span className="tabular-nums text-gray-300">{visitas}</span>
+            <span className="tabular-nums text-hud-soft">{visitas}</span>
           </div>
-          <div className="h-2.5 rounded-full bg-gray-700" />
+          <div className="h-2.5 rounded-full bg-[var(--hud-track)]" />
         </div>
         <div>
-          <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <div className="flex justify-between text-xs text-hud-muted mb-1">
             <span>Agendaram</span>
-            <span className="tabular-nums text-brand-400">{agendamentos}</span>
+            <span className="tabular-nums text-hud-light">{agendamentos}</span>
           </div>
-          <div className="h-2.5 rounded-full bg-gray-700 overflow-hidden">
+          <div className="h-2.5 rounded-full bg-[var(--hud-track)] overflow-hidden">
             <div
-              className="h-full rounded-full bg-brand-500 transition-all duration-700"
+              className="h-full rounded-full gold-fill transition-all duration-700"
               style={{ width: Math.min(100, conversao) + "%" }}
             />
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed border-t border-gray-700 pt-3">
+      <p className="text-xs text-hud-muted leading-relaxed border-t border-hud-border pt-3">
         {leitura}
       </p>
     </div>

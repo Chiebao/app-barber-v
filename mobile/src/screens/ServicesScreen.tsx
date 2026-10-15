@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import HudIcon, { type NomeHudIcon } from "../components/HudIcon";
 import {
   View,
   Text,
@@ -43,8 +44,8 @@ const CATEGORIES = [
   { key: "luzes", label: "Luzes" },
 ];
 
-const CATEGORY_ICONS: Record<string, string> = {
-  corte: "✂️", barba: "🪒", sobrancelha: "👁️", pezinho: "💈", luzes: "✨",
+const CATEGORY_ICONS: Record<string, NomeHudIcon> = {
+  corte: "scissors", barba: "scissors", sobrancelha: "eye", pezinho: "scissors", luzes: "star",
 };
 
 const makeStyles = (colors: ReturnType<typeof import("../utils/useColors").useColors>) =>
@@ -280,14 +281,14 @@ export default function ServicesScreen({ token, onBack }: Props) {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {grouped.map((group) => (
             <View key={group.key} style={styles.group}>
-              <Text style={styles.groupTitle}>{CATEGORY_ICONS[group.key]} {group.label}</Text>
+              <Text style={styles.groupTitle}>{group.label}</Text>
               {group.items.map((s) => (
                 <TouchableOpacity key={s.id} style={[styles.card, !s.active && styles.cardInactive]} onPress={() => openEdit(s)}>
                   {s.imageUrl ? (
                     <Image source={{ uri: s.imageUrl }} style={styles.thumb} resizeMode="cover" />
                   ) : (
                     <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                      <Text style={styles.thumbIcon}>{CATEGORY_ICONS[s.category]}</Text>
+                      <HudIcon nome={CATEGORY_ICONS[s.category] ?? "scissors"} size={22} color={colors.brand[400]} />
                     </View>
                   )}
                   <View style={styles.cardInfo}>
@@ -325,7 +326,7 @@ export default function ServicesScreen({ token, onBack }: Props) {
                 {newImageUri ? (
                   <Image source={{ uri: newImageUri }} style={styles.imagePickerImg} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.imagePickerText}>📷 Adicionar foto</Text>
+                  <Text style={styles.imagePickerText}>Adicionar foto</Text>
                 )}
               </TouchableOpacity>
 
@@ -344,7 +345,7 @@ export default function ServicesScreen({ token, onBack }: Props) {
                     style={[styles.catChip, newCategory === cat.key && styles.catChipActive]}
                   >
                     <Text style={[styles.catChipText, newCategory === cat.key && styles.catChipTextActive]}>
-                      {CATEGORY_ICONS[cat.key]} {cat.label}
+                      {cat.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -387,7 +388,7 @@ export default function ServicesScreen({ token, onBack }: Props) {
                 ) : editModal?.imageUrl ? (
                   <Image source={{ uri: editModal.imageUrl }} style={styles.imagePickerImg} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.imagePickerText}>📷 Adicionar foto</Text>
+                  <Text style={styles.imagePickerText}>Adicionar foto</Text>
                 )}
               </TouchableOpacity>
 

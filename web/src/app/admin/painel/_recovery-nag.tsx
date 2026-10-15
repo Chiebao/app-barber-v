@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/app/components/hud";
 
 /**
  * Aviso na home do painel para quem ainda NAO gerou codigo de recuperacao.
@@ -47,14 +48,14 @@ export default function RecoveryNag({
   };
 
   return (
-    <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-4 space-y-3">
+    <div className="rounded border border-[color-mix(in_srgb,var(--hud-warn)_40%,transparent)] bg-[color-mix(in_srgb,var(--hud-warn)_10%,transparent)] p-4 space-y-3">
       <div className="flex items-start gap-3">
-        <span className="text-xl leading-none">🔑</span>
+        <span className="text-hud-warn"><Icon nome="cadeado" tamanho={20} /></span>
         <div className="flex-1">
-          <p className="font-semibold text-yellow-300 text-sm">
+          <p className="font-semibold text-hud-warn text-sm">
             Gere seu código de recuperação
           </p>
-          <p className="text-xs text-gray-300 mt-1 leading-relaxed">
+          <p className="text-xs text-hud-soft mt-1 leading-relaxed">
             É com ele que você cria uma senha nova sozinho se esquecer a atual.
             Leva 10 segundos — e evita ficar sem acesso à sua agenda.
           </p>
@@ -63,13 +64,13 @@ export default function RecoveryNag({
       <div className="flex gap-2">
         <button
           onClick={onIrParaConfig}
-          className="flex-1 rounded-xl bg-yellow-500 py-2.5 text-sm font-semibold text-dark-900 hover:bg-yellow-400 transition"
+          className="hud-focus min-h-[44px] flex-1 rounded bg-hud-warn py-2.5 text-sm font-semibold text-[var(--hud-on-accent)] hover:brightness-110 transition"
         >
           Gerar agora
         </button>
         <button
           onClick={adiar}
-          className="rounded-xl border border-gray-700 px-4 py-2.5 text-sm text-gray-400 hover:text-white transition"
+          className="hud-focus min-h-[44px] rounded border border-hud-border px-4 py-2.5 text-sm text-hud-muted hover:text-hud-text transition"
         >
           Depois
         </button>

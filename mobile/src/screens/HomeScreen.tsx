@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import HudIcon, { iconeDoEmoji } from "../components/HudIcon";
 import {
   View,
   Text,
@@ -161,10 +162,10 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
       ? [{ icon: "📊", label: "Dashboard", onPress: onOpenDashboard }]
       : []),
     ...(barber.role === "owner" && onOpenBarbers
-      ? [{ icon: "✂️", label: "Barbeiros", onPress: onOpenBarbers }]
+      ? [{ icon: "users", label: "Barbeiros", onPress: onOpenBarbers }]
       : []),
     ...(barber.role === "owner" && onOpenServices
-      ? [{ icon: "🔧", label: "Serviços", onPress: onOpenServices }]
+      ? [{ icon: "scissors", label: "Serviços", onPress: onOpenServices }]
       : []),
     ...(barber.role === "owner" && onOpenClients
       ? [{ icon: "👥", label: "Clientes", onPress: onOpenClients }]
@@ -188,7 +189,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
           </Text>
         </View>
         <TouchableOpacity onPress={onOpenSobre} style={styles.settingsButton}>
-          <Text style={styles.settingsText}>⚙️</Text>
+          <HudIcon nome="settings" size={22} color={colors.gray[400]} />
         </TouchableOpacity>
       </View>
 
@@ -215,7 +216,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
           />
         </View>
         <TouchableOpacity onPress={() => setShowQR(true)} style={{ alignItems: "center", marginTop: spacing.sm, paddingVertical: 6 }}>
-          <Text style={{ color: colors.brand[400], fontSize: fontSize.bodySmall, fontWeight: fontWeight.semibold }}>📱 Ver QR Code</Text>
+          <Text style={{ color: colors.brand[400], fontSize: fontSize.bodySmall, fontWeight: fontWeight.semibold }}>Ver QR Code</Text>
         </TouchableOpacity>
       </AppCard>
 
@@ -276,7 +277,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
                   onPress={action.onPress}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.actionIcon}>{action.icon}</Text>
+                  <HudIcon nome={iconeDoEmoji(action.icon) ?? "circle"} size={24} color={colors.brand[400]} />
                   <Text style={styles.actionLabel} numberOfLines={1}>{action.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -299,7 +300,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📋</Text>
+            <HudIcon nome="calendar" size={36} color={colors.brand[400]} />
             <Text style={styles.emptyText}>
               {loading ? "Carregando..." : "Nenhum agendamento neste dia"}
             </Text>
@@ -326,7 +327,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
 
             {/* Notas CRM */}
             <View style={styles.notesContainer}>
-              <Text style={[styles.notesLabel, { color: colors.gray[400] }]}>📝 Notas</Text>
+              <Text style={[styles.notesLabel, { color: colors.gray[400] }]}>Notas</Text>
               <TextInput
                 style={[styles.notesInput, { color: colors.white, borderColor: colors.gray[700], backgroundColor: colors.dark[900] }]}
                 placeholder="Observações (cabelo, preferências...)"
@@ -352,7 +353,7 @@ export default function HomeScreen({ token, barber, onLogout, onOpenFinance, onO
 
             {item.status === "pending_payment" && (
               <View style={styles.pendingPaymentBadge}>
-                <Text style={styles.pendingPaymentText}>⏳ Aguardando confirmação do Pix</Text>
+                <Text style={styles.pendingPaymentText}>Aguardando confirmação do Pix</Text>
                 <AppButton
                   title="✓ Confirmar Pix"
                   variant="primary"

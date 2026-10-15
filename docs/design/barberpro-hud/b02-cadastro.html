@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barbeiro — Cadastro da barbearia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:1320px;box-sizing:border-box;overflow:hidden;background-color:#0B0B14;background-image:linear-gradient(rgba(245,183,49,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,183,49,0.05) 1px,transparent 1px);background-size:28px 28px;color:#F5F5F7;font-family:'Manrope',sans-serif">
+  <div style="position:absolute;top:-140px;left:50%;margin-left:-190px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,49,0.15),rgba(245,183,49,0) 65%)"></div>
+
+  <div style="position:relative;box-sizing:border-box;padding:20px 20px 28px;display:flex;flex-direction:column;gap:18px">
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Voltar ao login" style="width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(22,22,37,0.85);border:1px solid #2A2D42;border-radius:4px;color:#F5B731;padding:0;cursor:pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+      <h1 style="margin:0;font-family:'Marcellus',Georgia,serif;font-weight:400;font-size:28px;line-height:1.1">Cadastre sua barbearia</h1>
+    </div>
+
+    <!-- dados -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Seu nome *</label><div style="height:52px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px;font-size:16px">Rafael Lima</div></div>
+      <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Nome da barbearia *</label><div style="height:52px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #F5B731;background:rgba(22,22,37,0.9);border-radius:4px;box-shadow:0 0 0 3px rgba(245,183,49,0.12);font-size:16px">Sua Barbearia</div></div>
+      <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">WhatsApp (com DDD) *</label><div style="height:52px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px;font-size:16px;font-variant-numeric:tabular-nums">(15) 99999-9999</div></div>
+      <div><label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-bottom:6px">Senha * <span style="text-transform:none;letter-spacing:0;font-weight:500">(mín. 6 caracteres)</span></label><div style="height:52px;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.9);border-radius:4px;font-size:16px;letter-spacing:0.2em">••••••••</div></div>
+    </div>
+
+    <!-- horário -->
+    <div style="position:relative;padding:14px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Horário de funcionamento</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:48px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">09:00</div>
+        <span style="color:#8B8FA3;font-size:13px">até</span>
+        <div style="flex:1;height:48px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">19:00</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase;margin-top:2px">Dias de trabalho</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+        <button type="button" aria-pressed="false" style="height:44px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;color:#8B8FA3;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Dom</button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Seg</span></button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Ter</span></button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Qua</span></button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Qui</span></button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Sex</span></button>
+        <button type="button" aria-pressed="true" style="height:44px;border:1px solid #F5B731;background:rgba(245,183,49,0.14);border-radius:4px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer"><span style="background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#D98A0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Sáb</span></button>
+      </div>
+    </div>
+
+    <!-- cortes -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Cortes disponíveis</div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px">
+        <span style="width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);border-radius:3px;color:#0B0B14"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span>
+        <span style="flex:1;font-size:14px;font-weight:700">Corte social</span>
+        <div style="width:92px;height:38px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 10px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:14px;font-weight:700"><span style="color:#8B8FA3">R$</span>35</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px">
+        <span style="width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08);border-radius:3px;color:#0B0B14"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span>
+        <span style="flex:1;font-size:14px;font-weight:700">Degradê</span>
+        <div style="width:92px;height:38px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 10px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:14px;font-weight:700"><span style="color:#8B8FA3">R$</span>40</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+        <span style="width:22px;height:22px;flex-shrink:0;box-sizing:border-box;border:1.5px solid #4A4E66;border-radius:3px"></span>
+        <span style="flex:1;font-size:14px;font-weight:700;color:#C9CCD6">Navalhado</span>
+        <div style="width:92px;height:38px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 10px;border:1px solid #2A2D42;background:rgba(11,11,20,0.4);border-radius:4px;font-size:14px;color:#6E7289"><span>R$</span></div>
+      </div>
+    </div>
+
+    <!-- extras -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#8B8FA3;text-transform:uppercase">Serviços extras</div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #F5B731;background:rgba(245,183,49,0.12);border-radius:4px">
+        <span style="flex:1;font-size:14px;font-weight:700">Faz barba?</span>
+        <div style="width:80px;height:38px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 10px;border:1px solid #2A2D42;background:rgba(11,11,20,0.7);border-radius:4px;font-size:14px;font-weight:700"><span style="color:#8B8FA3">R$</span>25</div>
+        <span role="switch" aria-checked="true" style="position:relative;width:48px;height:26px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#F9DA8A,#F5B731 45%,#C47A08)"><span style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0B0B14"></span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+        <span style="flex:1;font-size:14px;font-weight:700;color:#C9CCD6">Faz sobrancelha?</span>
+        <span role="switch" aria-checked="false" style="position:relative;width:48px;height:26px;flex-shrink:0;border-radius:13px;background:#2B2E40"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8B8FA3"></span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+        <span style="flex:1;font-size:14px;font-weight:700;color:#C9CCD6">Faz pezinho?</span>
+        <span role="switch" aria-checked="false" style="position:relative;width:48px;height:26px;flex-shrink:0;border-radius:13px;background:#2B2E40"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8B8FA3"></span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid #2A2D42;background:rgba(22,22,37,0.85);border-radius:4px">
+        <span style="flex:1;font-size:14px;font-weight:700;color:#C9CCD6">Faz luzes?</span>
+        <span role="switch" aria-checked="false" style="position:relative;width:48px;height:26px;flex-shrink:0;border-radius:13px;background:#2B2E40"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8B8FA3"></span></span>
+      </div>
+    </div>
+
+    <button type="button" style="height:56px;display:flex;align-items:center;justify-content:center;border:0;background:linear-gradient(135deg,#F9DA8A 0%,#F5B731 45%,#C47A08 100%);color:#0B0B14;font-family:inherit;font-weight:700;font-size:15px;letter-spacing:0.1em;text-transform:uppercase;padding:0;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)">Criar minha barbearia</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

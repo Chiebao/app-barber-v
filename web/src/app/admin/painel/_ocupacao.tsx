@@ -37,8 +37,8 @@ export default function Ocupacao({ token }: { token: string | null }) {
 
   if (carregando) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5">
-        <div className="h-4 w-44 bg-gray-700/60 rounded animate-pulse" />
+      <div className="hud-card p-5">
+        <div className="h-4 w-44 bg-[color-mix(in_srgb,var(--hud-surface)_60%,transparent)] rounded animate-pulse" />
       </div>
     );
   }
@@ -46,9 +46,9 @@ export default function Ocupacao({ token }: { token: string | null }) {
 
   if (d.semDados) {
     return (
-      <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-2">
-        <h3 className="font-semibold text-white">🪑 Ocupação da agenda</h3>
-        <p className="text-sm text-gray-400">
+      <div className="hud-card p-5 space-y-2">
+        <h3 className="font-display text-xl text-hud-text">Ocupação da agenda</h3>
+        <p className="text-sm text-hud-muted">
           Sem atendimentos nos últimos {d.dias} dias. Assim que a agenda começar a rodar,
           mostramos aqui quanto da sua cadeira está sendo aproveitado.
         </p>
@@ -57,9 +57,9 @@ export default function Ocupacao({ token }: { token: string | null }) {
   }
 
   const cor =
-    d.taxa >= 80 ? "text-green-400" : d.taxa >= 50 ? "text-brand-400" : "text-yellow-400";
+    d.taxa >= 80 ? "text-hud-ok" : d.taxa >= 50 ? "text-hud-light" : "text-hud-warn";
   const barra =
-    d.taxa >= 80 ? "bg-green-500" : d.taxa >= 50 ? "bg-brand-500" : "bg-yellow-500";
+    d.taxa >= 80 ? "bg-hud-ok" : d.taxa >= 50 ? "gold-fill" : "bg-hud-warn";
 
   const leitura =
     d.taxa >= 85
@@ -75,20 +75,20 @@ export default function Ocupacao({ token }: { token: string | null }) {
     .sort((a, b) => a.taxa - b.taxa)[0];
 
   return (
-    <div className="rounded-xl bg-dark-800 border border-gray-700 p-5 space-y-4">
+    <div className="hud-card p-5 space-y-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-semibold text-white">🪑 Ocupação da agenda</h3>
-        <span className="text-xs text-gray-500">últimos {d.dias} dias</span>
+        <h3 className="font-display text-xl text-hud-text">Ocupação da agenda</h3>
+        <span className="text-xs text-hud-muted">últimos {d.dias} dias</span>
       </div>
 
       <div>
         <div className="flex items-end gap-3">
           <p className={"text-4xl font-bold tabular-nums " + cor}>{d.taxa}%</p>
-          <p className="text-xs text-gray-500 pb-1.5">
+          <p className="text-xs text-hud-muted pb-1.5">
             {d.horasOcupadas}h de {d.horasDisponiveis}h disponíveis
           </p>
         </div>
-        <div className="h-2.5 rounded-full bg-gray-700 overflow-hidden mt-2">
+        <div className="h-2.5 rounded-full bg-[var(--hud-track)] overflow-hidden mt-2">
           <div
             className={"h-full rounded-full transition-all duration-700 " + barra}
             style={{ width: Math.min(100, d.taxa) + "%" }}
@@ -103,26 +103,26 @@ export default function Ocupacao({ token }: { token: string | null }) {
             <div className="h-16 flex items-end justify-center">
               {x.aberta ? (
                 <div
-                  className={"w-full rounded-t " + (x.taxa >= 60 ? "bg-brand-500" : "bg-gray-600")}
+                  className={"w-full rounded-t " + (x.taxa >= 60 ? "gold-fill" : "bg-[var(--hud-track)]")}
                   style={{ height: Math.max(4, Math.min(100, x.taxa)) + "%" }}
                   title={x.taxa + "%"}
                 />
               ) : (
-                <div className="w-full h-1 rounded bg-gray-800" title="fechado" />
+                <div className="w-full h-1 rounded bg-hud-surface" title="fechado" />
               )}
             </div>
-            <p className={"text-xs mt-1 " + (x.aberta ? "text-gray-400" : "text-gray-700")}>
+            <p className={"text-xs mt-1 " + (x.aberta ? "text-hud-muted" : "text-hud-faint")}>
               {x.dia}
             </p>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed border-t border-gray-700 pt-3">
+      <p className="text-xs text-hud-muted leading-relaxed border-t border-hud-border pt-3">
         {leitura}
         {maisFraco && d.taxa < 85 && (
-          <span className="block mt-1 text-gray-500">
-            Dia mais vazio: <strong className="text-gray-300">{maisFraco.dia}</strong> ({maisFraco.taxa}%).
+          <span className="block mt-1 text-hud-muted">
+            Dia mais vazio: <strong className="text-hud-soft">{maisFraco.dia}</strong> ({maisFraco.taxa}%).
           </span>
         )}
       </p>
