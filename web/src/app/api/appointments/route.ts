@@ -1,3 +1,4 @@
+import { quandoFala, ehHoje } from "@/app/lib/quando";
 import { NextRequest, NextResponse } from "next/server";
 import { faltasDaPessoa, FALTAS_PARA_EXIGIR_PIX } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
@@ -233,10 +234,15 @@ export async function POST(req: NextRequest) {
 
     // Envia push notification ao barbeiro (Expo Push API)
     const isPendingPix = needsPix && data.pendingPayment;
-    const pushTitle = isPendingPix ? "Pix declarado — confirme 💰" : "Novo agendamento! 💈";
+    // O DIA vai junto: só "às 14:00" fazia o barbeiro achar que era outro
+    // dia, e o cliente marcado para hoje aparecia de surpresa.
+    const quando = quandoFala(data.date, data.startTime);
+    const pushTitle = isPendingPix
+      ? "Pix declarado — confirme 💰"
+      : ehHoje(data.date) ? "Agendamento para HOJE! 💈" : "Novo agendamento! 💈";
     const pushBody = isPendingPix
-      ? `${data.clientName} informou que pagou o Pix de ${serviceNames} às ${data.startTime}. Confirme no painel.`
-      : `${data.clientName} — ${serviceNames} às ${data.startTime}`;
+      ? `${data.clientName} informou que pagou o Pix de ${serviceNames} — ${quando}. Confirme no painel.`
+      : `${data.clientName} — ${serviceNames} — ${quando}`;
     const pushToken = (barber as Record<string, unknown>).pushToken as string | null;
     const pushTargets: string[] = [];
     if (pushToken && pushToken.startsWith("ExponentPushToken")) pushTargets.push(pushToken);

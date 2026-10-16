@@ -1,3 +1,4 @@
+import { quandoFala } from "@/app/lib/quando";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken } from "@/app/lib/auth";
@@ -50,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       const serviceNames = appointment.services.map(as => as.service.name).join(", ");
 
       // Push notification ao barbeiro + owner
-      const cancelBody = `${appointment.client.name} cancelou ${serviceNames} às ${appointment.startTime}`;
+      const cancelBody = `${appointment.client.name} cancelou ${serviceNames} — ${quandoFala(appointment.date.toISOString(), appointment.startTime)}`;
 
       // Notificação no navegador (PWA)
       notifyTargets(appointment.shopId, appointment.barberId)
@@ -147,7 +148,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           body: JSON.stringify([{
             to: ownerBarber.pushToken,
             title: "Vaga aberta + lista de espera 📋",
-            body: `${appointment.client.name} cancelou às ${appointment.startTime}. ${waitlistEntries.length} cliente(s) na lista de espera!`,
+            body: `${appointment.client.name} cancelou — ${quandoFala(appointment.date.toISOString(), appointment.startTime)}. ${waitlistEntries.length} cliente(s) na lista de espera!`,
             sound: "default",
           }]),
         }).catch(console.error);

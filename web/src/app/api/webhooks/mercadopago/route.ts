@@ -1,3 +1,4 @@
+import { quandoFala } from "@/app/lib/quando";
 import { NextRequest, NextResponse } from "next/server";
 import { perdoarFaltasDaPessoa } from "@/app/lib/faltas";
 import { prisma } from "@/app/lib/prisma";
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       .then((ids) =>
         sendWebPush(ids, {
           title: "Pix recebido ✅",
-          body: `${agendamento.client.name} pagou e o horário das ${agendamento.startTime} está confirmado.`,
+          body: `${agendamento.client.name} pagou e o horário de ${quandoFala(agendamento.date.toISOString(), agendamento.startTime)} está confirmado.`,
           url: "/admin/painel",
           tag: "pix-recebido",
         }),
