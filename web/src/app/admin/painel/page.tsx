@@ -387,7 +387,14 @@ export default function PainelPage() {
 
   const fetchDashboard = useCallback(async () => {
     if (!token) return; setDashLoading(true);
-    try { const res = await fetch("/api/me/dashboard", { headers: authHeaders() }); const data = await res.json(); setDashboard(data); }
+    // Só guarda quando veio o resumo de verdade. A rota é do DONO e responde
+    // 401 `{ error }` para barbeiro contratado — guardar isso como se fossem
+    // os números derrubava a aba inteira ("Algo deu errado aqui").
+    try {
+      const res = await fetch("/api/me/dashboard", { headers: authHeaders() });
+      const data = await res.json();
+      setDashboard(res.ok && data?.month ? data : null);
+    }
     catch { setDashboard(null); } finally { setDashLoading(false); }
   }, [token, authHeaders]);
 
@@ -2161,7 +2168,26 @@ export default function PainelPage() {
                   <span className="text-[color-mix(in_srgb,var(--hud-accent)_50%,transparent)] shrink-0">›</span>
                 </button>
 
-                {dashLoading ? <Spinner /> : !dashboard ? <p className="text-center text-hud-muted py-10">Não foi possível carregar</p> : (
+                {dashLoading ? <Spinner /> : !dashboard ? (
+                  user?.role !== "owner" ? (
+                    // Barbeiro contratado: o resumo do mês é da barbearia (do
+                    // dono). O que é dele — atendimentos e comissão — está no
+                    // relatório.
+                    <EmptyState
+                      icone="grafico"
+                      titulo="Seu relatório"
+                      texto="O resumo do mês da barbearia fica com o dono. Seus atendimentos e sua comissão estão no relatório."
+                      acao={{ rotulo: "Ver meu relatório", onClick: () => setVerRelatorio(true) }}
+                    />
+                  ) : (
+                    <EmptyState
+                      erro
+                      titulo="Não foi possível carregar"
+                      texto="Confira a internet e tente de novo."
+                      acao={{ rotulo: "Tentar de novo", onClick: fetchDashboard }}
+                    />
+                  )
+                ) : (
                   <>
                     <div className="hud-card hud-corners p-5">
                       <p className="hud-eyebrow mb-1">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p>

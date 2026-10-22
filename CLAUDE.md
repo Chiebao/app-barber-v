@@ -662,6 +662,20 @@ app_barber/
 - O que o cache NAO faz: aceitar agendamento novo. Gravar precisa do
   servidor. Ver quem vem salva o sabado; marcar, nao da
 
+### Dono em dois lugares (Owner + perfil de barbeiro)
+- O dono existe como `Owner` e como `Barber` com `isOwnerProfile` (é o que
+  tem agenda), com o MESMO telefone. As trocas de senha gravavam só no
+  `Owner`; o perfil ficava com a senha antiga
+- Quem entrava com a senha antiga caía no login de BARBEIRO: sumiam endereço,
+  produtos e despesas das Configurações e o Financeiro quebrava. Apareceu ao
+  reinstalar o app na tela de início (sessão nova, login de novo)
+- Login: entrar pelo perfil de barbeiro do dono responde como DONO, sempre
+- `lib/senha-do-dono.ts` grava a senha nos dois lugares — painel, código de
+  recuperação e "esqueci minha senha" passam por ele
+- O Financeiro não guarda mais a resposta de erro do `/api/me/dashboard`
+  como se fossem números: para barbeiro contratado (rota só do dono) mostra
+  "Seu relatório" em vez de "Algo deu errado aqui"
+
 ### Seguranca e limites
 - O limitador do `middleware.ts` e um Map EM MEMORIA: em serverless cada
   instancia tem o seu, e o limite vira N x instancias. Ele continua como

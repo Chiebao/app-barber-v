@@ -1,3 +1,4 @@
+import { gravarSenhaDoDono } from "@/app/lib/senha-do-dono";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyToken, verifyPassword, hashPassword } from "@/app/lib/auth";
@@ -24,10 +25,8 @@ export async function PATCH(req: NextRequest) {
       const valid = await verifyPassword(currentPassword, owner.passwordHash);
       if (!valid) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 400 });
 
-      await prisma.owner.update({
-        where: { id: payload.userId },
-        data: { passwordHash: await hashPassword(newPassword) },
-      });
+      // Grava também no perfil de barbeiro do dono (lib/senha-do-dono).
+      await gravarSenhaDoDono({ ownerId: payload.userId }, await hashPassword(newPassword));
     } else {
       const barber = await prisma.barber.findUnique({ where: { id: payload.userId } });
       if (!barber) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
@@ -35,10 +34,7 @@ export async function PATCH(req: NextRequest) {
       const valid = await verifyPassword(currentPassword, barber.passwordHash);
       if (!valid) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 400 });
 
-      await prisma.barber.update({
-        where: { id: payload.userId },
-        data: { passwordHash: await hashPassword(newPassword) },
-      });
+      await gravarSenhaDoDono({ barberId: payload.userId }, await hashPassword(newPassword));
     }
 
     return NextResponse.json({ ok: true });

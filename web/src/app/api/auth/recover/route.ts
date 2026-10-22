@@ -1,3 +1,4 @@
+import { gravarSenhaDoDono } from "@/app/lib/senha-do-dono";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword } from "@/app/lib/auth";
@@ -72,16 +73,13 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hashPassword(data.newPassword);
 
     // Troca a senha e queima o código (uso único)
+    // A senha vai para a conta de dono E para o perfil de barbeiro dele
+    // (lib/senha-do-dono) — separadas, o login caía como barbeiro.
     if (owner) {
-      await prisma.owner.update({
-        where: { id: owner.id },
-        data: { passwordHash, recoveryCodeHash: null },
-      });
+      await gravarSenhaDoDono({ ownerId: owner.id }, passwordHash, { recoveryCodeHash: null });
     } else if (barber) {
-      await prisma.barber.update({
-        where: { id: barber.id },
-        data: { passwordHash, recoveryCodeHash: null },
-      });
+      await gravarSenhaDoDono({ barberId: barber.id }, passwordHash);
+      await prisma.barber.update({ where: { id: barber.id }, data: { recoveryCodeHash: null } });
     }
 
     return NextResponse.json({ ok: true });

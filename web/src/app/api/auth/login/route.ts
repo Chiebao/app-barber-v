@@ -4,6 +4,34 @@ import { verifyPassword, signToken } from "@/app/lib/auth";
 import { num } from "@/app/lib/money";
 import { situacao, registrarFalha, limpar, mensagemDeBloqueio, LOGIN } from "@/app/lib/limite";
 
+const INCLUI_LOJA = { shops: { include: { services: true, barbers: { where: { active: true } } } } } as const;
+
+type DonoComLoja = NonNullable<Awaited<ReturnType<typeof buscarDono>>>;
+
+function buscarDono(where: { phone: string } | { id: string }) {
+  return prisma.owner.findUnique({ where, include: INCLUI_LOJA });
+}
+
+/** A resposta de login do DONO — usada pela conta de dono e pelo perfil de barbeiro dele. */
+function respostaDeDono(owner: DonoComLoja, base: string) {
+  const shop = owner.shops[0];
+  if (!shop) return NextResponse.json({ error: "Nenhuma barbearia cadastrada" }, { status: 404 });
+  const token = signToken({ userId: owner.id, role: "owner", shopId: shop.id });
+  return NextResponse.json({
+    token,
+    role: "owner",
+    user: { id: owner.id, name: owner.name, phone: owner.phone },
+    shop: {
+      id: shop.id, name: shop.name, slug: shop.slug,
+      openTime: shop.openTime, closeTime: shop.closeTime,
+      workDays: shop.workDays, avgServiceTime: shop.avgServiceTime,
+      pixKey: shop.pixKey, link: `${base}/${shop.slug}`,
+      services: shop.services.map(s => ({ ...s, price: num(s.price) })),
+      barbers: shop.barbers.map(b => ({ id: b.id, name: b.name, phone: b.phone })),
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { phone, password } = await req.json();
@@ -21,33 +49,11 @@ export async function POST(req: NextRequest) {
     const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
     // Tenta como dono
-    const owner = await prisma.owner.findUnique({
-      where: { phone },
-      include: {
-        shops: {
-          include: { services: true, barbers: { where: { active: true } } },
-        },
-      },
-    });
+    const owner = await buscarDono({ phone });
 
     if (owner && await verifyPassword(password, owner.passwordHash)) {
-      const shop = owner.shops[0];
-      if (!shop) return NextResponse.json({ error: "Nenhuma barbearia cadastrada" }, { status: 404 });
       await limpar(chave);
-      const token = signToken({ userId: owner.id, role: "owner", shopId: shop.id });
-      return NextResponse.json({
-        token,
-        role: "owner",
-        user: { id: owner.id, name: owner.name, phone: owner.phone },
-        shop: {
-          id: shop.id, name: shop.name, slug: shop.slug,
-          openTime: shop.openTime, closeTime: shop.closeTime,
-          workDays: shop.workDays, avgServiceTime: shop.avgServiceTime,
-          pixKey: shop.pixKey, link: `${base}/${shop.slug}`,
-          services: shop.services.map(s => ({ ...s, price: num(s.price) })),
-          barbers: shop.barbers.map(b => ({ id: b.id, name: b.name, phone: b.phone })),
-        },
-      });
+      return respostaDeDono(owner, base);
     }
 
     // Tenta como barbeiro
@@ -58,6 +64,16 @@ export async function POST(req: NextRequest) {
 
     if (barber && await verifyPassword(password, barber.passwordHash)) {
       await limpar(chave);
+
+      // O perfil de barbeiro DO DONO é o dono. Entrar por ele como
+      // "barbeiro" escondia endereço, produtos e despesas e quebrava o
+      // Financeiro — aconteceu quando as senhas dos dois se separaram
+      // (ver lib/senha-do-dono.ts).
+      if (barber.isOwnerProfile) {
+        const dono = await buscarDono({ id: barber.shop.ownerId });
+        if (dono) return respostaDeDono(dono, base);
+      }
+
       const token = signToken({ userId: barber.id, role: barber.role as "owner" | "barber", shopId: barber.shopId });
       return NextResponse.json({
         token,

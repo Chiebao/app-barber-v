@@ -1,3 +1,4 @@
+import { gravarSenhaDoDono } from "@/app/lib/senha-do-dono";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword } from "@/app/lib/auth";
@@ -65,13 +66,11 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(data.newPassword);
 
-    // Senha nova e código queimado juntos — não existe estado pela metade
-    await prisma.$transaction([
-      dono
-        ? prisma.owner.update({ where: { id: dono.id }, data: { passwordHash } })
-        : prisma.barber.update({ where: { id: barbeiro!.id }, data: { passwordHash } }),
-      prisma.passwordReset.update({ where: { id: pedido.id }, data: { usedAt: new Date() } }),
-    ]);
+    // Código queimado primeiro: se a gravação da senha falhar, o pedido de
+    // código novo resolve; o contrário deixaria um código reutilizável.
+    await prisma.passwordReset.update({ where: { id: pedido.id }, data: { usedAt: new Date() } });
+    // Conta de dono E perfil de barbeiro dele juntos (lib/senha-do-dono).
+    await gravarSenhaDoDono(dono ? { ownerId: dono.id } : { barberId: barbeiro!.id }, passwordHash);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
