@@ -6,7 +6,8 @@
   "scripts": {
     "estudio": "remotion studio",
     "gravar": "node scripts/gravar.mjs",
-    "render": "remotion render"
+    "render": "remotion render",
+    "narrar": "python scripts/narrar.py"
   },
   "dependencies": {
     "@remotion/cli": "4.0.538",

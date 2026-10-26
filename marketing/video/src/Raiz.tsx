@@ -1,9 +1,9 @@
 import { Composition } from "remotion";
-import { Amostra, DURACAO_AMOSTRA } from "./Amostra";
+import { ClienteAgenda, DURACAO_CLIENTE_AGENDA } from "./ClienteAgenda";
 import { ALTURA, FPS, LARGURA } from "./tema";
 
 export function Raiz() {
   return (
-    <Composition id="Amostra" component={Amostra} durationInFrames={DURACAO_AMOSTRA} fps={FPS} width={LARGURA} height={ALTURA} />
+    <Composition id="ClienteAgenda" component={ClienteAgenda} durationInFrames={DURACAO_CLIENTE_AGENDA} fps={FPS} width={LARGURA} height={ALTURA} />
   );
 }

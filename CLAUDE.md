@@ -1023,8 +1023,20 @@ hora (hot reload do Next). No app Expo, o equivalente é o Expo Go no celular.
 - `npm run gravar <cena>` grava o app DE VERDADE (servidor de prévia, 3x) e
   guarda onde e quando cada toque aconteceu; os roteiros ficam em
   `scripts/cenas.mjs`. Espera de rede em `esperaCortada` sai do vídeo
-- `npm run estudio` abre o editor; `npx remotion render src/index.ts Amostra
-  out/x.mp4` gera o MP4 (1080×1920). As composições ficam em `src/`
+- `npm run narrar <roteiro> [voz]` gera a narração (Piper, vozes pt-BR CC0,
+  padrão `cadu`) a partir de `src/narracao/<roteiro>.json`. A voz SORTEIA a
+  cada geração, então cada fala sai em 5 tomadas e fica a que o transcritor
+  (faster-whisper) entende melhor. `fala` = grafia de pronúncia; `confere` =
+  o que se espera ouvir quando difere da legenda
+- A narração manda no tempo (`src/linha-do-tempo.ts`): cada trecho dura a sua
+  fala e o pedaço da gravação acelera ou freia (0,55x a 1,4x) para caber
+- O nome "BarberPro" NÃO é falado: a voz engole o "r" e vira "Babe Pro" em
+  qualquer grafia. O logo na tela diz o nome
+- Pelo CLI do Piper no Windows, `PYTHONUTF8=1` é obrigatório: sem isso lê em cp1252 e
+  SOLETRA os acentos ("você" vira "voc, A til, ordinal feminino"). O
+  `narrar.py` usa a API Python direto e não passa por isso
+- `npm run estudio` abre o editor; `npx remotion render src/index.ts
+  ClienteAgenda out/x.mp4` gera o MP4 (1080×1920). As composições ficam em `src/`
 - Grava pelo screencast do Chrome, não pelo `recordVideo` do Playwright: aquele
   sai em VP8 de bitrate baixo e o texto borra quando a câmera aproxima
 - A onda do toque dura ~0,3s de propósito: a tela troca 0,2s depois do clique,

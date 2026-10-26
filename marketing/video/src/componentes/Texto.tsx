@@ -25,8 +25,10 @@ export function Frase({ texto, duracao, tamanho = 76, fonte = "titulo", atraso =
       {linhas.map((linha, l) => (
         <div key={l}>
           {linha.split(" ").map((palavra, p) => {
-            const ouro = palavra.startsWith("*") && palavra.endsWith("*");
-            const limpa = ouro ? palavra.slice(1, -1) : palavra;
+            // "*link*..." também é ouro: a pontuação depois do asterisco fica junto
+            const m = palavra.match(/^\*(.+)\*([^*]*)$/);
+            const ouro = !!m;
+            const limpa = m ? m[1] + m[2] : palavra;
             const entra = spring({ frame: f - indice++ * atraso, fps, config: { damping: 14, stiffness: 160, mass: 0.6 } });
             return (
               <span

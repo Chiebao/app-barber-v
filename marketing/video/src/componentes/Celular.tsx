@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { AbsoluteFill, Freeze, OffthreadVideo, interpolate, staticFile, useCurrentFrame, Easing } from "remotion";
-import { COR, FPS, TEXTO } from "../tema";
+import { AbsoluteFill, interpolate, useCurrentFrame, Easing } from "remotion";
+import { COR, TEXTO } from "../tema";
 
 export type Evento =
   | { tipo: "toque"; t: number; x: number; y: number; rotulo: string | null }
@@ -18,8 +18,8 @@ const MOLDURA = 18;
 export const CELULAR_L = TELA_L + MOLDURA * 2;
 export const CELULAR_A = TELA_A + MOLDURA * 2;
 
-/** Quadro (relativo ao início do vídeo) em que um instante da gravação aparece. */
-export const quadroDe = (t: number, velocidade: number) => Math.round((t / velocidade) * FPS);
+/** Toque já convertido para o quadro do vídeo final; x/y de 0 a 1 na tela do app. */
+export type Toque = { quadro: number; x: number; y: number };
 
 function BarraDeStatus() {
   return (
@@ -41,12 +41,12 @@ function BarraDeStatus() {
 }
 
 /** O "dedo": um ponto que encosta e uma onda dourada que se abre. */
-function Toques({ eventos, velocidade }: { eventos: Evento[]; velocidade: number }) {
+function Toques({ toques }: { toques: Toque[] }) {
   const f = useCurrentFrame();
   return (
     <>
-      {eventos.filter((e): e is Extract<Evento, { tipo: "toque" }> => e.tipo === "toque").map((e, i) => {
-        const fe = quadroDe(e.t, velocidade) + 2; // o toque é registrado 140ms antes do clique
+      {toques.map((e, i) => {
+        const fe = e.quadro + 2; // o toque é registrado 140ms antes do clique
         const d = f - fe;
         // Curto de propósito: a tela troca ~0,2s depois do toque, e a onda que
         // sobra por cima da tela nova parece tocar no botão errado.
@@ -67,13 +67,10 @@ function Toques({ eventos, velocidade }: { eventos: Evento[]; velocidade: number
 }
 
 /**
- * Celular com a gravação do app dentro. `children` desenha por cima da tela
- * (notificação). Quando a gravação acaba, a tela fica parada no último quadro.
+ * Celular com o app dentro. `tela` é o que aparece abaixo da barra de status
+ * (os trechos da gravação); `children` desenha por cima (notificação).
  */
-export function Celular({ video, gravacao, velocidade, children }: {
-  video: string; gravacao: Gravacao; velocidade: number; children?: ReactNode;
-}) {
-  const ultimo = quadroDe(gravacao.duracao, velocidade) - 2;
+export function Celular({ tela, toques, children }: { tela: ReactNode; toques: Toque[]; children?: ReactNode }) {
   return (
     <div
       style={{
@@ -84,17 +81,10 @@ export function Celular({ video, gravacao, velocidade, children }: {
     >
       <div style={{ width: TELA_L, height: TELA_A, borderRadius: 76, overflow: "hidden", position: "relative", background: COR.fundo2 }}>
         <BarraDeStatus />
-        <Freeze frame={ultimo} active={(f) => f >= ultimo}>
-          <OffthreadVideo
-            src={staticFile(video)}
-            playbackRate={velocidade}
-            muted
-            style={{ width: TELA_L, height: TELA_A - BARRA, display: "block" }}
-          />
-          <AbsoluteFill>
-            <Toques eventos={gravacao.eventos} velocidade={velocidade} />
-          </AbsoluteFill>
-        </Freeze>
+        <div style={{ position: "relative", width: TELA_L, height: TELA_A - BARRA }}>{tela}</div>
+        <AbsoluteFill>
+          <Toques toques={toques} />
+        </AbsoluteFill>
         {children}
       </div>
       {/* reflexo no vidro */}

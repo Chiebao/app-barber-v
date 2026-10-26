@@ -1,0 +1,46 @@
+[
+  {
+    "id": "gancho",
+    "texto": "Barbeiro, você ainda marca cliente pelo *WhatsApp?*"
+  },
+  {
+    "id": "nome",
+    "texto": "Olha só: seu cliente abre o seu *link*..."
+  },
+  {
+    "id": "telefone",
+    "texto": "coloca o nome e o telefone..."
+  },
+  {
+    "id": "servicos",
+    "texto": "vê os seus serviços, com *foto* e *preço*...",
+    "fala": "vê todos os seus serviços, com foto e preço,"
+  },
+  {
+    "id": "escolhe",
+    "texto": "escolhe o corte, a barba, e já vê o *total*."
+  },
+  {
+    "id": "data",
+    "texto": "Depois, escolhe o *dia*..."
+  },
+  {
+    "id": "horario",
+    "texto": "e só aparecem os horários *livres*."
+  },
+  {
+    "id": "confirmar",
+    "texto": "Confere tudo e confirma. *Sozinho.*",
+    "fala": "Confere tudo, e confirma. Sozinho!"
+  },
+  {
+    "id": "aviso",
+    "texto": "E você? Só recebe o *aviso* no celular."
+  },
+  {
+    "id": "fim",
+    "texto": "A agenda que trabalha *sozinha.*",
+    "fala": "A agenda que trabalha sozinha. O línque tá na bio.",
+    "confere": "A agenda que trabalha sozinha. O link tá na bio."
+  }
+]
