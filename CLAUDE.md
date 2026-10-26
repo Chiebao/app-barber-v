@@ -1018,6 +1018,19 @@ e **WhatsApp desligado**, porque o banco é o de produção e testar agendamento
 na prévia não pode mandar mensagem para cliente. Cada arquivo salvo aparece na
 hora (hot reload do Next). No app Expo, o equivalente é o Expo Go no celular.
 
+### Vídeos de divulgação (`marketing/video`, Remotion)
+
+- `npm run gravar <cena>` grava o app DE VERDADE (servidor de prévia, 3x) e
+  guarda onde e quando cada toque aconteceu; os roteiros ficam em
+  `scripts/cenas.mjs`. Espera de rede em `esperaCortada` sai do vídeo
+- `npm run estudio` abre o editor; `npx remotion render src/index.ts Amostra
+  out/x.mp4` gera o MP4 (1080×1920). As composições ficam em `src/`
+- Grava pelo screencast do Chrome, não pelo `recordVideo` do Playwright: aquele
+  sai em VP8 de bitrate baixo e o texto borra quando a câmera aproxima
+- A onda do toque dura ~0,3s de propósito: a tela troca 0,2s depois do clique,
+  e onda mais longa fica por cima da tela nova parecendo tocar no botão errado
+- Gravações e renders não vão para o git (`gravacoes/`, `out/`): regrave
+
 ### Scripts
 
 | Local | Script | Comando | Descricao |
