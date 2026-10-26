@@ -1010,6 +1010,14 @@ npm install
 npx expo start         # Abre Expo Dev Tools
 ```
 
+### Prévia ao vivo no Claude (tela de celular ao lado do chat)
+
+`.claude/launch.json` → `barberpro-web` roda `web/scripts/dev-preview.mjs` na
+porta **3100**: banco pelo pooler do `.env` (o `.env.local` não conecta daqui)
+e **WhatsApp desligado**, porque o banco é o de produção e testar agendamento
+na prévia não pode mandar mensagem para cliente. Cada arquivo salvo aparece na
+hora (hot reload do Next). No app Expo, o equivalente é o Expo Go no celular.
+
 ### Scripts
 
 | Local | Script | Comando | Descricao |

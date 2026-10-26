@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "barberpro-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["web/scripts/dev-preview.mjs"],
+      "port": 3100
+    }
+  ]
+}
