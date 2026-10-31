@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { caminhoSemMarcaDoModelo } from "@/app/lib/link-do-modelo";
 
 const ALLOWED_ORIGINS = [
   "https://barberpro-mauve.vercel.app",
@@ -116,6 +117,14 @@ export function middleware(req: NextRequest) {
     res.headers.set("X-DNS-Prefetch-Control", "off");
 
     return res;
+  }
+
+  // ── Link de botão de modelo do WhatsApp mal cadastrado (lib/link-do-modelo) ──
+  const caminhoCerto = caminhoSemMarcaDoModelo(pathname);
+  if (caminhoCerto !== null) {
+    const destino = req.nextUrl.clone();
+    destino.pathname = caminhoCerto;
+    return NextResponse.redirect(destino);
   }
 
   // ── Security headers para páginas HTML ──

@@ -399,6 +399,12 @@ app_barber/
   (132000), refaz SEM — a ordem de quem muda primeiro deixa de importar.
   So vale para o botao de link, e so nesse erro: token morto (401) ou modelo
   pausado nao melhoram tentando de novo
+- No campo de URL do botão dinâmico vai SÓ o começo do endereço
+  (`https://barberpro-mauve.vercel.app/` ou `.../pagar/`): a Meta já põe o
+  `{{1}}` depois do campo. Com outro `{{1}}` escrito dentro, ele fica gravado
+  como `%7B%7B1%7D%7D` e o cliente cai em "Barbearia não encontrada". O
+  `middleware.ts` tira essa marca (`lib/link-do-modelo.ts`), porque a revisão
+  da Meta demora e mensagem já entregue guarda o link antigo para sempre
 - Entrar na fila agora AVISA o barbeiro (push web + Expo). Antes ninguem
   era avisado: o pedido so aparecia para quem abrisse a tela de espera de
   proposito, e pedido que ninguem ve e pedido perdido
