@@ -46,7 +46,7 @@ interface Appointment {
   status: string; paidAt: string | null; paymentMethod: string | null;
   totalPrice: number; barberName: string;
   pendingExpiresAt?: string | null; pendingExpired?: boolean;
-  client: { id: string; name: string; phone: string; noShowCount: number; notes: string | null };
+  client: { id: string; name: string; phone: string; noShowCount: number; notes: string | null; pediuParar?: boolean };
   services: AppointmentService[];
   comanda?: ItemComanda[];
   comandaTotal?: number;
@@ -1932,6 +1932,7 @@ export default function PainelPage() {
                               <p className="font-semibold text-hud-text mt-1">{appt.client?.name}</p>
                               <p className="text-sm text-hud-muted">{appt.services.map(s => s.name).join(", ")}{appt.barberName ? ` · ${appt.barberName}` : ""}</p>
                               <p className="text-xs text-hud-muted">{appt.client?.phone}</p>
+                              {appt.client?.pediuParar && <p className="text-xs text-hud-warn mt-1">Pediu para não receber lembretes</p>}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                               <span className={`text-[10px] font-bold px-2 py-[3px] rounded-[3px] ${appt.pendingExpired ? "text-hud-err border border-[color-mix(in_srgb,var(--hud-err)_60%,transparent)]" : (STATUS_COLORS[appt.status] || STATUS_COLORS.pending)}`}>{appt.pendingExpired ? "Pix expirado" : (STATUS_LABELS[appt.status] || appt.status)}</span>

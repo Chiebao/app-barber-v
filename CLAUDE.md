@@ -290,6 +290,8 @@ app_barber/
 | `WorkDay` | Horario de UM dia da semana | id, dia, aberto, abre, fecha, almocoInicio, almocoFim, shopId (FK), unique(shopId+dia) |
 | `RateLimit` | Tentativas por identidade (login, recuperacao) | chave (PK), tentativas, janelaAte, castigos, bloqueadoAte |
 | `InboundMessage` | Mensagem que o cliente respondeu no WhatsApp | id, waMessageId (unique), texto, tipo, lida, respondidaEm, shopId (FK) |
+| `ConversaComercial` | Conversa do robo comercial com um numero | telefone (PK, canonico), nome, etapa, origem, papel, barbeiros, agenda, perguntasNaoEntendidas, naoEntendidasSeguidas, souClienteEm, iniciadaEm, ultimaMensagemEm, encerradaEm |
+| `PedidoParar` | Numero que pediu para nao receber mensagens | telefone (PK, canonico), pedidoEm |
 
 ### 5.2 Convencoes
 
@@ -357,8 +359,9 @@ app_barber/
 - A resposta automatica manda o cliente para o WhatsApp DA BARBEARIA: o
   numero e do BarberPro, e servir de intermediario entre barbeiro e cliente
   nao escala. A barbearia e descoberta pelo agendamento mais proximo
-- Dentro da janela de 24h texto livre e **gratuito** — a auto-resposta nao
-  custa mensagem paga nem precisa de modelo
+- Dentro da janela de 24h texto livre nao precisa de modelo, mas NAO e sempre
+  gratuito: desde 01/10/2026 cada numero tem 1.000 mensagens de servico entregues
+  de graca por mes, e acima disso cada uma e paga
 - `waMessageId` e unico porque a Meta REENVIA o webhook sem 200 rapido.
   Sem a trava, o mesmo "oi" gera duas respostas
 - Assinatura (`WHATSAPP_APP_SECRET`) importa mais que num webhook comum:
@@ -366,6 +369,37 @@ app_barber/
   mensagem para terceiro as nossas custas
 - Passadas 24h o painel para de oferecer resposta e manda abrir o WhatsApp:
   a Meta so entrega modelo depois disso, e modelo nao serve para conversa
+
+### Robo comercial do WhatsApp
+- A mesma linha (99237) recebe interessado, cliente de barbearia e quem tem conta.
+  A ordem de quem responde mora em `lib/robo-fluxo.ts`, funcao pura sem banco e sem
+  envio, e segue a tabela de `venda_app_barber/chatbot/fluxo.md`. Errar a ordem e
+  mandar o preco do BarberPro para quem perguntou quanto custa o corte
+- Os textos moram todos em `lib/robo-textos.ts`, aprovados pelo dono em 01/11/2026.
+  Sem IA: o robo so diz o que esta escrito, entao nao inventa preco nem promessa
+- Conversa comercial nao aparece no painel de barbearia nenhuma. So a resposta de
+  cliente (ordem 7) e o PARAR de um cliente sao gravados com a barbearia
+- Telefone chega de varios jeitos (com ou sem 55, com ou sem o 9o digito):
+  `lib/telefone.ts`. A chave da conversa e do PARAR e o canonico; a resposta vai
+  para o `from` exato, que e o que a Meta reconhece
+- PARAR vale em todas as barbearias e bloqueia so `lembrete_agendamento`,
+  `agendamento_marcado`, `vaga_disponivel` e `espera_sem_vaga`. Modelo da conta e
+  recibo do Mercado Pago continuam saindo
+- O envio bloqueado e um resultado proprio (`enviarModeloComResultado`), nao falha:
+  como falha, o cron tentaria de novo a cada rodada. O cron grava
+  `lembretePuladoMotivo`, e VOLTAR limpa esse motivo
+- Limite de 20 respostas por numero por hora (`RateLimit`, chave `robo:`), contando
+  a resposta a cliente: e contra loop com outro robo. Acima dele a mensagem e guardada
+  e nao responde, mas PARAR continua valendo
+- A ordem 10 e a 11 REABREM a conversa: sem isso o botao da Oferta cairia na mesma
+  linha e ela voltaria para sempre
+- O banco nasce por `db push`, nao ha pasta de migrations. O SQL do robo esta em
+  `web/prisma/sql/2026-11-robo-comercial.sql`, e tem de ser aplicado ANTES do deploy:
+  sem as tabelas, o webhook erra para todo mundo, inclusive cliente de barbearia
+- Os testes do robo (`tests/api/robo-comercial.spec.ts`) so rodam com `DATABASE_URL`
+  apontando para localhost: o `.env` deste projeto e o banco de producao
+- Para testar com o numero de teste da Meta: `node scripts/dev-robo.mjs`, que le
+  `web/.env.robo-teste.local` e para se o banco nao for local
 
 ### Lista de espera
 - A fila NAO vencia: cliente entrou dia 28 pedindo vaga PARA o dia 28, o
@@ -932,6 +966,7 @@ app_barber/
 | 65 | Cobranca passo a passo no painel da plataforma (fatura → aviso → link → pago) | ✅ | — | ✅ |
 | 66 | Redesign visual "Ouro HUD" (site, painel, páginas públicas e app) | ✅ | ✅ | — |
 | 67 | Status do WhatsApp em 2 toques (imagem do dia + aviso às 7h) | ✅ | — | ✅ |
+| 68 | Robo comercial do WhatsApp por regras, PARAR/VOLTAR e interessados na plataforma | ✅ | — | ✅ |
 
 ### Pendentes / Melhorias
 

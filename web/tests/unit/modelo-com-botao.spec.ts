@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { MODELOS } from "../../src/app/lib/whatsapp-templates";
-import { enviarModelo } from "../../src/app/lib/whatsapp-send";
+import { enviarModelo, trocarConsultaDeParar } from "../../src/app/lib/whatsapp-send";
 
 /**
  * Modelos com botão de URL dinâmica.
@@ -33,6 +33,8 @@ test("sem o valor do botão, o envio para antes de sair", async () => {
   // guarda devolve false antes de qualquer chamada de rede.
   process.env.WHATSAPP_API_TOKEN = "token-de-teste";
   process.env.WHATSAPP_PHONE_ID = "000000";
+  // Teste de unidade não tem banco: ninguém aqui pediu PARAR.
+  trocarConsultaDeParar(async () => false);
 
   // `false` sozinho não prova nada: sem a guarda o envio iria para a rede,
   // levaria 401 do token de mentira e voltaria `false` igual. O que

@@ -110,6 +110,15 @@ export default function PrivacidadePage() {
             <li>User-Agent do navegador/app</li>
             <li>Data e hora de acesso</li>
           </ul>
+
+          <h3 className="text-lg font-medium text-hud-soft">
+            3.4 Dados de quem escreve para o WhatsApp do BarberPro
+          </h3>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Número de telefone e nome do perfil do WhatsApp</li>
+            <li>As mensagens enviadas e as respostas dadas ao atendimento automático</li>
+            <li>O pedido de não receber mensagens, quando a pessoa o faz</li>
+          </ul>
         </section>
 
         <section className="space-y-4">
@@ -125,6 +134,13 @@ export default function PrivacidadePage() {
             <li>
               <strong className="text-hud-soft">Comunicação:</strong>{" "}
               lembretes de agendamento via WhatsApp, notificações push.
+            </li>
+            <li>
+              <strong className="text-hud-soft">Contato comercial:</strong>{" "}
+              responder quem escreve para o WhatsApp do BarberPro pedindo
+              informações sobre a plataforma. O atendimento é automático e só
+              responde a quem escreveu. Quem pede PARAR deixa de receber essas
+              respostas, e também os lembretes e avisos de vaga naquele número.
             </li>
             <li>
               <strong className="text-hud-soft">Segurança:</strong>{" "}

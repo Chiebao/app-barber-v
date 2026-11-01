@@ -49,6 +49,12 @@ interface Uso {
   avaliacoes: number; notaMedia: number | null;
   atendimentosPagos: number; volumeFinanceiro: number;
 }
+interface Interessado {
+  telefone: string; nome: string | null; etapa: string; origem: string | null;
+  papel: string | null; barbeiros: string | null; agenda: string | null;
+  perguntasNaoEntendidas: string[]; souCliente: boolean; ultimaMensagemEm: string;
+}
+interface Interessados { total: number; pediramParar: number; lista: Interessado[] }
 interface Resumo {
   barbearias: number; ativas: number; emRisco: number; semUso: number;
   ativasNaSemana: number; clientesTotal: number; agendamentosMes: number;
@@ -100,7 +106,7 @@ const MODELO_WHATSAPP: Record<string, string> = {
 
 export default function PlataformaPage() {
   const [secret, setSecret] = useState("");
-  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[]; assinaturas: Assinaturas; uso: Uso } | null>(null);
+  const [dados, setDados] = useState<{ resumo: Resumo; barbearias: Barbearia[]; assinaturas: Assinaturas; uso: Uso; interessados: Interessados } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const carregar = async () => {
@@ -322,6 +328,35 @@ export default function PlataformaPage() {
             <Metrica n={`${dados.uso.taxaNoShow}%`} rotulo={`Taxa de falta (${dados.uso.noShows})`} />
             <Metrica n={`${dados.uso.taxaCancelamento}%`} rotulo={`Taxa de cancelamento (${dados.uso.cancelados})`} />
           </div>
+
+          <h2 className="font-display text-[28px] leading-tight text-hud-text">Interessados no WhatsApp</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Metrica n={dados.interessados.total} rotulo="Falaram com o robô" destaque />
+            <Metrica n={dados.interessados.pediramParar} rotulo="Pediram PARAR" />
+          </div>
+          {dados.interessados.lista.length === 0 ? (
+            <p className="text-hud-muted py-4 text-center">Ninguém falou com o robô ainda.</p>
+          ) : (
+            <div className="space-y-2">
+              {dados.interessados.lista.map((i) => (
+                <div key={i.telefone} className="hud-card p-3">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <a href={`https://wa.me/${i.telefone}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-hud-text underline">
+                      {i.nome || i.telefone}
+                    </a>
+                    <span className="text-xs text-hud-muted tabular-nums">{i.telefone}</span>
+                    <span className="ml-auto text-xs text-hud-muted">{new Date(i.ultimaMensagemEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</span>
+                  </div>
+                  <p className="text-sm text-hud-soft mt-1">
+                    {i.souCliente ? "Disse que é cliente" : ["Etapa " + i.etapa, i.origem, i.papel, i.barbeiros, i.agenda].filter(Boolean).join(" · ")}
+                  </p>
+                  {i.perguntasNaoEntendidas.length > 0 && (
+                    <p className="text-xs text-hud-warn mt-1">Sem resposta: {i.perguntasNaoEntendidas.slice(-3).join(" | ")}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           <h2 className="font-display text-[28px] leading-tight text-hud-text">Barbearias</h2>
           {dados.barbearias.length === 0 ? (

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { enviarModelo } from "../../src/app/lib/whatsapp-send";
+import { enviarModelo, trocarConsultaDeParar } from "../../src/app/lib/whatsapp-send";
 
 /**
  * A volta atrás quando a Meta ainda não tem o botão.
@@ -39,6 +39,8 @@ const TOKEN_MORTO = JSON.stringify({
 });
 
 test.beforeEach(() => {
+  // Teste de unidade não tem banco: ninguém aqui pediu PARAR.
+  trocarConsultaDeParar(async () => false);
   process.env.WHATSAPP_API_TOKEN = "token-de-teste";
   process.env.WHATSAPP_PHONE_ID = "000000";
 });

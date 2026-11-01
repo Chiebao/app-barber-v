@@ -11,7 +11,7 @@
  */
 
 import { prisma } from "@/app/lib/prisma";
-import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { enviarModeloComResultado } from "@/app/lib/whatsapp-send";
 import { agoraNaBarbearia } from "@/app/lib/time-slots";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,6 +27,8 @@ export const DIAS_SEM_DATA = 30;
 export type ResultadoEspera = {
   removidos: number;
   avisados: number;
+  /** Pediu PARAR: não foi avisado de propósito, e isso não é falha. */
+  pulados: number;
   falhas: number;
 };
 
@@ -39,7 +41,7 @@ export type ResultadoEspera = {
  * sempre esperando um envio que nunca vai acontecer.
  */
 export async function limparEsperaVencida(agora = new Date()): Promise<ResultadoEspera> {
-  const r: ResultadoEspera = { removidos: 0, avisados: 0, falhas: 0 };
+  const r: ResultadoEspera = { removidos: 0, avisados: 0, pulados: 0, falhas: 0 };
 
   // O dia é o da barbearia, não o do servidor: às 21h de Brasília o servidor
   // em UTC já virou o dia, e a espera de hoje seria apagada durante o
@@ -80,13 +82,15 @@ export async function limparEsperaVencida(agora = new Date()): Promise<Resultado
       // O botao leva o cliente direto para a pagina da barbearia. Sem o
       // link, "escolha outro dia" e um pedido sem endereco — ele teria de
       // achar a mensagem antiga ou perguntar para alguem.
-      const ok = await enviarModelo(
+      const resultado = await enviarModeloComResultado(
         e.clientPhone,
         "espera_sem_vaga",
         [e.clientName.split(" ")[0], e.shop.name, quando],
         e.shop.slug,
       );
-      if (ok) r.avisados++; else r.falhas++;
+      if (resultado === "enviado") r.avisados++;
+      else if (resultado === "bloqueado") r.pulados++;
+      else r.falhas++;
     } catch (err) {
       r.falhas++;
       console.error("[ESPERA] falha ao avisar", e.id, err);

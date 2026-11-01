@@ -6,6 +6,7 @@ import { verifyToken } from "@/app/lib/auth";
 import { num, money, multiplyMoney } from "@/app/lib/money";
 import { isPendingExpired } from "@/app/lib/pending-deadline";
 import { materializarRecorrentes } from "@/app/lib/recurrence";
+import { quaisPediramParar } from "@/app/lib/parar";
 
 export async function GET(req: NextRequest) {
   try {
@@ -63,6 +64,10 @@ export async function GET(req: NextRequest) {
       faltasPorPessoa.set(k, (faltasPorPessoa.get(k) ?? 0) + 1);
     }
 
+    // O barbeiro precisa saber que o lembrete não vai sair: senão ele conta com
+    // o aviso, e o cliente que pediu para não receber esquece o horário.
+    const pediramParar = await quaisPediramParar([...new Set(appointments.map((a) => a.client.phone))]);
+
     const now = new Date();
 
     return NextResponse.json({
@@ -86,6 +91,7 @@ export async function GET(req: NextRequest) {
           ...a.client,
           name: nomeDoCliente(a),
           noShowCount: faltasPorPessoa.get(`${a.clientId}|${chaveDaPessoa(nomeDoCliente(a))}`) ?? 0,
+          pediuParar: pediramParar.has(a.client.phone),
         },
         services: a.services.map(as => ({ serviceId: as.serviceId, name: as.service.name, category: as.service.category, price: num(as.service.price) })),
         rating: a.rating?.score || null,

@@ -4,7 +4,8 @@ import { prisma } from "@/app/lib/prisma";
 import { limparEsperaVencida } from "@/app/lib/espera";
 import { appointmentStartUtc } from "@/app/lib/pending-deadline";
 import { format } from "date-fns";
-import { enviarModelo } from "@/app/lib/whatsapp-send";
+import { enviarModelo, enviarModeloComResultado } from "@/app/lib/whatsapp-send";
+import { MOTIVO_PEDIU_PARAR } from "@/app/lib/parar";
 import { MODELOS, preverTexto, type NomeModelo } from "@/app/lib/whatsapp-templates";
 import { ptBR } from "date-fns/locale";
 import { enviarAgendaDoDia } from "@/app/lib/agenda-do-dia";
@@ -53,6 +54,8 @@ export async function GET(req: NextRequest) {
         date: { gte: inicioBusca, lte: fimBusca },
         status: "confirmed",
         reminderSentAt: null,
+        // Quem pediu PARAR já foi contado como pulado: não tenta de novo.
+        lembretePuladoMotivo: null,
       },
       include: {
         client: true,
@@ -239,7 +242,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    let sent = 0, failedSend = 0, noChannel = 0;
+    let sent = 0, failedSend = 0, noChannel = 0, skipped = 0;
 
     for (const apt of aVencer) {
       const serviceNames = apt.services.map((s) => s.service.name).join(", ");
@@ -260,14 +263,21 @@ export async function GET(req: NextRequest) {
         // fora da janela de 24h a Meta so entrega desta forma.
         // Modelo aprovado: o lembrete é sempre iniciado por nós, então fora
         // da janela de 24h a Meta só entrega desta forma.
-        const enviado = await enviarModelo(phoneWithCountry, "lembrete_agendamento", [
+        const resultado = await enviarModeloComResultado(phoneWithCountry, "lembrete_agendamento", [
           nomeDoCliente(apt).split(" ")[0],
           apt.shop.name,
           apt.startTime,
           serviceNames,
         ]);
 
-        if (enviado) {
+        if (resultado === "bloqueado") {
+          // Não é falha: o cliente pediu. Grava o motivo para sair da fila.
+          await prisma.appointment.update({
+            where: { id: apt.id },
+            data: { lembretePuladoMotivo: MOTIVO_PEDIU_PARAR },
+          });
+          skipped++;
+        } else if (resultado === "enviado") {
           // Só marca como enviado quando a API confirma — se falhar, tenta na próxima rodada
           await prisma.appointment.update({
             where: { id: apt.id },
@@ -300,7 +310,7 @@ export async function GET(req: NextRequest) {
     // vaga. Roda todo dia porque a lista some da vista do barbeiro e ele
     // não vai limpar à mão — foi assim que uma cliente ficou uma semana
     // esperando um dia que já tinha passado.
-    let espera = { removidos: 0, avisados: 0, falhas: 0 };
+    let espera = { removidos: 0, avisados: 0, pulados: 0, falhas: 0 };
     try {
       espera = await limparEsperaVencida(now);
     } catch (err) {
@@ -333,6 +343,7 @@ export async function GET(req: NextRequest) {
       sent,
       failedSend,
       noChannel,
+      skipped,
       espera,
       limpas,
       agendaDoDia,

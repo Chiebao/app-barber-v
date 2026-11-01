@@ -289,6 +289,12 @@ model Appointment {
   /// apagava a falta do PAI junto com a do filho, e nao deixava rastro de
   /// que houve perdao. Aqui da para ver qual falta foi relevada.
   faltaPerdoada       Boolean   @default(false)
+
+  /// Por que o lembrete NAO saiu, quando nao saiu de proposito.
+  ///
+  /// "pediu_parar" = o numero pediu para nao receber. Sem esta marca o cron
+  /// veria reminderSentAt vazio e tentaria de novo a cada rodada.
+  lembretePuladoMotivo String?
   createdAt           DateTime  @default(now())
 
   shop         Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -721,4 +727,49 @@ model RateLimit {
 
   @@index([janelaAte])
   @@map("rate_limits")
+}
+
+/// Conversa do robo comercial com um numero. Uma linha por telefone.
+///
+/// A linha sobrevive ao fim da conversa de proposito: e ela que diz que o
+/// numero ja respondeu as 3 perguntas (volta na Oferta) ou que tocou em
+/// "Sou cliente" (nao recebe as Boas-vindas de novo por 30 dias).
+///
+/// A conversa esta aberta enquanto `encerradaEm` for nulo e a ultima mensagem
+/// tiver menos de 24h. Ver `lib/robo-fluxo.ts`.
+model ConversaComercial {
+  /// Telefone canonico: 55 + DDD + 9 + numero. Ver `lib/telefone.ts`.
+  telefone               String    @id
+  /// Nome do perfil do WhatsApp, para o painel da plataforma.
+  nome                   String?
+  /// p1 | p2 | p3 | oferta | duvida
+  etapa                  String    @default("p1")
+  /// instagram | site | barberpro | direto
+  origem                 String?
+  papel                  String?
+  barbeiros              String?
+  agenda                 String?
+  /// O que o robo nao soube responder, para sabermos o que falta no fluxo.
+  perguntasNaoEntendidas String[]
+  /// Dois "nao entendi" seguidos levam a uma pessoa.
+  naoEntendidasSeguidas  Int       @default(0)
+  souClienteEm           DateTime?
+  iniciadaEm             DateTime  @default(now())
+  ultimaMensagemEm       DateTime  @default(now())
+  encerradaEm            DateTime?
+
+  @@index([ultimaMensagemEm])
+  @@map("conversas_comerciais")
+}
+
+/// Numero que pediu PARAR. A Meta obriga a respeitar o pedido, e ele vale em
+/// todas as barbearias: quem pediu nao recebe lembrete nem aviso de vaga.
+/// VOLTAR apaga a linha.
+model PedidoParar {
+  /// Telefone canonico: o pedido chega de um jeito e o cadastro pode estar
+  /// de outro (com ou sem 55, com ou sem o 9o digito).
+  telefone String   @id
+  pedidoEm DateTime @default(now())
+
+  @@map("pedidos_parar")
 }

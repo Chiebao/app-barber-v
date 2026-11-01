@@ -212,7 +212,31 @@ export async function POST(req: NextRequest) {
     const emRisco = barbearias.filter((b) => b.situacao === "em_risco").length;
     const semUso = barbearias.filter((b) => b.situacao === "sem_uso").length;
 
+    // Quem falou com o robô comercial. Sem esta lista, a conversa some: a linha
+    // da Cloud API não tem caixa de entrada para consultar depois.
+    const [interessados, totalInteressados, pediramParar] = await Promise.all([
+      prisma.conversaComercial.findMany({ orderBy: { ultimaMensagemEm: "desc" }, take: 50 }),
+      prisma.conversaComercial.count(),
+      prisma.pedidoParar.count(),
+    ]);
+
     return NextResponse.json({
+      interessados: {
+        total: totalInteressados,
+        pediramParar,
+        lista: interessados.map((i) => ({
+          telefone: i.telefone,
+          nome: i.nome,
+          etapa: i.etapa,
+          origem: i.origem,
+          papel: i.papel,
+          barbeiros: i.barbeiros,
+          agenda: i.agenda,
+          perguntasNaoEntendidas: i.perguntasNaoEntendidas,
+          souCliente: !!i.souClienteEm,
+          ultimaMensagemEm: i.ultimaMensagemEm,
+        })),
+      },
       resumo: {
         barbearias: shops.length,
         ativas,

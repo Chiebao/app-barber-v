@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { prisma } from "@/app/lib/prisma";
-import { enviarWhatsApp } from "@/app/lib/whatsapp-send";
+import { tratarMensagem, type MensagemDaMeta } from "@/app/lib/robo";
 
 /**
- * Mensagem que o cliente manda de volta.
+ * Mensagem que alguém manda para a linha do BarberPro.
  *
- * Os lembretes terminam com "é só responder por aqui", e até agora responder
- * não levava a lugar nenhum: número da Cloud API não tem caixa de entrada em
- * canto nenhum — o que não cai num webhook é DESCARTADO, não fica não lido.
- * Ou seja, o app convidava a resposta e destruía a resposta. E a mensagem que
- * mais chega é "não vou poder ir", justamente a que evitaria uma falta.
+ * Os lembretes terminam com "é só responder por aqui", e número da Cloud API
+ * não tem caixa de entrada em canto nenhum — o que não cai num webhook é
+ * DESCARTADO, não fica não lido. A mensagem que mais chega é "não vou poder
+ * ir", justamente a que evitaria uma falta.
  *
- * O que fazemos: guardamos a mensagem (o barbeiro a vê no painel) e
- * respondemos na hora com o WhatsApp da barbearia. A conversa pertence ao
- * barbeiro e ao cliente — este número é do BarberPro, e servir de
- * intermediário entre eles não escala nem faz sentido.
+ * A mesma linha recebe cliente de barbearia, interessado e quem já tem conta.
+ * Quem é cliente tem a mensagem guardada (o barbeiro a vê no painel) e recebe o
+ * WhatsApp da barbearia. A conversa pertence ao barbeiro e ao cliente — este
+ * número é do BarberPro, e servir de intermediário entre eles não escala nem
+ * faz sentido. Os demais caem no robô comercial: `lib/robo.ts`.
  *
- * A resposta é de graça: o cliente acabou de escrever, então a janela de 24h
- * está aberta e texto livre passa sem modelo.
+ * Quem escreveu abriu a janela de 24h, então texto livre passa sem modelo. Mas
+ * não é sempre de graça: desde 01/10/2026 cada número tem 1.000 mensagens de
+ * serviço entregues de graça por mês, e acima disso cada uma é paga.
  */
 
 /** Só o que precisamos do corpo da Meta. */
@@ -27,12 +27,7 @@ interface Payload {
     changes?: {
       value?: {
         contacts?: { profile?: { name?: string }; wa_id?: string }[];
-        messages?: {
-          id?: string;
-          from?: string;
-          type?: string;
-          text?: { body?: string };
-        }[];
+        messages?: MensagemDaMeta[];
       };
     }[];
   }[];
@@ -102,7 +97,7 @@ export async function POST(req: NextRequest) {
 
         for (const msg of valor.messages) {
           if (!msg.id || !msg.from) continue;
-          await tratar(msg, nomePerfil);
+          await tratarMensagem(msg, nomePerfil);
         }
       }
     }
@@ -112,108 +107,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
-
-async function tratar(
-  msg: { id?: string; from?: string; type?: string; text?: { body?: string } },
-  nomePerfil: string | null,
-) {
-  const waMessageId = msg.id!;
-  const telefone = msg.from!.replace(/\D/g, "");
-
-  // O que não é texto vira um aviso legível, para o barbeiro saber que existe
-  // um áudio esperando e responder pelo WhatsApp dele.
-  const tipo = msg.type || "text";
-  const texto =
-    tipo === "text"
-      ? (msg.text?.body || "").slice(0, 2000)
-      : `[${tipo}] o cliente mandou ${tipo === "audio" ? "um áudio" : "um arquivo"}`;
-
-  // Descobre a barbearia pelo agendamento mais próximo desse telefone. Um
-  // cliente pode frequentar duas barbearias; a mais provável é a do horário
-  // que está chegando.
-  const cliente = await prisma.client.findUnique({
-    where: { phone: telefone.startsWith("55") ? telefone.slice(2) : telefone },
-    select: { id: true, name: true },
-  });
-
-  let shop: { id: string; name: string; phone: string | null; slug: string } | null = null;
-  let quando: { date: Date; startTime: string } | null = null;
-
-  if (cliente) {
-    const proximo =
-      (await prisma.appointment.findFirst({
-        where: { clientId: cliente.id, date: { gte: new Date(Date.now() - 12 * 3600_000) }, status: { not: "cancelled" } },
-        orderBy: [{ date: "asc" }, { startTime: "asc" }],
-        select: { date: true, startTime: true, shop: { select: { id: true, name: true, phone: true, slug: true } } },
-      })) ||
-      // Sem horário à frente, vale o último atendimento: é a barbearia dele.
-      (await prisma.appointment.findFirst({
-        where: { clientId: cliente.id },
-        orderBy: [{ date: "desc" }, { startTime: "desc" }],
-        select: { date: true, startTime: true, shop: { select: { id: true, name: true, phone: true, slug: true } } },
-      }));
-
-    if (proximo) {
-      shop = proximo.shop;
-      quando = { date: proximo.date, startTime: proximo.startTime };
-    }
-  }
-
-  // A trava contra resposta dobrada: a Meta reenvia o webhook quando não
-  // recebe 200 rápido, e sem isto o mesmo "oi" geraria duas respostas.
-  try {
-    await prisma.inboundMessage.create({
-      data: {
-        waMessageId,
-        shopId: shop?.id ?? null,
-        clientPhone: telefone,
-        clientName: cliente?.name || nomePerfil,
-        texto,
-        tipo,
-      },
-    });
-  } catch {
-    // Violação do unique: já tratamos esta mensagem. Não responde de novo.
-    return;
-  }
-
-  await responder(telefone, shop, quando);
-}
-
-async function responder(
-  telefone: string,
-  shop: { name: string; phone: string | null; slug: string } | null,
-  quando: { date: Date; startTime: string } | null,
-) {
-  const base = (process.env.NEXT_PUBLIC_BASE_URL || "https://barberpro-mauve.vercel.app").replace(/\/+$/, "");
-
-  if (!shop) {
-    await enviarWhatsApp(
-      telefone,
-      "Oi! 👋\n\n" +
-        "Esta linha é automática e não é lida por ninguém — ela só envia lembretes de horário.\n\n" +
-        "Para falar sobre um agendamento, procure a barbearia direto.",
-    );
-    return;
-  }
-
-  const linhas = [`Oi! 👋`, ``, `Esta linha é automática e não é lida por ninguém. 😅`, ``];
-
-  if (shop.phone) {
-    const tel = shop.phone.replace(/\D/g, "");
-    const comDDI = tel.startsWith("55") ? tel : `55${tel}`;
-    linhas.push(`Para falar com a *${shop.name}*, é por aqui:`, `https://wa.me/${comDDI}`, ``);
-  } else {
-    // Sem telefone cadastrado, não inventamos um número — mandamos para onde
-    // ele consegue se resolver sozinho.
-    linhas.push(`Para remarcar ou cancelar, é por aqui:`, `${base}/${shop.slug}/meus-agendamentos`, ``);
-  }
-
-  if (quando) {
-    const dia = quando.date.toISOString().slice(0, 10).split("-").reverse().slice(0, 2).join("/");
-    linhas.push(`📆 Seu horário: ${dia} às ${quando.startTime}`);
-  }
-
-  await enviarWhatsApp(telefone, linhas.join("\n"));
 }

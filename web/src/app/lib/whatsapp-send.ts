@@ -8,6 +8,7 @@
  */
 
 import { MODELOS, preverTexto, type NomeModelo } from "@/app/lib/whatsapp-templates";
+import { pediuParar } from "@/app/lib/parar";
 
 /** Env vars já chegaram com quebra de linha colada e derrubaram tudo em silêncio. */
 function envClean(name: string): string {
@@ -63,6 +64,94 @@ export async function enviarWhatsApp(telefone: string, texto: string): Promise<b
 }
 
 /**
+ * Texto livre com botões de resposta. Como o texto livre, só chega dentro da
+ * janela de 24h.
+ *
+ * A Meta recusa a mensagem inteira se um limite estourar (3 botões, 20
+ * caracteres por botão, 1.024 no texto), então barrar aqui deixa o motivo no log.
+ */
+export async function enviarBotoes(
+  telefone: string,
+  texto: string,
+  botoes: { id: string; titulo: string }[],
+): Promise<boolean> {
+  const token = envClean("WHATSAPP_API_TOKEN");
+  const phoneId = envClean("WHATSAPP_PHONE_ID");
+  if (!token || !phoneId) {
+    console.log("[WhatsApp] sem credenciais — mensagem não enviada:", texto.slice(0, 60));
+    return false;
+  }
+  if (botoes.length < 1 || botoes.length > 3 || botoes.some((b) => b.titulo.length > 20) || texto.length > 1024) {
+    console.error("[WhatsApp] botões fora do limite da Meta:", texto.slice(0, 60));
+    return false;
+  }
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: paraFormatoWhatsApp(telefone),
+        type: "interactive",
+        interactive: {
+          type: "button",
+          body: { text: texto },
+          action: {
+            buttons: botoes.map((b) => ({ type: "reply", reply: { id: b.id, title: b.titulo } })),
+          },
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const detalhe = await res.text().catch(() => "");
+      console.error("[WhatsApp] falha no envio com botões:", res.status, detalhe.slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[WhatsApp] erro no envio com botões:", err);
+    return false;
+  }
+}
+
+/**
+ * O que quem pediu PARAR deixa de receber. Os modelos da conta (código de
+ * recuperação, agenda do dia, cobrança, fim do teste) ficam de fora: o dono que
+ * pede PARAR como cliente continua precisando deles.
+ */
+export const MODELOS_QUE_RESPEITAM_PARAR: readonly NomeModelo[] = [
+  "lembrete_agendamento",
+  "agendamento_marcado",
+  "vaga_disponivel",
+  "espera_sem_vaga",
+];
+
+/**
+ * "bloqueado" não é falha. Se fosse, o cron tentaria de novo a cada rodada, e o
+ * painel diria que o WhatsApp está com problema quando foi o cliente que pediu.
+ */
+export type ResultadoDoEnvio = "enviado" | "bloqueado" | "falhou";
+
+let consultaDeParar = pediuParar;
+
+/** Só para teste de função pura, que não tem banco: troca a consulta por uma resposta pronta. */
+export function trocarConsultaDeParar(consulta: (telefone: string) => Promise<boolean>) {
+  consultaDeParar = consulta;
+}
+
+/** O mesmo envio, para quem não precisa saber por que não saiu. */
+export async function enviarModelo(
+  telefone: string,
+  nome: NomeModelo,
+  variaveis: string[],
+  valorDoBotao?: string,
+): Promise<boolean> {
+  return (await enviarModeloComResultado(telefone, nome, variaveis, valorDoBotao)) === "enviado";
+}
+
+/**
  * Envio por MODELO aprovado — o caminho de produção.
  *
  * Fora da janela de 24h a Meta só entrega mensagem baseada em modelo, e
@@ -73,7 +162,7 @@ export async function enviarWhatsApp(telefone: string, texto: string): Promise<b
  * a mensagem não sai. Registramos o texto previsto no log para o envio
  * falho não virar um silêncio sem explicação.
  */
-export async function enviarModelo(
+export async function enviarModeloComResultado(
   telefone: string,
   nome: NomeModelo,
   variaveis: string[],
@@ -86,14 +175,25 @@ export async function enviarModelo(
    * a Meta recusa o envio.
    */
   valorDoBotao?: string,
-): Promise<boolean> {
+): Promise<ResultadoDoEnvio> {
   const token = envClean("WHATSAPP_API_TOKEN");
   const phoneId = envClean("WHATSAPP_PHONE_ID");
   const previsto = preverTexto(nome, variaveis);
 
+  if (MODELOS_QUE_RESPEITAM_PARAR.includes(nome)) {
+    try {
+      if (await consultaDeParar(telefone)) return "bloqueado";
+    } catch (err) {
+      // Sem saber se a pessoa pediu para parar, não manda. "falhou" faz o cron
+      // tentar de novo, e a resposta certa chega quando o banco voltar.
+      console.error("[WhatsApp] não deu para conferir o pedido de PARAR:", err);
+      return "falhou";
+    }
+  }
+
   if (!token || !phoneId) {
     console.log("[WhatsApp] sem credenciais — modelo não enviado:", nome, "|", previsto.slice(0, 80));
-    return false;
+    return "falhou";
   }
 
   const modelo = MODELOS[nome];
@@ -101,7 +201,7 @@ export async function enviarModelo(
     // Quantidade errada de variaveis e recusa certa da Meta — melhor
     // barrar aqui, onde da para ver o nome do modelo no log.
     console.error("[WhatsApp] modelo", nome, "espera", modelo.variaveis, "variaveis, recebeu", variaveis.length);
-    return false;
+    return "falhou";
   }
 
   // O corpo sozinho, guardado à parte: é para ele que o envio volta se a
@@ -128,7 +228,7 @@ export async function enviarModelo(
   if (modelo.botaoComLink) {
     if (!valorDoBotao) {
       console.error("[WhatsApp] modelo", nome, "precisa do valor do botao e não recebeu");
-      return false;
+      return "falhou";
     }
     componentes.push({
       type: "button",
@@ -172,7 +272,7 @@ export async function enviarModelo(
       const semBotao = await tentar(soCorpo);
       if (semBotao.ok) {
         console.warn("[WhatsApp] modelo", nome, "enviado SEM o botão: a Meta ainda não tem o botão cadastrado");
-        return true;
+        return "enviado";
       }
       r = semBotao;
     }
@@ -180,12 +280,12 @@ export async function enviarModelo(
     if (!r.ok) {
       console.error("[WhatsApp] modelo", nome, "falhou:", r.status, r.detalhe.slice(0, 300));
       console.error("[WhatsApp] texto previsto:", previsto);
-      return false;
+      return "falhou";
     }
-    return true;
+    return "enviado";
   } catch (err) {
     console.error("[WhatsApp] erro ao enviar modelo", nome, err);
-    return false;
+    return "falhou";
   }
 }
 
