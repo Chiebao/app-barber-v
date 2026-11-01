@@ -410,8 +410,11 @@ app_barber/
   mesmo igual. A Meta pode sugerir Marketing ("A categoria não corresponde"), e
   editar REABRE a classificação: `espera_sem_vaga`, `vaga_disponivel` e
   `fim_do_teste` seguiram em Utilidade, mas o `cobranca_assinatura` foi trocado
-  para Marketing em 01/11/2026 (análise pode ser pedida até 31/12/2026). Não
-  editar modelo aprovado sem necessidade: o link já estava coberto pelo middleware
+  para Marketing em 01/11/2026. Revisão da categoria pedida no mesmo dia, em
+  Suporte para Empresas > Atualizações das categorias de modelo: marcar o modelo
+  e tocar em "Pedir análise" envia NA HORA, sem formulário nem justificativa.
+  Não editar modelo aprovado sem necessidade: o link já estava coberto pelo
+  middleware
 - Entrar na fila agora AVISA o barbeiro (push web + Expo). Antes ninguem
   era avisado: o pedido so aparecia para quem abrisse a tela de espera de
   proposito, e pedido que ninguem ve e pedido perdido
