@@ -431,6 +431,9 @@ app_barber/
   reconhece esse texto. Termos usam o mesmo numero. Publicar so depois do robo:
   sem ele, quem nao e cliente recebe "Esta linha e automatica e nao e lida por
   ninguem"
+- Salvar QUALQUER campo do perfil do numero na Meta (foto, descricao) reenvia o
+  nome de exibicao para verificacao. Em 01/11/2026 "BarberPro App" saiu de
+  Rejeitado para Em analise so por trocar foto e descricao: conferir o nome depois
 - O suporte feito por uma pessoa fica no 99776 ("Esqueci minha senha", exclusao
   de dados, encarregado na privacidade): so uma pessoa resolve esses casos, e a
   linha do robo nao tem caixa de entrada
