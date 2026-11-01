@@ -341,7 +341,7 @@ export default function PrivacidadePage() {
               >
                 (15) 99776-7794
               </a>{" "}
-              — canal principal, com resposta mais rapida
+              — contato do encarregado
             </li>
             <li>Encarregado (DPO): Elias Henrique Dias Godoy</li>
           </ul>

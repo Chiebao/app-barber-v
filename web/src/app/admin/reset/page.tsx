@@ -67,7 +67,7 @@ export default function AdminResetPage() {
           </div>
           <div>
             <label className="text-xs text-hud-muted mb-1 block">Telefone da pessoa (que veio no WhatsApp)</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ex: 15997767794"
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ex: 15900000000"
               className="w-full rounded bg-hud-bg border border-hud-border px-4 py-3 text-hud-text placeholder:text-hud-faint focus:border-hud-accent focus:outline-none" />
           </div>
           <div>

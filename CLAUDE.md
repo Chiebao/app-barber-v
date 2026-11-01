@@ -424,9 +424,16 @@ app_barber/
 ### Landing page (a raiz do site)
 - A raiz era `redirect("/admin")`: quem ouvia falar do app e ia olhar caia
   numa TELA DE SENHA, sem saber o que e nem quanto custa
-- O botao vai para o WHATSAPP, nao para o cadastro: enquanto nao existir
-  cobranca (B14), um "comece gratis" criaria conta que ninguem tem como
-  cobrar nem desligar. Troca quando o billing existir; a pagina nao muda
+- O botao vai para o WHATSAPP, nao para o cadastro: e o atendimento automatico
+  que mostra o app e explica como testar na barbearia
+- Contato comercial e o `ZAP` de `page.tsx` (`5515996917520`, a linha da Cloud
+  API, atendida pelo robo comercial). O `CONVITE` nao muda sozinho: o robo
+  reconhece esse texto. Termos usam o mesmo numero. Publicar so depois do robo:
+  sem ele, quem nao e cliente recebe "Esta linha e automatica e nao e lida por
+  ninguem"
+- O suporte feito por uma pessoa fica no 99776 ("Esqueci minha senha", exclusao
+  de dados, encarregado na privacidade): so uma pessoa resolve esses casos, e a
+  linha do robo nao tem caixa de entrada
 - Abre pela folha de caderno rasurada porque quem le ainda nao esta
   comprando software — esta reconhecendo o proprio sabado. O produto so
   aparece depois disso
@@ -1092,7 +1099,7 @@ hora (hot reload do Next). No app Expo, o equivalente é o Expo Go no celular.
 | `WHATSAPP_APP_SECRET` | Nao | Segredo do app na Meta — confere a assinatura do webhook |
 | `WHATSAPP_WABA_ID` | Nao | ID da conta do WhatsApp Business — usado para conferir os modelos aprovados em `/api/me/whatsapp-status` |
 | `ADMIN_SECRET` | Nao | Senha-mestra da pagina `/admin/reset` (reset de senha super-admin) |
-| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Nao | WhatsApp do suporte (55+DDD+numero) para o fluxo "Esqueci minha senha" |
+| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Nao | WhatsApp do suporte feito por uma pessoa (55+DDD+numero), so para o fluxo "Esqueci minha senha". O contato comercial NAO usa esta variavel: e a constante `ZAP` de `web/src/app/page.tsx` |
 
 ---
 

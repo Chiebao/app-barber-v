@@ -375,14 +375,14 @@ export default function TermosPage() {
             <li>
               <strong className="text-hud-soft">WhatsApp:</strong>{" "}
               <a
-                href="https://wa.me/5515997767794"
+                href="https://wa.me/5515996917520"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-hud-light underline"
               >
-                (15) 99776-7794
+                (15) 99691-7520
               </a>{" "}
-              — canal principal de atendimento
+              — canal principal de atendimento, automático. Se ele não resolver, ele te manda o contato de uma pessoa.
             </li>
             <li>Responsável: Elias Henrique Dias Godoy</li>
           </ul>

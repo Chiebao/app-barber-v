@@ -13,9 +13,8 @@ import { Caveat } from "next/font/google";
  * reconhece antes de qualquer argumento — ele não está comprando software,
  * está olhando o próprio sábado. O produto só aparece depois disso.
  *
- * O botão leva para o WhatsApp, não para o cadastro: enquanto não existir
- * cobrança no produto, um "comece grátis" criaria conta que ninguém tem
- * como cobrar nem desligar.
+ * O botão leva para o WhatsApp, não para o cadastro: é o atendimento
+ * automático que mostra o app e explica como testar na barbearia.
  */
 
 // A letra à mão é o conceito da página, não enfeite. Carregada AQUI e não no
@@ -28,7 +27,10 @@ const caveat = Caveat({
   weight: ["500", "700"],
 });
 
-const ZAP = (process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "5515997767794").replace(/\D/g, "");
+// Contato comercial, atendido pelo robô. NÃO é o NEXT_PUBLIC_SUPPORT_WHATSAPP:
+// aquele é o suporte feito por uma pessoa ("Esqueci minha senha").
+const ZAP = "5515996917520";
+// O robô reconhece este texto: mudar aqui exige mudar lá.
 const CONVITE = "Oi! Quero saber mais sobre o BarberPro";
 const linkZap = `https://wa.me/${ZAP}?text=${encodeURIComponent(CONVITE)}`;
 
@@ -379,8 +381,8 @@ export default function Home() {
             Quer ver na sua barbearia?
           </h2>
           <p className="text-[1.0625rem] leading-relaxed text-hud-muted">
-            Me chama no WhatsApp. A gente conversa, eu monto sua barbearia no app com seus
-            serviços e preços, e você já sai com o link pra mandar pros clientes.
+            Chama no WhatsApp. O atendimento automático te mostra o app e explica como testar na
+            sua barbearia.
           </p>
           <a
             href={linkZap}
@@ -388,7 +390,7 @@ export default function Home() {
           >
             Falar no WhatsApp
           </a>
-          <p className="text-[0.8125rem] text-hud-muted">Respondo eu mesmo. Sem robô, sem formulário.</p>
+          <p className="text-[0.8125rem] text-hud-muted">Atendimento automático. Se ele não resolver, ele te manda o contato de uma pessoa.</p>
         </section>
 
         <footer className="py-12 text-center text-xs text-hud-faint">
