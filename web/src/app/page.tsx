@@ -29,7 +29,7 @@ const caveat = Caveat({
 
 // Contato comercial, atendido pelo robô. NÃO é o NEXT_PUBLIC_SUPPORT_WHATSAPP:
 // aquele é o suporte feito por uma pessoa ("Esqueci minha senha").
-const ZAP = "5515996917520";
+const ZAP = "5515992378348";
 // O robô reconhece este texto: mudar aqui exige mudar lá.
 const CONVITE = "Oi! Quero saber mais sobre o BarberPro";
 const linkZap = `https://wa.me/${ZAP}?text=${encodeURIComponent(CONVITE)}`;

@@ -375,12 +375,12 @@ export default function TermosPage() {
             <li>
               <strong className="text-hud-soft">WhatsApp:</strong>{" "}
               <a
-                href="https://wa.me/5515996917520"
+                href="https://wa.me/5515992378348"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-hud-light underline"
               >
-                (15) 99691-7520
+                (15) 99237-8348
               </a>{" "}
               — canal principal de atendimento, automático. Se ele não resolver, ele te manda o contato de uma pessoa.
             </li>

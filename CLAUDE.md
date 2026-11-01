@@ -426,7 +426,7 @@ app_barber/
   numa TELA DE SENHA, sem saber o que e nem quanto custa
 - O botao vai para o WHATSAPP, nao para o cadastro: e o atendimento automatico
   que mostra o app e explica como testar na barbearia
-- Contato comercial e o `ZAP` de `page.tsx` (`5515996917520`, a linha da Cloud
+- Contato comercial e o `ZAP` de `page.tsx` (`5515992378348`, a linha da Cloud
   API, atendida pelo robo comercial). O `CONVITE` nao muda sozinho: o robo
   reconhece esse texto. Termos usam o mesmo numero. Publicar so depois do robo:
   sem ele, quem nao e cliente recebe "Esta linha e automatica e nao e lida por
