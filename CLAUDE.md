@@ -405,6 +405,13 @@ app_barber/
   como `%7B%7B1%7D%7D` e o cliente cai em "Barbearia não encontrada". O
   `middleware.ts` tira essa marca (`lib/link-do-modelo.ts`), porque a revisão
   da Meta demora e mensagem já entregue guarda o link antigo para sempre
+- Os quatro botões foram corrigidos na Meta em 31/10-01/11/2026. Ao trocar essa
+  URL, "Enviar para análise" fica desativado até redigitar a URL de amostra,
+  mesmo igual. A Meta pode sugerir Marketing ("A categoria não corresponde"), e
+  editar REABRE a classificação: `espera_sem_vaga`, `vaga_disponivel` e
+  `fim_do_teste` seguiram em Utilidade, mas o `cobranca_assinatura` foi trocado
+  para Marketing em 01/11/2026 (análise pode ser pedida até 31/12/2026). Não
+  editar modelo aprovado sem necessidade: o link já estava coberto pelo middleware
 - Entrar na fila agora AVISA o barbeiro (push web + Expo). Antes ninguem
   era avisado: o pedido so aparecia para quem abrisse a tela de espera de
   proposito, e pedido que ninguem ve e pedido perdido
