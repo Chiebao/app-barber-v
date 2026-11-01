@@ -413,8 +413,8 @@ app_barber/
   para Marketing em 01/11/2026. Revisão da categoria pedida no mesmo dia, em
   Suporte para Empresas > Atualizações das categorias de modelo: marcar o modelo
   e tocar em "Pedir análise" envia NA HORA, sem formulário nem justificativa.
-  Não editar modelo aprovado sem necessidade: o link já estava coberto pelo
-  middleware
+  A Meta devolveu para Utilidade em cerca de 3 horas. Não editar modelo aprovado
+  sem necessidade: o link já estava coberto pelo middleware
 - Entrar na fila agora AVISA o barbeiro (push web + Expo). Antes ninguem
   era avisado: o pedido so aparecia para quem abrisse a tela de espera de
   proposito, e pedido que ninguem ve e pedido perdido
