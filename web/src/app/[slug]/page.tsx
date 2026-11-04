@@ -127,6 +127,25 @@ function diaLocal(d: Date): string {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
+/**
+ * Quem já agendou NESTE aparelho. Fica no navegador do cliente, e não no IP:
+ * o IP muda a cada rede e é o mesmo para todo mundo no Wi-Fi da barbearia ou
+ * na mesma operadora, então mostraria o nome de um cliente para outro.
+ */
+const CHAVE_IDENTIDADE = "client_identity";
+
+function identidadeSalva(): { name: string; phone: string } | null {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE_IDENTIDADE) || "null");
+    const name = typeof salvo?.name === "string" ? salvo.name.trim() : "";
+    const phone = typeof salvo?.phone === "string" ? salvo.phone.replace(/\D/g, "") : "";
+    if (!name || phone.length < 10 || phone.length > 11) return null;
+    return { name, phone };
+  } catch {
+    return null;
+  }
+}
+
 export default function BarberPage() {
   const params = useParams();
   const router = useRouter();
@@ -209,16 +228,19 @@ export default function BarberPage() {
         if (data.shop?.colorTheme) {
           applyWebTheme(data.shop.colorTheme);
         }
-        // Restore saved identity
-        try {
-          const saved = localStorage.getItem("client_identity");
-          if (saved) {
-            const { name, phone } = JSON.parse(saved);
-            if (name) setClientName(name);
-            if (phone) setClientPhone(phone);
-          }
-        } catch { /* ignore */ }
-        setStep("name");
+        // Quem já agendou neste aparelho não digita nome e telefone de novo:
+        // vai direto para a escolha do modo, com "Não é você?" para trocar.
+        // Antes o nome e o telefone eram lidos aqui, mas os campos começavam
+        // vazios e a tela pedia tudo outra vez.
+        const lembrado = identidadeSalva();
+        if (lembrado) {
+          setNameInput(lembrado.name);
+          setPhoneInput(formatPhone(lembrado.phone));
+          setClientName(lembrado.name);
+          entrarComo(data.shop.id, lembrado.name, lembrado.phone);
+        } else {
+          setStep("name");
+        }
       })
       .catch((e) => setLoadError(e.message));
 
@@ -261,13 +283,13 @@ export default function BarberPage() {
     setStep("phone");
   };
 
-  const handleSubmitPhone = async () => {
-    const phone = phoneInput.replace(/\D/g, "");
-    if (phone.length < 10) return;
+  /** Segue com este nome e telefone: fidelidade, avaliação pendente e modo. */
+  const entrarComo = async (shopId: string, name: string, phone: string) => {
     setClientPhone(phone);
+    try { localStorage.setItem(CHAVE_IDENTIDADE, JSON.stringify({ name, phone })); } catch { /* ignore */ }
 
     try {
-      const res = await fetch(`/api/appointments?phone=${phone}&shopId=${shop!.id}`);
+      const res = await fetch(`/api/appointments?phone=${phone}&shopId=${shopId}`);
       const data = await res.json();
       // Salva fidelidade
       if (typeof data.loyaltyCount === "number") setLoyaltyCount(data.loyaltyCount);
@@ -276,13 +298,34 @@ export default function BarberPage() {
       if (data.pendingRating) {
         setPendingRating(data.pendingRating);
         setStep("rating");
-        try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone })); } catch { /* ignore */ }
         return;
       }
     } catch { /* ignore */ }
 
-    try { localStorage.setItem("client_identity", JSON.stringify({ name: clientName, phone })); } catch { /* ignore */ }
     setStep("mode_select");
+  };
+
+  const handleSubmitPhone = async () => {
+    const phone = phoneInput.replace(/\D/g, "");
+    if (phone.length < 10) return;
+    await entrarComo(shop!.id, clientName, phone);
+  };
+
+  /**
+   * "Não é você?": aparelho emprestado, ou a esposa agendando no celular do
+   * marido. Apaga o que estava salvo e volta para o começo.
+   */
+  const trocarDeCliente = () => {
+    try { localStorage.removeItem(CHAVE_IDENTIDADE); } catch { /* ignore */ }
+    setClientName("");
+    setClientPhone("");
+    setNameInput("");
+    setPhoneInput("");
+    setLastBooking(null);
+    setPendingRating(null);
+    setLoyaltyCount(0);
+    setLoyaltyProgress(0);
+    setStep("name");
   };
 
   const handleSubmitRating = async () => {
@@ -763,6 +806,19 @@ export default function BarberPage() {
         {step === "mode_select" && shop && (
           <div className="space-y-6">
             {titulo("Como prefere agendar?", "Escolha a forma que preferir — você pode mudar sempre que quiser.")}
+            <HudCard className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-hud-text">{clientName}</p>
+                <p className="text-xs text-hud-muted tabular-nums">{formatPhone(clientPhone)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={trocarDeCliente}
+                className="hud-focus min-h-[44px] shrink-0 rounded px-2 text-sm font-semibold text-hud-light underline"
+              >
+                Não é você?
+              </button>
+            </HudCard>
             <div className="grid gap-3">
               {([
                 { modo: "steps" as const, icone: "agenda" as const, nome: "Etapas clássico", desc: "Escolha serviço, barbeiro, data e hora passo a passo" },
